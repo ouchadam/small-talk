@@ -1,0 +1,35 @@
+plugins {
+    id 'kotlin'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencies {
+    kotlinTest(it)
+    testImplementation 'app.cash.turbine:turbine:0.7.0'
+
+    testImplementation Dependencies.mavenCentral.kotlinSerializationJson
+
+    testImplementation project(":core")
+    testImplementation project(":domains:store")
+    testImplementation project(":domains:olm")
+
+    testImplementation project(":matrix:matrix")
+    testImplementation project(":matrix:matrix-http-ktor")
+    testImplementation project(":matrix:services:auth")
+    testImplementation project(":matrix:services:sync")
+    testImplementation project(":matrix:services:room")
+    testImplementation project(":matrix:services:push")
+    testImplementation project(":matrix:services:message")
+    testImplementation project(":matrix:services:device")
+    testImplementation project(":matrix:services:crypto")
+
+    testImplementation rootProject.files("external/jolm.jar")
+    testImplementation 'org.json:json:20211205'
+
+    testImplementation Dependencies.mavenCentral.ktorJava
+    testImplementation Dependencies.mavenCentral.sqldelightInMemory
+}

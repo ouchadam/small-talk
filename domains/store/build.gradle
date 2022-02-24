@@ -1,0 +1,25 @@
+plugins {
+    id 'kotlin'
+    id 'com.squareup.sqldelight'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+}
+
+sqldelight {
+    DapkDb {
+        packageName = "app.dapk.db"
+    }
+    linkSqlite = true
+}
+
+dependencies {
+    api project(":matrix:common")
+    implementation project(":matrix:services:sync")
+    implementation project(":matrix:services:message")
+    implementation project(":matrix:services:profile")
+    implementation project(":matrix:services:device")
+    implementation project(":matrix:services:room")
+    implementation project(":core")
+    implementation Dependencies.mavenCentral.kotlinSerializationJson
+    implementation Dependencies.mavenCentral.kotlinCoroutinesCore
+    implementation "com.squareup.sqldelight:coroutines-extensions:1.5.3"
+}

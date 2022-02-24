@@ -1,0 +1,9 @@
+plugins { id 'java-test-fixtures' }
+applyMatrixServiceModule(project)
+
+dependencies {
+    kotlinFixtures(it)
+    testFixturesImplementation(testFixtures(project(":matrix:common")))
+    testFixturesImplementation(testFixtures(project(":core")))
+    testFixturesImplementation Dependencies.mavenCentral.kotlinSerializationJson
+}

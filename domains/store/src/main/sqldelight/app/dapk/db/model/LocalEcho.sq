@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS dbLocalEcho (
+    local_id TEXT NOT NULL,
+    room_id TEXT NOT NULL,
+    blob TEXT NOT NULL,
+    PRIMARY KEY (local_id)
+);
+
+selectAll:
+SELECT *
+FROM dbLocalEcho;
+
+insert:
+INSERT OR REPLACE INTO dbLocalEcho(local_id, room_id, blob)
+VALUES ?;
+
+delete:
+DELETE FROM dbLocalEcho
+WHERE local_id = ?;

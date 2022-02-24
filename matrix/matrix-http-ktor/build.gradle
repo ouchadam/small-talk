@@ -1,0 +1,13 @@
+plugins {
+    id 'kotlin'
+}
+
+dependencies {
+    implementation project(":matrix:common")
+    api project(":matrix:matrix-http")
+
+    implementation Dependencies.mavenCentral.ktorCore
+    implementation Dependencies.mavenCentral.ktorSerialization
+    implementation Dependencies.mavenCentral.ktorLogging
+    implementation Dependencies.mavenCentral.kotlinSerializationJson
+}

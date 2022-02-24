@@ -1,0 +1,7 @@
+<resources>
+
+    <style name="DapkTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+
+</resources>

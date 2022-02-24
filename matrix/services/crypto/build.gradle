@@ -1,0 +1,17 @@
+plugins { id 'java-test-fixtures' }
+applyMatrixServiceModule(project)
+
+dependencies {
+    implementation project(":core")
+    implementation project(":matrix:services:device")
+
+    kotlinTest(it)
+    kotlinFixtures(it)
+    testImplementation(testFixtures(project(":matrix:common")))
+    testImplementation(testFixtures(project(":matrix:matrix-http")))
+    testImplementation(testFixtures(project(":core")))
+    testImplementation(testFixtures(project(":matrix:services:device")))
+    testFixturesImplementation(testFixtures(project(":matrix:common")))
+    testFixturesImplementation(testFixtures(project(":matrix:services:device")))
+    testFixturesImplementation(testFixtures(project(":core")))
+}

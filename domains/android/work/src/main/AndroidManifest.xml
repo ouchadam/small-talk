@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.dapk.st.work">
+
+    <application>
+
+        <service android:name=".WorkAndroidService"
+                 android:permission="android.permission.BIND_JOB_SERVICE"/>
+
+    </application>
+
+</manifest>

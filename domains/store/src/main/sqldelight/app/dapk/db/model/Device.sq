@@ -1,0 +1,47 @@
+CREATE TABLE dbDeviceKey (
+    user_id TEXT NOT NULL,
+    device_id TEXT NOT NULL,
+    blob TEXT NOT NULL,
+    outdated INTEGER AS Int NOT NULL,
+    PRIMARY KEY (user_id, device_id)
+);
+
+CREATE TABLE dbDeviceKeyToMegolmSession (
+    device_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    PRIMARY KEY (device_id, session_id)
+);
+
+selectUserDevicesWithSessions:
+SELECT user_id, dbDeviceKey.device_id, blob
+FROM dbDeviceKey
+JOIN dbDeviceKeyToMegolmSession ON dbDeviceKeyToMegolmSession.device_id = dbDeviceKey.device_id
+WHERE user_id IN ? AND dbDeviceKeyToMegolmSession.session_id = ?;
+
+selectDevice:
+SELECT blob
+FROM dbDeviceKey
+WHERE device_id = ?;
+
+selectOutdatedUsers:
+SELECT user_id
+FROM dbDeviceKey
+WHERE outdated = 1;
+
+insertDevice:
+INSERT OR REPLACE INTO dbDeviceKey(user_id, device_id, blob, outdated)
+VALUES (?, ?, ?, 0);
+
+markOutdated:
+UPDATE dbDeviceKey
+SET outdated = 1
+WHERE user_id IN ?;
+
+markIndate:
+UPDATE dbDeviceKey
+SET outdated = 0
+WHERE user_id IN ?;
+
+insertDeviceToMegolmSession:
+INSERT OR REPLACE INTO dbDeviceKeyToMegolmSession(device_id, session_id)
+VALUES (?, ?);

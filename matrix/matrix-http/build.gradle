@@ -1,0 +1,11 @@
+plugins {
+    id 'kotlin'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    api Dependencies.mavenCentral.ktorCore
+    implementation Dependencies.mavenCentral.kotlinSerializationJson
+
+    kotlinFixtures(it)
+}

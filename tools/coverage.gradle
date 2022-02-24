@@ -1,0 +1,93 @@
+def excludes = [
+        // DI graph
+        '**/*Module.*',
+        '**/*Module*.*',
+
+        // Android composables
+        '**/*Screen*',
+        '**/components/*',
+        '**/*Compose*.*',
+
+        // Android framework
+        '**/*Activity*',
+        '**/*AndroidService*',
+        '**/*Application*',
+
+        // Generated
+        '**/*serializer*',
+        '**/*Serializer*',
+        "**/*request/*Companion*.*",
+        '**/*QueriesImpl*',
+        '**/*Db*',
+        '**/Select*',
+
+        // Tmp until serializationx can ignore generated
+        '**/Api*',
+]
+
+def initializeReport(report, projects, classExcludes) {
+    report.executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+
+    def includeAndroid = { project, type ->
+        report.sourceDirectories.setFrom(report.sourceDirectories + files(["${project.projectDir}/src/main/kotlin"]))
+        def androidClasses = project.files([project.fileTree(dir: "${project.buildDir}/tmp/kotlin-classes/${type}", excludes: classExcludes)])
+        report.classDirectories.setFrom(androidClasses + report.classDirectories)
+    }
+
+    projects.each { project ->
+        project.apply plugin: 'jacoco'
+        project.afterEvaluate {
+            switch (project) {
+                case { it.plugins.hasPlugin("com.android.application") }:
+                    includeAndroid(it, "debug")
+                    break
+                case { it.plugins.hasPlugin("com.android.library") }:
+                    includeAndroid(it, "release")
+                    break
+                default:
+                    report.sourceSets it.sourceSets.main
+                    report.classDirectories.setFrom(files(report.classDirectories.files.collect {
+                        fileTree(dir: it, excludes: classExcludes)
+                    }))
+            }
+        }
+    }
+
+    report.reports {
+        xml.enabled true
+        html.enabled true
+        csv.enabled false
+    }
+}
+
+def collectProjects(predicate) {
+    return subprojects.findAll { it.buildFile.isFile() && predicate(it) }
+}
+
+task unitCodeCoverageReport(type: JacocoReport) {
+    rootProject.apply plugin: 'jacoco'
+    def excludedProjects = [
+            'olm-stub',
+            'test-harness'
+    ]
+    def projects = collectProjects { !excludedProjects.contains(it.name) }
+    dependsOn ":app:assembleDebug"
+    dependsOn { projects*.test }
+    initializeReport(it, projects, excludes)
+}
+
+task harnessCodeCoverageReport(type: JacocoReport) {
+    rootProject.apply plugin: 'jacoco'
+    def projects = collectProjects { true }
+    dependsOn ":app:assembleDebug"
+    dependsOn { project(":test-harness").test }
+    initializeReport(it, projects, excludes)
+}
+
+task allCodeCoverageReport(type: JacocoReport) {
+    rootProject.apply plugin: 'jacoco'
+    def projects = collectProjects { true }
+    dependsOn ":app:assembleDebug"
+    dependsOn { projects*.test }
+    initializeReport(it, projects, excludes)
+}

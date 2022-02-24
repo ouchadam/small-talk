@@ -1,0 +1,12 @@
+CREATE TABLE dbInviteState (
+    room_id TEXT NOT NULL,
+    PRIMARY KEY (room_id)
+);
+
+selectAll:
+SELECT room_id
+FROM dbInviteState;
+
+insert:
+INSERT OR REPLACE INTO dbInviteState(room_id)
+VALUES (?);

@@ -1,0 +1,13 @@
+plugins {
+    id 'kotlin'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    implementation Dependencies.mavenCentral.kotlinSerializationJson
+
+    kotlinTest(it)
+    kotlinFixtures(it)
+    testFixturesImplementation(testFixtures(project(":core")))
+}

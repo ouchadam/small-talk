@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS dbUnreadEvent (
+    event_id TEXT NOT NULL,
+    room_id TEXT NOT NULL,
+    PRIMARY KEY (event_id)
+);
+
+insertUnread:
+INSERT OR REPLACE INTO dbUnreadEvent(event_id, room_id)
+VALUES (?, ?);
+
+removeRead:
+DELETE FROM dbUnreadEvent
+WHERE room_id = ?;
+
+selectUnreadByRoom:
+SELECT event_id
+FROM dbUnreadEvent
+WHERE room_id = ?;

@@ -1,0 +1,11 @@
+plugins {
+    id 'kotlin'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    implementation Dependencies.mavenCentral.kotlinCoroutinesCore
+    testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
+    testFixturesImplementation Dependencies.mavenCentral.kluent
+    testFixturesImplementation 'io.mockk:mockk:1.12.2'
+}

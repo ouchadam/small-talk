@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+<string tools:ignore="UnusedResources,TypographyDashes" name="com.crashlytics.android.build_id" translatable="false">00000000000000000000000000000000</string>
+</resources>

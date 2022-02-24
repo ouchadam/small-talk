@@ -1,0 +1,61 @@
+CREATE TABLE dbCryptoAccount (
+    user_id TEXT NOT NULL,
+    blob TEXT NOT NULL,
+    PRIMARY KEY (user_id)
+);
+
+CREATE TABLE dbCryptoOlmSession (
+    identity_key TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    blob TEXT NOT NULL,
+    PRIMARY KEY (identity_key, session_id)
+);
+
+CREATE TABLE dbCryptoMegolmInbound (
+    session_id TEXT NOT NULL,
+    blob TEXT NOT NULL,
+    PRIMARY KEY (session_id)
+);
+
+CREATE TABLE dbCryptoMegolmOutbound (
+    room_id TEXT NOT NULL,
+    utcEpochMillis INTEGER NOT NULL,
+    blob TEXT NOT NULL,
+    PRIMARY KEY (room_id)
+);
+
+selectAccount:
+SELECT blob
+FROM dbCryptoAccount
+WHERE user_id = ?;
+
+insertAccount:
+INSERT OR REPLACE INTO dbCryptoAccount(user_id, blob)
+VALUES ?;
+
+selectOlmSession:
+SELECT blob, identity_key
+FROM dbCryptoOlmSession
+WHERE identity_key IN ?;
+
+insertOlmSession:
+INSERT OR REPLACE INTO dbCryptoOlmSession(identity_key, session_id, blob)
+VALUES (?, ?, ?);
+
+selectMegolmInbound:
+SELECT blob
+FROM dbCryptoMegolmInbound
+WHERE session_id = ?;
+
+insertMegolmInbound:
+INSERT OR REPLACE INTO dbCryptoMegolmInbound(session_id, blob)
+VALUES ?;
+
+selectMegolmOutbound:
+SELECT blob, utcEpochMillis
+FROM dbCryptoMegolmOutbound
+WHERE room_id = ?;
+
+insertMegolmOutbound:
+INSERT OR REPLACE INTO dbCryptoMegolmOutbound(room_id, utcEpochMillis, blob)
+VALUES ?;

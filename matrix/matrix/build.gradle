@@ -1,0 +1,9 @@
+plugins {
+    id 'kotlin'
+}
+
+dependencies {
+    implementation project(":matrix:matrix-http")
+    implementation project(":matrix:common")
+    implementation Dependencies.mavenCentral.kotlinSerializationJson
+}
