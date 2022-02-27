@@ -1,0 +1,35 @@
+name: Assemble Debug
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+
+jobs:
+  assemble-debug:
+    name: Assemble debug variant
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Assemble debug variant
+        run: ./gradlew assembleDebug --no-daemon
