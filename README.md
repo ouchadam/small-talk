@@ -1,4 +1,4 @@
-# SmallTalk [![codecov](https://codecov.io/gh/ouchadam/small-talk/branch/main/graph/badge.svg?token=ETFSLZ9FCI)](https://codecov.io/gh/ouchadam/small-talk)
+# SmallTalk [![Assemble](https://github.com/ouchadam/small-talk/actions/workflows/assemble.yml/badge.svg)](https://github.com/ouchadam/small-talk/actions/workflows/assemble.yml) [![codecov](https://codecov.io/gh/ouchadam/small-talk/branch/main/graph/badge.svg?token=ETFSLZ9FCI)](https://codecov.io/gh/ouchadam/small-talk)
 
 `SmallTalk` is a minimal, modern, friends and family focused Android messenger. Heavily inspired by Whatsapp and Signal, powered by Matrix.
 
