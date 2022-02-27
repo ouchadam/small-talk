@@ -1,0 +1,53 @@
+name: Test
+
+on:
+  workflow_run:
+    workflows: ["Assemble Debug"]
+    types:
+      - completed
+
+jobs:
+  unit-tests:
+    name: Run all unit tests (with coverage)
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Start synapse server
+        run: |
+          pip install matrix-synapse
+          curl -sL https://raw.githubusercontent.com/matrix-org/synapse/develop/demo/start.sh \
+            | bash -s -- --no-rate-limit
+
+      - name: Run all unit tests
+        run: ./gradlew allCodeCoverageReport --no-configuration-cache --no-daemon
+
+      - uses: codecov/codecov-action@v2
+        with:
+          files: ./build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml
