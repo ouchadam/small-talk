@@ -1,6 +1,0 @@
-applyAndroidLibraryModule(project)
-
-dependencies {
-    implementation project(':core')
-    implementation project(':domains:android:core')
-}

@@ -1,5 +1,0 @@
-applyMatrixServiceModule(project)
-
-dependencies {
-    implementation project(":core")
-}
