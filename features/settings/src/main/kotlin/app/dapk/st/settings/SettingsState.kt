@@ -43,6 +43,7 @@ sealed interface SettingItem {
         ClearCache,
         EventLog,
         Encryption,
+        PrivacyPolicy,
         Ignored,
     }
 }
@@ -52,6 +53,7 @@ sealed interface SettingsEvent {
     object SignedOut : SettingsEvent
     data class Toast(val message: String) : SettingsEvent
     object OpenEventLog : SettingsEvent
+    data class OpenUrl(val url: String) : SettingsEvent
     data class CopyToClipboard(val message: String, val content: String) : SettingsEvent
 }
 

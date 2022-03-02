@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import app.dapk.st.core.Lce
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
@@ -219,6 +220,9 @@ private fun SettingsViewModel.ObserveEvents(onSignOut: () -> Unit) {
                 is SettingsEvent.Toast -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 OpenEventLog -> {
                     context.startActivity(Intent(context, EventLogActivity::class.java))
+                }
+                is OpenUrl -> {
+                    context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = it.url.toUri() })
                 }
             }
         }

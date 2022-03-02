@@ -38,6 +38,7 @@ class SettingsViewModel(
                         SettingItem.Header("Account"),
                         SettingItem.Text(SignOut, "Sign out"),
                         SettingItem.Header("About"),
+                        SettingItem.Text(PrivacyPolicy, "Privacy policy"),
                         SettingItem.Text(Ignored, "Version", buildMeta.versionName),
                     )
                 )
@@ -74,6 +75,10 @@ class SettingsViewModel(
                 updateState {
                     copy(page = SpiderPage(Page.Routes.encryption, "Encryption", Page.Routes.root, Page.Security))
                 }
+            }
+            PrivacyPolicy -> _events.tryEmit(OpenUrl("https://ouchadam.github.io/small-talk/privacy/"))
+            Ignored -> {
+                // do nothing
             }
         }
     }
