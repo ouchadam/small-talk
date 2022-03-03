@@ -1,12 +1,10 @@
 package internalfake
 
-import app.dapk.st.matrix.crypto.Olm
 import app.dapk.st.matrix.crypto.internal.FetchAccountCryptoUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
+import test.delegateReturn
 
 class FakeFetchAccountCryptoUseCase : FetchAccountCryptoUseCase by mockk() {
-    fun givenAccount(account: Olm.AccountCryptoSession) {
-        coEvery { this@FakeFetchAccountCryptoUseCase.invoke() } returns account
-    }
+    fun givenFetch() = coEvery { this@FakeFetchAccountCryptoUseCase.invoke() }.delegateReturn()
 }

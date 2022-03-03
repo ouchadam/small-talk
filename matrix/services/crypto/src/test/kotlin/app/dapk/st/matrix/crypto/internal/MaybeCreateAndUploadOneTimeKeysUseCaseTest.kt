@@ -27,7 +27,7 @@ class MaybeCreateAndUploadOneTimeKeysUseCaseTest {
     }
 
     private val maybeCreateAndUploadOneTimeKeysUseCase = MaybeCreateAndUploadOneTimeKeysUseCaseImpl(
-        FakeFetchAccountCryptoUseCase().also { it.givenAccount(AN_ACCOUNT_CRYPTO_SESSION) },
+        FakeFetchAccountCryptoUseCase().also { it.givenFetch().returns(AN_ACCOUNT_CRYPTO_SESSION) },
         fakeOlm,
         fakeCredentialsStore,
         fakeDeviceService,

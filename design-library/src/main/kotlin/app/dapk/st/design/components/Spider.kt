@@ -49,6 +49,7 @@ data class SpiderPage<T>(
     val label: String,
     val parent: Route<*>?,
     val state: T,
+    val hasToolbar: Boolean = true,
 )
 
 @JvmInline

@@ -1,6 +1,5 @@
 package app.dapk.st.notifications
 
-import android.R
 import android.app.*
 import android.app.Notification.InboxStyle
 import android.content.Context
@@ -105,7 +104,7 @@ class NotificationsUseCase(
 
         return Notification.Builder(context, channelId)
             .setStyle(summaryInboxStyle)
-            .setSmallIcon(R.drawable.ic_menu_send)
+            .setSmallIcon(R.drawable.ic_notification_small_icon)
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setGroupSummary(true)
             .setGroup(GROUP_ID)
@@ -155,7 +154,7 @@ class NotificationsUseCase(
                 .setStyle(messageStyle)
                 .setCategory(Notification.CATEGORY_MESSAGE)
                 .setShortcutId(roomOverview.roomId.value)
-                .setSmallIcon(R.drawable.ic_menu_send)
+                .setSmallIcon(R.drawable.ic_notification_small_icon)
                 .setLargeIcon(roomOverview.roomAvatarUrl?.let { iconLoader.load(it.value) })
                 .setAutoCancel(true)
                 .build(),

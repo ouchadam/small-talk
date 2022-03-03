@@ -157,7 +157,7 @@ internal class FeatureModules internal constructor(
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile) }
     val settingsModule by unsafeLazy { SettingsModule(storeModule.value, matrixModules.crypto, matrixModules.sync, context.contentResolver, buildMeta) }
-    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile) }
+    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
             matrixModules.push,

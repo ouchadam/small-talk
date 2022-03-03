@@ -141,12 +141,11 @@ fun MatrixServiceInstaller.installCryptoService(
 
         val olmCrypto = OlmCrypto(
             olm,
-            deviceService,
-            logger,
-            registerOlmSessionUseCase,
             encryptMegolmUseCase,
             accountCryptoUseCase,
-            MaybeCreateAndUploadOneTimeKeysUseCaseImpl(accountCryptoUseCase, olm, credentialsStore, deviceService, logger)
+            UpdateKnownOlmSessionUseCaseImpl(accountCryptoUseCase, deviceService, registerOlmSessionUseCase, logger),
+            MaybeCreateAndUploadOneTimeKeysUseCaseImpl(accountCryptoUseCase, olm, credentialsStore, deviceService, logger),
+            logger
         )
         val verificationHandler = VerificationHandler(deviceService, credentialsStore, logger, JsonCanonicalizer(), olm)
         val roomKeyImporter = RoomKeyImporter(coroutineDispatchers)

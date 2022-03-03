@@ -20,6 +20,7 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
+import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.TextRow
 import app.dapk.st.design.components.percentOfHeight
 import app.dapk.st.settings.SettingsActivity
@@ -84,6 +85,11 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                 TextRow(
                     title = "Homeserver",
                     content = state.me.homeServerUrl.value,
+                )
+
+                TextRow(
+                    title = "Invitations",
+                    content = "${state.invitationsCount} pending",
                 )
             }
         }

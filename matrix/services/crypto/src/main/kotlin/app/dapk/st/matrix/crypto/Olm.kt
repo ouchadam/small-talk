@@ -24,7 +24,7 @@ interface Olm {
         publishKeys: suspend (DeviceService.OneTimeKeys) -> Unit
     )
 
-    suspend fun decryptOlm(olmAccount: AccountCryptoSession, senderKey: Curve25519, type: Long, body: CipherText): DecryptionResult
+    suspend fun decryptOlm(olmAccount: AccountCryptoSession, senderKey: Curve25519, type: Int, body: CipherText): DecryptionResult
     suspend fun decryptMegOlm(sessionId: SessionId, cipherText: CipherText): DecryptionResult
     suspend fun verifyExternalUser(keys: Ed25519?, recipeientKeys: Ed25519?): Boolean
     suspend fun olmSessions(devices: List<DeviceKeys>, onMissing: suspend (List<DeviceKeys>) -> List<DeviceCryptoSession>): List<DeviceCryptoSession>

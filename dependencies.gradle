@@ -94,7 +94,7 @@ ext.Dependencies.with {
 
     google = new DependenciesContainer()
     google.with {
-        androidGradlePlugin = "com.android.tools.build:gradle:7.1.1"
+        androidGradlePlugin = "com.android.tools.build:gradle:7.1.2"
 
         androidxComposeUi = "androidx.compose.ui:ui:${composeVer}"
         androidxComposeFoundation = "androidx.compose.foundation:foundation:${composeVer}"

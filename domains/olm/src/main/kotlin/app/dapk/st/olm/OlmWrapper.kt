@@ -231,10 +231,10 @@ class OlmWrapper(
         return SignedJson(olmAccount.signMessage(jsonCanonicalizer.canonicalize(json)))
     }
 
-    override suspend fun decryptOlm(olmAccount: AccountCryptoSession, senderKey: Curve25519, type: Long, body: CipherText): DecryptionResult {
+    override suspend fun decryptOlm(olmAccount: AccountCryptoSession, senderKey: Curve25519, type: Int, body: CipherText): DecryptionResult {
         interactWithOlm()
         val olmMessage = OlmMessage().apply {
-            this.mType = type
+            this.mType = type.toLong()
             this.mCipherText = body.value
         }
 

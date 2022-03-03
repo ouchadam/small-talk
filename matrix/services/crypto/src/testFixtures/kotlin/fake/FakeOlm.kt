@@ -1,9 +1,6 @@
 package fake
 
-import app.dapk.st.matrix.common.CipherText
-import app.dapk.st.matrix.common.JsonString
-import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.UserCredentials
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.crypto.Olm
 import app.dapk.st.matrix.device.DeviceService
 import app.dapk.st.matrix.device.internal.DeviceKeys
@@ -66,4 +63,11 @@ class FakeOlm : Olm by mockk() {
     }
 
     fun givenDeviceCrypto(input: Olm.OlmSessionInput, account: Olm.AccountCryptoSession) = coEvery { ensureDeviceCrypto(input, account) }.delegateReturn()
+
+    fun givenDecrypting(payload: EncryptedMessageContent.MegOlmV1) = coEvery { decryptMegOlm(payload.sessionId, payload.cipherText) }
+
+    fun givenDecrypting(payload: EncryptedMessageContent.OlmV1, account: Olm.AccountCryptoSession) = coEvery {
+        val cipherForAccount = payload.cipherText[account.senderKey]!!
+        decryptOlm(account, payload.senderKey, cipherForAccount.type, cipherForAccount.body)
+    }.delegateReturn()
 }

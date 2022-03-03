@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldHaveSize
 import org.amshove.kluent.shouldNotBeEqualTo
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -108,7 +107,7 @@ class SmokeTest {
             stream.importRoomKeys(password = "aaaaaa")
         }
 
-        result shouldBeEqualTo listOf(RoomId(value="!qOSENTtFUuCEKJSVzl:matrix.org"))
+        result shouldBeEqualTo listOf(RoomId(value = "!qOSENTtFUuCEKJSVzl:matrix.org"))
     }
 }
 

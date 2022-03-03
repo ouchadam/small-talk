@@ -29,7 +29,7 @@ class FetchMegolmSessionUseCaseTest {
     private val fetchMegolmSessionUseCase = FetchMegolmSessionUseCaseImpl(
         fakeOlm,
         deviceService,
-        FakeFetchAccountCryptoUseCase().also { it.givenAccount(AN_ACCOUNT_CRYPTO_SESSION) },
+        FakeFetchAccountCryptoUseCase().also { it.givenFetch().returns(AN_ACCOUNT_CRYPTO_SESSION) },
         roomMembersProvider,
         fakeRegisterOlmSessionUseCase,
         fakeShareRoomKeyUseCase,
