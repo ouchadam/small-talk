@@ -14,7 +14,7 @@ sealed interface Page {
     object Security : Page
     data class ImportRoomKey(
         val selectedFile: NamedUri? = null,
-        val importProgress: Lce<Boolean>? = null,
+        val importProgress: Lce<Unit>? = null,
     ) : Page
 
     object Routes {

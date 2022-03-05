@@ -4,13 +4,13 @@ import app.dapk.st.matrix.common.*
 import fake.FakeMatrixLogger
 import fake.FakeOlm
 import fixture.*
+import internalfake.FakeEncryptMessageWithMegolmUseCase
 import internalfake.FakeFetchAccountCryptoUseCase
-import io.mockk.coEvery
-import io.mockk.mockk
+import internalfake.FakeMaybeCreateAndUploadOneTimeKeysUseCase
+import internalfake.FakeUpdateKnownOlmSessionUseCase
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
-import test.delegateReturn
 import test.runExpectTest
 
 private val A_LIST_OF_SHARED_ROOM_KEYS = listOf(aSharedRoomKey())
@@ -26,7 +26,6 @@ private val A_MEGOLM_PAYLOAD = anEncryptedMegOlmV1Message()
 private val AN_ACCOUNT_CRYPTO_SESSION = anAccountCryptoSession()
 private val AN_OLM_PAYLOAD = anEncryptedOlmV1Message(cipherText = mapOf(AN_ACCOUNT_CRYPTO_SESSION.senderKey to aCipherTextInfo()))
 private val A_DECRYPTION_RESULT = aDecryptionSuccessResult()
-
 
 internal class OlmCryptoTest {
 
@@ -100,44 +99,3 @@ internal class OlmCryptoTest {
         result shouldBeEqualTo A_DECRYPTION_RESULT
     }
 }
-
-fun aDecryptionSuccessResult(
-    payload: JsonString = aJsonString(),
-    isVerified: Boolean = false,
-) = DecryptionResult.Success(payload, isVerified)
-
-fun anEncryptedMegOlmV1Message(
-    cipherText: CipherText = aCipherText(),
-    deviceId: DeviceId = aDeviceId(),
-    senderKey: String = "a-sender-key",
-    sessionId: SessionId = aSessionId(),
-) = EncryptedMessageContent.MegOlmV1(cipherText, deviceId, senderKey, sessionId)
-
-fun anEncryptedOlmV1Message(
-    senderId: UserId = aUserId(),
-    cipherText: Map<Curve25519, EncryptedMessageContent.CipherTextInfo> = emptyMap(),
-    senderKey: Curve25519 = aCurve25519(),
-) = EncryptedMessageContent.OlmV1(senderId, cipherText, senderKey)
-
-fun aCipherTextInfo(
-    body: CipherText = aCipherText(),
-    type: Int = 1,
-) = EncryptedMessageContent.CipherTextInfo(body, type)
-
-class FakeEncryptMessageWithMegolmUseCase : EncryptMessageWithMegolmUseCase by mockk() {
-    fun givenEncrypt(credentials: DeviceCredentials, message: MessageToEncrypt) = coEvery {
-        this@FakeEncryptMessageWithMegolmUseCase.invoke(credentials, message)
-    }.delegateReturn()
-}
-
-class FakeUpdateKnownOlmSessionUseCase : UpdateKnownOlmSessionUseCase by mockk()
-
-class FakeMaybeCreateAndUploadOneTimeKeysUseCase : MaybeCreateAndUploadOneTimeKeysUseCase by mockk()
-
-fun aSharedRoomKey(
-    algorithmName: AlgorithmName = anAlgorithmName(),
-    roomId: RoomId = aRoomId(),
-    sessionId: SessionId = aSessionId(),
-    sessionKey: String = "a-session-key",
-    isExported: Boolean = false,
-) = SharedRoomKey(algorithmName, roomId, sessionId, sessionKey, isExported)

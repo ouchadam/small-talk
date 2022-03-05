@@ -84,7 +84,7 @@ class TestMatrix(
             val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore())
             val olm = OlmWrapper(
                 olmStore = olmAccountStore,
-                singletonFlows = SingletonFlows(),
+                singletonFlows = SingletonFlows(coroutineDispatchers),
                 jsonCanonicalizer = JsonCanonicalizer(),
                 deviceKeyFactory = DeviceKeyFactory(JsonCanonicalizer()),
                 errorTracker = errorTracker,

@@ -136,6 +136,12 @@ ext.kotlinFixtures = { dependencies ->
     dependencies.testFixturesImplementation Dependencies.mavenCentral.kluent
 }
 
+ext.androidImportFixturesWorkaround = { project, fixtures ->
+    project.dependencies.testImplementation(project.dependencies.testFixtures(fixtures))
+    project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}-test-fixtures.jar")
+    project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}.jar")
+}
+
 if (launchTask.contains("codeCoverageReport".toLowerCase())) {
     apply from: 'tools/coverage.gradle'
 }

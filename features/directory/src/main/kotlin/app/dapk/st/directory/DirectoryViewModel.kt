@@ -1,9 +1,9 @@
 package app.dapk.st.directory
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.DapkViewModel
 import app.dapk.st.directory.DirectoryScreenState.Content
 import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
+import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach

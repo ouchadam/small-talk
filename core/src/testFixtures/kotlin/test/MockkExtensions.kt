@@ -6,10 +6,22 @@ inline fun <T : Any, reified R> T.expect(crossinline block: suspend MockKMatcher
     coEvery { block(this@expect) } returns mockk(relaxed = true)
 }
 
-fun <T, B> MockKStubScope<T, B>.delegateReturn(): Returns<T> = Returns { value ->
-    answers(ConstantAnswer(value))
+fun <T, B> MockKStubScope<T, B>.delegateReturn() = object : Returns<T> {
+    override fun returns(value: T) {
+        answers(ConstantAnswer(value))
+    }
+
+    override fun throws(value: Throwable) {
+        this@delegateReturn.throws(value)
+    }
 }
 
-fun interface Returns<T> {
+fun <T> returns(block: (T) -> Unit) = object : Returns<T> {
+    override fun returns(value: T) = block(value)
+    override fun throws(value: Throwable) = throw value
+}
+
+interface Returns<T> {
     fun returns(value: T)
+    fun throws(value: Throwable)
 }

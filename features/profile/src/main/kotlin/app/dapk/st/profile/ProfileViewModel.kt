@@ -1,10 +1,9 @@
 package app.dapk.st.profile
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.DapkViewModel
 import app.dapk.st.matrix.room.ProfileService
 import app.dapk.st.matrix.sync.SyncService
-import kotlinx.coroutines.flow.count
+import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 

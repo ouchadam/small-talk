@@ -1,7 +1,6 @@
 package app.dapk.st.home
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.DapkViewModel
 import app.dapk.st.directory.DirectoryViewModel
 import app.dapk.st.home.HomeScreenState.*
 import app.dapk.st.login.LoginViewModel
@@ -9,6 +8,7 @@ import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.isSignedIn
 import app.dapk.st.matrix.room.ProfileService
 import app.dapk.st.profile.ProfileViewModel
+import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.launch
 
 class HomeViewModel(

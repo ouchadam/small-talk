@@ -10,6 +10,7 @@ import io.mockk.slot
 import org.amshove.kluent.shouldBeEqualTo
 import test.Returns
 import test.delegateReturn
+import test.returns
 
 class FakeOlm : Olm by mockk() {
 
@@ -22,7 +23,7 @@ class FakeOlm : Olm by mockk() {
     fun givenCreatesAccount(credentials: UserCredentials): Returns<Olm.AccountCryptoSession> {
         val slot = slot<suspend (Olm.AccountCryptoSession) -> Unit>()
         val mockKStubScope = coEvery { ensureAccountCrypto(credentials, capture(slot)) }
-        return Returns { value ->
+        return returns { value ->
             mockKStubScope coAnswers {
                 slot.captured.invoke(value)
                 value
@@ -39,7 +40,7 @@ class FakeOlm : Olm by mockk() {
     fun givenMissingOlmSessions(newDevices: List<DeviceKeys>): Returns<List<Olm.DeviceCryptoSession>> {
         val slot = slot<suspend (List<DeviceKeys>) -> List<Olm.DeviceCryptoSession>>()
         val mockKStubScope = coEvery { olmSessions(newDevices, capture(slot)) }
-        return Returns { value ->
+        return returns { value ->
             mockKStubScope coAnswers {
                 slot.captured.invoke(newDevices).also {
                     value shouldBeEqualTo it
@@ -55,7 +56,7 @@ class FakeOlm : Olm by mockk() {
     ): Returns<DeviceService.OneTimeKeys> {
         val slot = slot<suspend (DeviceService.OneTimeKeys) -> Unit>()
         val mockKStubScope = coEvery { with(accountCryptoSession) { generateOneTimeKeys(countToCreate, credentials, capture(slot)) } }
-        return Returns { value ->
+        return returns { value ->
             mockKStubScope coAnswers {
                 slot.captured.invoke(value)
             }

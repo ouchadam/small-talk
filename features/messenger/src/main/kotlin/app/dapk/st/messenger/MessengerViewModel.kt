@@ -1,7 +1,6 @@
 package app.dapk.st.messenger
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.DapkViewModel
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.matrix.common.CredentialsStore
@@ -11,6 +10,7 @@ import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged

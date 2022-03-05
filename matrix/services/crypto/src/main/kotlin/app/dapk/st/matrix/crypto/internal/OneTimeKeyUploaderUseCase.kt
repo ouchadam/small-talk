@@ -7,7 +7,7 @@ import app.dapk.st.matrix.common.crypto
 import app.dapk.st.matrix.crypto.Olm
 import app.dapk.st.matrix.device.DeviceService
 
-typealias MaybeCreateAndUploadOneTimeKeysUseCase = suspend (ServerKeyCount) -> Unit
+internal typealias MaybeCreateAndUploadOneTimeKeysUseCase = suspend (ServerKeyCount) -> Unit
 
 internal class MaybeCreateAndUploadOneTimeKeysUseCaseImpl(
     private val fetchAccountCryptoUseCase: FetchAccountCryptoUseCase,

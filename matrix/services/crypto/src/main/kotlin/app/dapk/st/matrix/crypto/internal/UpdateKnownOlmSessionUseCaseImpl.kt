@@ -6,7 +6,7 @@ import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.common.crypto
 import app.dapk.st.matrix.device.DeviceService
 
-typealias UpdateKnownOlmSessionUseCase = suspend (List<UserId>, SyncToken?) -> Unit
+internal typealias UpdateKnownOlmSessionUseCase = suspend (List<UserId>, SyncToken?) -> Unit
 
 internal class UpdateKnownOlmSessionUseCaseImpl(
     private val fetchAccountCryptoUseCase: FetchAccountCryptoUseCase,

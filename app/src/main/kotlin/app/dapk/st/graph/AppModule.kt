@@ -115,6 +115,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         imageLoaderModule,
         context,
         buildMeta,
+        coroutineDispatchers,
     )
 }
 
@@ -126,6 +127,7 @@ internal class FeatureModules internal constructor(
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
+    coroutineDispatchers: CoroutineDispatchers,
 ) {
 
     val directoryModule by unsafeLazy {
@@ -156,7 +158,16 @@ internal class FeatureModules internal constructor(
         )
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile) }
-    val settingsModule by unsafeLazy { SettingsModule(storeModule.value, matrixModules.crypto, matrixModules.sync, context.contentResolver, buildMeta) }
+    val settingsModule by unsafeLazy {
+        SettingsModule(
+            storeModule.value,
+            matrixModules.crypto,
+            matrixModules.sync,
+            context.contentResolver,
+            buildMeta,
+            coroutineDispatchers
+        )
+    }
     val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
@@ -195,7 +206,7 @@ internal class MatrixModules(
                 installEncryptionService(store.knownDevicesStore())
 
                 val olmAccountStore = OlmPersistenceWrapper(store.olmStore())
-                val singletonFlows = SingletonFlows()
+                val singletonFlows = SingletonFlows(coroutineDispatchers)
                 val olm = OlmWrapper(
                     olmStore = olmAccountStore,
                     singletonFlows = singletonFlows,

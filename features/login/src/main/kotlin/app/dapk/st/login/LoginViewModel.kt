@@ -1,15 +1,14 @@
 package app.dapk.st.login
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.DapkViewModel
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.logP
 import app.dapk.st.login.LoginEvent.LoginComplete
 import app.dapk.st.login.LoginScreenState.*
 import app.dapk.st.matrix.auth.AuthService
-import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.room.ProfileService
 import app.dapk.st.push.RegisterFirebasePushTokenUseCase
+import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch

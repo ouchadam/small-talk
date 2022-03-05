@@ -46,7 +46,7 @@ import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit, navigator: Navigator) {
+internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit, navigator: Navigator) {
     viewModel.ObserveEvents(onSignOut)
     LaunchedEffect(true) {
         viewModel.start()

@@ -1,9 +1,9 @@
 package app.dapk.st.settings.eventlogger
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.DapkViewModel
 import app.dapk.st.core.Lce
 import app.dapk.st.domain.eventlog.EventLogPersistence
+import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach

@@ -9,7 +9,7 @@ import app.dapk.st.matrix.crypto.Olm
 
 private val ALGORITHM_MEGOLM = AlgorithmName("m.megolm.v1.aes-sha2")
 
-typealias EncryptMessageWithMegolmUseCase = suspend (DeviceCredentials, MessageToEncrypt) -> Crypto.EncryptionResult
+internal typealias EncryptMessageWithMegolmUseCase = suspend (DeviceCredentials, MessageToEncrypt) -> Crypto.EncryptionResult
 
 internal class EncryptMessageWithMegolmUseCaseImpl(
     private val olm: Olm,
