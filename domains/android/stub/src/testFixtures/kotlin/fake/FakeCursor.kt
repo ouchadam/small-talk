@@ -1,4 +1,4 @@
-package app.dapk.st.settings
+package fake
 
 import android.database.Cursor
 import io.mockk.every

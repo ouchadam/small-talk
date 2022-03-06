@@ -5,11 +5,11 @@ import app.dapk.st.core.Lce
 import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.SpiderPage
 
-data class SettingsScreenState(
+internal data class SettingsScreenState(
     val page: SpiderPage<out Page>,
 )
 
-sealed interface Page {
+internal sealed interface Page {
     data class Root(val content: Lce<List<SettingItem>>) : Page
     object Security : Page
     data class ImportRoomKey(
@@ -29,7 +29,7 @@ data class NamedUri(
     val uri: Uri,
 )
 
-sealed interface SettingItem {
+internal sealed interface SettingItem {
 
     val id: Id
 

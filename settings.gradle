@@ -20,6 +20,7 @@ include ':features:messenger'
 include ':features:navigator'
 include ':features:verification'
 
+include ':domains:android:stub'
 include ':domains:android:core'
 include ':domains:android:imageloader'
 include ':domains:android:work'

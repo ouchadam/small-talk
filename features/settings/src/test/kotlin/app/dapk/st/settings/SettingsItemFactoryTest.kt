@@ -1,6 +1,8 @@
 package app.dapk.st.settings
 
 import app.dapk.st.core.BuildMeta
+import internalfixture.aSettingHeaderItem
+import internalfixture.aSettingTextItem
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 

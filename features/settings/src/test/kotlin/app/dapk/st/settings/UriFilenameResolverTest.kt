@@ -2,6 +2,9 @@ package app.dapk.st.settings
 
 import android.provider.OpenableColumns
 import app.dapk.st.core.CoroutineDispatchers
+import fake.FakeContentResolver
+import fake.FakeCursor
+import fake.FakeUri
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test

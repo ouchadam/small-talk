@@ -1,0 +1,20 @@
+plugins {
+    id 'kotlin'
+    id 'java-test-fixtures'
+}
+
+def properties = new Properties()
+def localProperties = rootProject.file("local.properties")
+if (localProperties.exists()) {
+    properties.load(rootProject.file("local.properties").newDataInputStream())
+} else {
+    properties.setProperty("sdk.dir", System.getenv("ANDROID_HOME"))
+}
+
+dependencies {
+    def androidVer = 31
+    kotlinFixtures(it)
+    testFixturesImplementation testFixtures(project(":core"))
+    testFixturesImplementation files("${properties.getProperty("sdk.dir")}/platforms/android-${androidVer}/android.jar")
+
+}

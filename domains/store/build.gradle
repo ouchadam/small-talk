@@ -2,6 +2,7 @@ plugins {
     id 'kotlin'
     id 'com.squareup.sqldelight'
     id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'java-test-fixtures'
 }
 
 sqldelight {
@@ -22,4 +23,6 @@ dependencies {
     implementation Dependencies.mavenCentral.kotlinSerializationJson
     implementation Dependencies.mavenCentral.kotlinCoroutinesCore
     implementation "com.squareup.sqldelight:coroutines-extensions:1.5.3"
+
+    kotlinFixtures(it)
 }
