@@ -9,5 +9,6 @@ dependencies {
     testImplementation(testFixtures(project(":matrix:common")))
     testImplementation(testFixtures(project(":matrix:matrix-http")))
     testImplementation(testFixtures(project(":core")))
+    testFixturesImplementation(testFixtures(project(":core")))
     testFixturesImplementation(testFixtures(project(":matrix:common")))
 }

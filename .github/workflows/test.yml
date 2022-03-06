@@ -45,9 +45,6 @@ jobs:
       - name: Run all unit tests
         run: ./gradlew clean allCodeCoverageReport --no-daemon
 
-      - name: Print coverage size
-        run: ls -l ./build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml
-
       - uses: codecov/codecov-action@v2
         with:
           files: ./build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml
