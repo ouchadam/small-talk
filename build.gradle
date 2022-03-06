@@ -52,9 +52,11 @@ ext.applyLibraryPlugins = { project ->
     project.apply plugin: 'kotlin-android'
 }
 
+ext.androidSdkVersion = 31
+
 ext.applyCommonAndroidParameters = { project ->
     def android = project.android
-    android.compileSdk 31
+    android.compileSdk androidSdkVersion
     android.compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -62,7 +64,7 @@ ext.applyCommonAndroidParameters = { project ->
     }
     android.defaultConfig {
         minSdkVersion 29
-        targetSdkVersion 31
+        targetSdkVersion androidSdkVersion
     }
 
     android.buildFeatures.compose = true

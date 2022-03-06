@@ -24,6 +24,8 @@ private val DARK_EXTENDED = ExtendedColors(
     onSelfBubble = DARK_COLOURS.onPrimary,
     othersBubble = Color(0x20EDEDED),
     onOthersBubble = Color(0xFF000000),
+    selfBubbleReplyBackground = Color(0x40EAEAEA),
+    otherBubbleReplyBackground = Color(0x20EAEAEA),
     missingImageColors = listOf(
         Color(0xFFf7c7f7) to Color(0xFFdf20de),
         Color(0xFFe5d7f6) to Color(0xFF7b30cf),
@@ -38,6 +40,8 @@ data class ExtendedColors(
     val onSelfBubble: Color,
     val othersBubble: Color,
     val onOthersBubble: Color,
+    val selfBubbleReplyBackground: Color,
+    val otherBubbleReplyBackground: Color,
     val missingImageColors: List<Pair<Color, Color>>,
 ) {
     fun getMissingImageColor(key: String): Pair<Color, Color> {

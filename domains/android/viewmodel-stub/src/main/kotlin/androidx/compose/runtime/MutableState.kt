@@ -1,5 +1,4 @@
 @file:JvmName("SnapshotStateKt")
-@file:JvmMultifileClass
 
 package androidx.compose.runtime
 
@@ -20,4 +19,16 @@ operator fun <T> MutableState<T>.setValue(thisObj: Any?, property: KProperty<*>,
     throw RuntimeException("stub")
 }
 
-fun <T> mutableStateOf(value: T): MutableState<T> = throw RuntimeException("stub")
+fun <T> mutableStateOf(
+    value: T,
+    policy: SnapshotMutationPolicy<T> = object : SnapshotMutationPolicy<T> {
+        override fun equivalent(a: T, b: T): Boolean {
+            throw RuntimeException("stub")
+        }
+    }
+): MutableState<T> = throw RuntimeException("stub")
+
+interface SnapshotMutationPolicy<T> {
+    fun equivalent(a: T, b: T): Boolean
+    fun merge(previous: T, current: T, applied: T): T? = null
+}

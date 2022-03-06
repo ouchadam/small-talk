@@ -12,9 +12,8 @@ if (localProperties.exists()) {
 }
 
 dependencies {
-    def androidVer = 31
+    def androidVer = androidSdkVersion
     kotlinFixtures(it)
     testFixturesImplementation testFixtures(project(":core"))
     testFixturesImplementation files("${properties.getProperty("sdk.dir")}/platforms/android-${androidVer}/android.jar")
-
 }

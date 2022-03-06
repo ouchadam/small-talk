@@ -336,10 +336,10 @@ private fun ReplyBubbleContent(shape: RoundedCornerShape, background: Color, isN
             ) {
                 Column(
                     Modifier
-                        .background(Color.Blue)
+                        .background(if (isNotSelf) SmallTalkTheme.extendedColors.otherBubbleReplyBackground else SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
                         .padding(4.dp)
                 ) {
-                    val replyName = if (!isNotSelf && reply.replyingToSelf) "You" else reply.message.author.displayName ?: reply.message.author.id.value
+                    val replyName = if (!isNotSelf && reply.replyingToSelf) "You" else reply.replyingTo.author.displayName ?: reply.replyingTo.author.id.value
                     Text(
                         fontSize = 11.sp,
                         text = replyName,
