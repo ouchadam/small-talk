@@ -2,6 +2,8 @@
 
 `SmallTalk` is a minimal, modern, friends and family focused Android messenger. Heavily inspired by Whatsapp and Signal, powered by Matrix.
 
+![header](https://github.com/ouchadam/small-talk/blob/main/.github/readme/header.png?raw=true)
+
 ---
 
 Project mantra
