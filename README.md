@@ -3,12 +3,14 @@
 `SmallTalk` is a minimal, modern, friends and family focused Android messenger. Heavily inspired by Whatsapp and Signal, powered by Matrix.
 
 ![header](https://github.com/ouchadam/small-talk/blob/main/.github/readme/header.png?raw=true)
+[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/google-play-badge.png?raw=tru"></a>](https://play.google.com/store/apps/details?id=app.dapk.st)
 
-[<img align="right" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/google-play-badge.png?raw=tru"></a>](https://play.google.com/store/apps/details?id=app.dapk.st)
+<br>
+<br>
+<br>
 
----
 
-Project mantra
+### Project mantra
 - Tiny app size - currently 1.72mb~ when provided via app bundle.
 - Focused on reliability and stability.
 - Bare-bones feature set.
@@ -17,7 +19,7 @@ Project mantra
 
 ---
 
-#### Feature list
+### Feature list
 
 - Login with username/password (home servers must serve `${domain}.well-known/matrix/client`)
 - Combined Room and DM interface
@@ -26,7 +28,7 @@ Project mantra
 - Push notifications (DMs always notify, Rooms notify once)
 - Importing of E2E room keys from Element clients
 
-#### Planned
+### Planned
 
 - Device verification (technically supported but has no UI)
 - Invitations (technically supported but has no UI)
