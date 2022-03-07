@@ -10,20 +10,16 @@ import app.dapk.st.matrix.sync.SyncService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-data class MessengerState(
-    val self: UserId,
-    val roomState: RoomState,
-    val typing: SyncService.SyncEvent.Typing?
-)
+internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerState>
 
-internal class TimelineUseCase(
+internal class TimelineUseCaseImpl(
     private val syncService: SyncService,
     private val messageService: MessageService,
     private val roomService: RoomService,
     private val mergeWithLocalEchosUseCase: MergeWithLocalEchosUseCase
-) {
+) : ObserveTimelineUseCase {
 
-    suspend fun state(roomId: RoomId, userId: UserId): Flow<MessengerState> {
+    override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerState> {
         return combine(
             syncService.startSyncing(),
             syncService.room(roomId),
@@ -50,3 +46,9 @@ internal class TimelineUseCase(
     }
 
 }
+
+data class MessengerState(
+    val self: UserId,
+    val roomState: RoomState,
+    val typing: SyncService.SyncEvent.Typing?
+)

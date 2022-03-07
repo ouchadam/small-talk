@@ -42,8 +42,8 @@ interface MessageService : MatrixService {
             @SerialName("content") val content: Content.TextContent,
             @SerialName("send_encrypted") val sendEncrypted: Boolean,
             @SerialName("room_id") val roomId: RoomId,
-            @SerialName("local_id") val localId: String = "local.${UUID.randomUUID()}",
-            @SerialName("timestamp") val timestampUtc: Long = System.currentTimeMillis(),
+            @SerialName("local_id") val localId: String,
+            @SerialName("timestamp") val timestampUtc: Long,
         ) : Message()
 
         @Serializable

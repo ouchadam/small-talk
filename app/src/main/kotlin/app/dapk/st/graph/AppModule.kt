@@ -71,7 +71,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
 
     private val driver = AndroidSqliteDriver(DapkDb.Schema, context, "dapk.db")
     private val database = DapkDb(driver)
-
+    private val clock = Clock.systemUTC()
     private val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
 
     val storeModule = unsafeLazy {
@@ -116,6 +116,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         context,
         buildMeta,
         coroutineDispatchers,
+        clock,
     )
 }
 
@@ -128,6 +129,7 @@ internal class FeatureModules internal constructor(
     context: Context,
     buildMeta: BuildMeta,
     coroutineDispatchers: CoroutineDispatchers,
+    clock: Clock,
 ) {
 
     val directoryModule by unsafeLazy {
@@ -155,6 +157,7 @@ internal class FeatureModules internal constructor(
             matrixModules.room,
             storeModule.value.credentialsStore(),
             storeModule.value.roomStore(),
+            clock
         )
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile) }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.fail
 import org.amshove.kluent.shouldBeEqualTo
+import java.util.*
 
 fun flowTest(block: suspend MatrixTestScope.() -> Unit) {
     runTest {
@@ -129,6 +130,8 @@ class MatrixTestScope(private val testScope: TestScope) {
                 content = MessageService.Message.Content.TextContent(body = content),
                 roomId = roomId,
                 sendEncrypted = true,
+                localId = "local.${UUID.randomUUID()}",
+                timestampUtc = System.currentTimeMillis(),
             )
         )
     }

@@ -101,8 +101,8 @@ internal class DefaultSyncService(
     override fun startSyncing() = syncFlow
     override suspend fun invites() = overviewStore.latestInvites()
     override suspend fun overview() = overviewStore.latest()
-    override suspend fun room(roomId: RoomId) = roomStore.latest(roomId)
-    override suspend fun events() = syncEventsFlow
+    override fun room(roomId: RoomId) = roomStore.latest(roomId)
+    override fun events() = syncEventsFlow
     override suspend fun observeEvent(eventId: EventId) = roomStore.observeEvent(eventId)
     override suspend fun forceManualRefresh(roomIds: List<RoomId>) {
         withContext(Dispatchers.IO) {

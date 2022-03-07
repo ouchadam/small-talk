@@ -12,23 +12,30 @@ import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.viewmodel.DapkViewModel
+import app.dapk.st.viewmodel.MutableStateFactory
+import app.dapk.st.viewmodel.defaultStateFactory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onEach
+import java.time.Clock
 
 internal class MessengerViewModel(
     private val messageService: MessageService,
     private val roomService: RoomService,
     private val roomStore: RoomStore,
     private val credentialsStore: CredentialsStore,
-    private val useCase: TimelineUseCase,
+    private val observeTimeline: ObserveTimelineUseCase,
+    private val localIdFactory: LocalIdFactory,
+    private val clock: Clock,
+    factory: MutableStateFactory<MessengerScreenState> = defaultStateFactory(),
 ) : DapkViewModel<MessengerScreenState, MessengerEvent>(
     initialState = MessengerScreenState(
         roomId = null,
         roomState = Lce.Loading(),
         composerState = ComposerState.Text(value = "")
-    )
+    ),
+    factory = factory,
 ) {
 
     private var syncJob: Job? = null
@@ -49,7 +56,7 @@ internal class MessengerViewModel(
 
             val credentials = credentialsStore.credentials()!!
             var lastKnownReadEvent: EventId? = null
-            useCase.state(action.roomId, credentials.userId).distinctUntilChanged().onEach { state ->
+            observeTimeline.invoke(action.roomId, credentials.userId).distinctUntilChanged().onEach { state ->
                 state.lastestMessageEventFromOthers(self = credentials.userId)?.let {
                     if (lastKnownReadEvent != it) {
                         updateRoomReadStateAsync(latestReadEvent = it, state)
@@ -82,6 +89,8 @@ internal class MessengerViewModel(
                                 MessageService.Message.Content.TextContent(body = copy.value),
                                 roomId = roomState.roomOverview.roomId,
                                 sendEncrypted = roomState.roomOverview.isEncrypted,
+                                localId = localIdFactory.create(),
+                                timestampUtc = clock.millis(),
                             )
                         )
                     }
