@@ -23,12 +23,13 @@ internal class TimelineUseCase(
     private val mergeWithLocalEchosUseCase: MergeWithLocalEchosUseCase
 ) {
 
-    suspend fun startSyncing(): Flow<Unit> {
-        return syncService.startSyncing()
-    }
-
     suspend fun state(roomId: RoomId, userId: UserId): Flow<MessengerState> {
-        return combine(syncService.room(roomId), messageService.localEchos(roomId), syncService.events()) { roomState, localEchos, events ->
+        return combine(
+            syncService.startSyncing(),
+            syncService.room(roomId),
+            messageService.localEchos(roomId),
+            syncService.events()
+        ) { _, roomState, localEchos, events ->
             MessengerState(
                 roomState = when {
                     localEchos.isEmpty() -> roomState

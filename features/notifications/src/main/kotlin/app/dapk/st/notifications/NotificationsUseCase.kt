@@ -72,7 +72,7 @@ class NotificationsUseCase(
                 }
 
                 if (summaryNotification == null) {
-                    notificationManager.cancel(101)
+                    notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
                 }
 
                 notifications.forEach {

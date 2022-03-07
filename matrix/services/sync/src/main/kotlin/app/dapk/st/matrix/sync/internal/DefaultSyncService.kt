@@ -98,7 +98,7 @@ internal class DefaultSyncService(
             }
     }
 
-    override suspend fun startSyncing() = syncFlow
+    override fun startSyncing() = syncFlow
     override suspend fun invites() = overviewStore.latestInvites()
     override suspend fun overview() = overviewStore.latest()
     override suspend fun room(roomId: RoomId) = roomStore.latest(roomId)

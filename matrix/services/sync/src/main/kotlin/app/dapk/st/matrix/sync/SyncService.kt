@@ -22,7 +22,7 @@ interface SyncService : MatrixService {
     suspend fun invites(): Flow<InviteState>
     suspend fun overview(): Flow<OverviewState>
     suspend fun room(roomId: RoomId): Flow<RoomState>
-    suspend fun startSyncing(): Flow<Unit>
+    fun startSyncing(): Flow<Unit>
     suspend fun events(): Flow<List<SyncEvent>>
     suspend fun observeEvent(eventId: EventId): Flow<EventId>
     suspend fun forceManualRefresh(roomIds: List<RoomId>)

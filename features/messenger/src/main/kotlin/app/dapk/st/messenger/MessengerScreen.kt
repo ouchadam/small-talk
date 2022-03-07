@@ -39,7 +39,7 @@ import app.dapk.st.navigator.Navigator
 import kotlinx.coroutines.launch
 
 @Composable
-fun MessengerScreen(roomId: RoomId, viewModel: MessengerViewModel, navigator: Navigator) {
+internal fun MessengerScreen(roomId: RoomId, viewModel: MessengerViewModel, navigator: Navigator) {
     val state = viewModel.state
 
     viewModel.ObserveEvents()

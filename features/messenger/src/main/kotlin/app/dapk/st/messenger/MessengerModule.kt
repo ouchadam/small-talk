@@ -15,7 +15,9 @@ class MessengerModule(
     private val roomStore: RoomStore,
 ) : ProvidableModule {
 
-    fun messengerViewModel(): MessengerViewModel {
-        return MessengerViewModel(syncService, messageService, roomService, roomStore, credentialsStore)
+    internal fun messengerViewModel(): MessengerViewModel {
+        return MessengerViewModel(messageService, roomService, roomStore, credentialsStore, timelineUseCase())
     }
+
+    private fun timelineUseCase() = TimelineUseCase(syncService, messageService, roomService, MergeWithLocalEchosUseCaseImpl())
 }

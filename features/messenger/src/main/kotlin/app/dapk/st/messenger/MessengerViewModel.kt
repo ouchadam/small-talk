@@ -4,25 +4,25 @@ import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.matrix.common.CredentialsStore
+import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
-import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.viewmodel.DapkViewModel
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
-class MessengerViewModel(
-    syncService: SyncService,
+internal class MessengerViewModel(
     private val messageService: MessageService,
     private val roomService: RoomService,
     private val roomStore: RoomStore,
     private val credentialsStore: CredentialsStore,
+    private val useCase: TimelineUseCase,
 ) : DapkViewModel<MessengerScreenState, MessengerEvent>(
     initialState = MessengerScreenState(
         roomId = null,
@@ -32,53 +32,58 @@ class MessengerViewModel(
 ) {
 
     private var syncJob: Job? = null
-    private val useCase: TimelineUseCase = TimelineUseCase(syncService, messageService, roomService, MergeWithLocalEchosUseCaseImpl())
 
     fun post(action: MessengerAction) {
         when (action) {
-            is MessengerAction.ComposerTextUpdate -> {
-                updateState { copy(composerState = ComposerState.Text(action.newValue)) }
-            }
-            is MessengerAction.OnMessengerVisible -> {
-                updateState { copy(roomId = action.roomId) }
+            is MessengerAction.OnMessengerVisible -> start(action)
+            MessengerAction.OnMessengerGone -> syncJob?.cancel()
+            is MessengerAction.ComposerTextUpdate -> updateState { copy(composerState = ComposerState.Text(action.newValue)) }
+            MessengerAction.ComposerSendText -> sendMessage()
+        }
+    }
 
-                syncJob = viewModelScope.launch {
-                    useCase.startSyncing().collect()
+    private fun start(action: MessengerAction.OnMessengerVisible) {
+        updateState { copy(roomId = action.roomId) }
+        syncJob = viewModelScope.launch {
+            roomStore.markRead(action.roomId)
+
+            val credentials = credentialsStore.credentials()!!
+            var lastKnownReadEvent: EventId? = null
+            useCase.state(action.roomId, credentials.userId).distinctUntilChanged().onEach { state ->
+                state.lastestMessageEventFromOthers(self = credentials.userId)?.let {
+                    if (lastKnownReadEvent != it) {
+                        updateRoomReadStateAsync(latestReadEvent = it, state)
+                        lastKnownReadEvent = it
+                    }
                 }
-                viewModelScope.launch {
-                    roomStore.markRead(action.roomId)
+                updateState { copy(roomState = Lce.Content(state)) }
+            }.collect()
+        }
+    }
 
-                    val credentials = credentialsStore.credentials()!!
-                    useCase.state(action.roomId, credentials.userId).distinctUntilChanged().onEach { state ->
-                        state.roomState.events.filterIsInstance<RoomEvent.Message>().filterNot { it.author.id == credentials.userId }.firstOrNull()?.let {
-                            roomService.markFullyRead(state.roomState.roomOverview.roomId, it.eventId)
-                            roomStore.markRead(state.roomState.roomOverview.roomId)
-                        }
-                        updateState { copy(roomState = Lce.Content(state)) }
-                    }.collect()
-                }
-            }
-            MessengerAction.OnMessengerGone -> {
-                syncJob?.cancel()
-            }
-            MessengerAction.ComposerSendText -> {
-                when (val composerState = state.composerState) {
-                    is ComposerState.Text -> {
-                        val copy = composerState.copy()
-                        updateState { copy(composerState = composerState.copy(value = "")) }
+    private fun CoroutineScope.updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerState): Deferred<Unit> {
+        return async {
+            roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent)
+            roomStore.markRead(state.roomState.roomOverview.roomId)
+        }
+    }
 
-                        state.roomState.takeIfContent()?.let { content ->
-                            val roomState = content.roomState
-                            viewModelScope.launch {
-                                messageService.scheduleMessage(
-                                    MessageService.Message.TextMessage(
-                                        MessageService.Message.Content.TextContent(body = copy.value),
-                                        roomId = roomState.roomOverview.roomId,
-                                        sendEncrypted = roomState.roomOverview.isEncrypted,
-                                    )
-                                )
-                            }
-                        }
+    private fun sendMessage() {
+        when (val composerState = state.composerState) {
+            is ComposerState.Text -> {
+                val copy = composerState.copy()
+                updateState { copy(composerState = composerState.copy(value = "")) }
+
+                state.roomState.takeIfContent()?.let { content ->
+                    val roomState = content.roomState
+                    viewModelScope.launch {
+                        messageService.scheduleMessage(
+                            MessageService.Message.TextMessage(
+                                MessageService.Message.Content.TextContent(body = copy.value),
+                                roomId = roomState.roomOverview.roomId,
+                                sendEncrypted = roomState.roomOverview.isEncrypted,
+                            )
+                        )
                     }
                 }
             }
@@ -86,6 +91,12 @@ class MessengerViewModel(
     }
 
 }
+
+private fun MessengerState.lastestMessageEventFromOthers(self: UserId) = this.roomState.events
+    .filterIsInstance<RoomEvent.Message>()
+    .filterNot { it.author.id == self }
+    .firstOrNull()
+    ?.eventId
 
 sealed interface MessengerAction {
     data class ComposerTextUpdate(val newValue: String) : MessengerAction
