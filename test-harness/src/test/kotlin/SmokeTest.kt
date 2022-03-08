@@ -22,8 +22,8 @@ import test.flowTest
 import test.restoreLoginAndInitialSync
 import java.util.*
 
-private const val TEST_SERVER_URL_REDIRECT = "http://localhost:8080/"
-private const val HTTPS_TEST_SERVER_URL = "https://localhost:8480/"
+private const val TEST_SERVER_URL_REDIRECT = "https://localhost:8080/"
+private const val HTTPS_TEST_SERVER_URL = "https://localhost:8080/"
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SmokeTest {
@@ -113,7 +113,7 @@ class SmokeTest {
 
 private suspend fun createAndRegisterAccount(): TestUser {
     val aUserName = "${UUID.randomUUID()}"
-    val userId = UserId("@$aUserName:localhost:8480")
+    val userId = UserId("@$aUserName:localhost:8080")
     val aUser = TestUser("aaaa11111zzzz", RoomMember(userId, aUserName, null), HTTPS_TEST_SERVER_URL)
 
     val result = TestMatrix(aUser, includeLogging = true, includeHttpLogging = true)
