@@ -117,7 +117,7 @@ ext.Dependencies.with {
         sqldelightInMemory = "com.squareup.sqldelight:sqlite-driver:${sqldelightVer}"
 
         ktorAndroid = "io.ktor:ktor-client-android:1.6.4"
-        ktorCore = "io.ktor:ktor-client-core:1.6.2"
+        ktorCore = "io.ktor:ktor-client-core:1.6.7"
         ktorSerialization = "io.ktor:ktor-client-serialization:1.6.7"
         ktorLogging = "io.ktor:ktor-client-logging-jvm:1.6.2"
         ktorJava = "io.ktor:ktor-client-java:1.6.7"
