@@ -120,7 +120,7 @@ ext.Dependencies.with {
         ktorCore = "io.ktor:ktor-client-core:1.6.2"
         ktorSerialization = "io.ktor:ktor-client-serialization:1.5.0"
         ktorLogging = "io.ktor:ktor-client-logging-jvm:1.6.2"
-        ktorJava = "io.ktor:ktor-client-java:1.6.2"
+        ktorJava = "io.ktor:ktor-client-java:1.6.7"
 
         junit = "junit:junit:4.13.2"
         kluent = "org.amshove.kluent:kluent:1.68"
