@@ -22,7 +22,6 @@ import test.flowTest
 import test.restoreLoginAndInitialSync
 import java.util.*
 
-private const val TEST_SERVER_URL_REDIRECT = "https://localhost:8080/"
 private const val HTTPS_TEST_SERVER_URL = "https://localhost:8080/"
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -122,7 +121,7 @@ private suspend fun createAndRegisterAccount(): TestUser {
         .register(aUserName, aUser.password, homeServer = HTTPS_TEST_SERVER_URL)
 
     result.accessToken shouldNotBeEqualTo null
-    result.homeServer shouldBeEqualTo HomeServerUrl(TEST_SERVER_URL_REDIRECT)
+    result.homeServer shouldBeEqualTo HomeServerUrl(HTTPS_TEST_SERVER_URL)
     result.userId shouldBeEqualTo userId
     return aUser
 }
@@ -135,7 +134,7 @@ private suspend fun login(user: TestUser) {
         .login(userName = user.roomMember.id.value, password = user.password)
 
     result.accessToken shouldNotBeEqualTo null
-    result.homeServer shouldBeEqualTo HomeServerUrl(TEST_SERVER_URL_REDIRECT)
+    result.homeServer shouldBeEqualTo HomeServerUrl(HTTPS_TEST_SERVER_URL)
     result.userId shouldBeEqualTo user.roomMember.id
 
     testMatrix.saveLogin(result)
