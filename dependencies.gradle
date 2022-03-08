@@ -91,6 +91,7 @@ ext.Dependencies.with {
     def kotlinVer = "1.6.10"
     def sqldelightVer = "1.5.3"
     def composeVer = "1.1.0"
+    def ktorVer = "1.6.7"
 
     google = new DependenciesContainer()
     google.with {
@@ -116,11 +117,11 @@ ext.Dependencies.with {
         sqldelightAndroid = "com.squareup.sqldelight:android-driver:${sqldelightVer}"
         sqldelightInMemory = "com.squareup.sqldelight:sqlite-driver:${sqldelightVer}"
 
-        ktorAndroid = "io.ktor:ktor-client-android:1.6.4"
-        ktorCore = "io.ktor:ktor-client-core:1.6.7"
-        ktorSerialization = "io.ktor:ktor-client-serialization:1.6.7"
-        ktorLogging = "io.ktor:ktor-client-logging-jvm:1.6.2"
-        ktorJava = "io.ktor:ktor-client-java:1.6.7"
+        ktorAndroid = "io.ktor:ktor-client-android:${ktorVer}"
+        ktorCore = "io.ktor:ktor-client-core:${ktorVer}"
+        ktorSerialization = "io.ktor:ktor-client-serialization:${ktorVer}"
+        ktorLogging = "io.ktor:ktor-client-logging-jvm:${ktorVer}"
+        ktorJava = "io.ktor:ktor-client-java:${ktorVer}"
 
         junit = "junit:junit:4.13.2"
         kluent = "org.amshove.kluent:kluent:1.68"
