@@ -29,15 +29,13 @@ internal class TimelineUseCaseImpl(
             MessengerState(
                 roomState = when {
                     localEchos.isEmpty() -> roomState
-                    else -> mergeWithLocalEchosUseCase.invoke(
-                        roomState,
-                        roomService.findMember(roomId, userId) ?: RoomMember(
-                            userId,
-                            null,
-                            avatarUrl = null,
-                        ),
-                        localEchos,
-                    )
+                    else -> {
+                        mergeWithLocalEchosUseCase.invoke(
+                            roomState,
+                            roomService.findMember(roomId, userId) ?: userId.toFallbackMember(),
+                            localEchos,
+                        )
+                    }
                 },
                 typing = events.filterIsInstance<SyncService.SyncEvent.Typing>().firstOrNull { it.roomId == roomId },
                 self = userId,
@@ -46,6 +44,8 @@ internal class TimelineUseCaseImpl(
     }
 
 }
+
+private fun UserId.toFallbackMember() = RoomMember(this, displayName = null, avatarUrl = null)
 
 data class MessengerState(
     val self: UserId,

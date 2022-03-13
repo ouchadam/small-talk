@@ -12,7 +12,7 @@ import app.dapk.st.matrix.message.internal.DefaultMessageService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.util.*
+import kotlinx.serialization.Transient
 
 private val SERVICE_KEY = MessageService::class
 
