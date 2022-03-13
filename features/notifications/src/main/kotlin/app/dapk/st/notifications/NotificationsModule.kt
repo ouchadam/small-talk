@@ -23,13 +23,12 @@ class NotificationsModule(
     fun pushUseCase() = pushService
     fun syncService() = syncService
     fun credentialProvider() = credentialsStore
-    fun roomStore() = roomStore
-    fun iconLoader() = iconLoader
     fun firebasePushTokenUseCase() = firebasePushTokenUseCase
     fun notificationsUseCase() = NotificationsUseCase(
         roomStore,
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager,
-        iconLoader,
-        context,
+        NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context)),
+        NotificationChannels(notificationManager()),
     )
+
+    private fun notificationManager() = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 }

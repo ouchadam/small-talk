@@ -1,5 +1,6 @@
 package app.dapk.st.directory
 
+import android.util.Log
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
@@ -17,7 +18,11 @@ value class UnreadCount(val value: Int)
 
 typealias DirectoryState = List<RoomFoo>
 
-data class RoomFoo(val overview: RoomOverview, val unreadCount: UnreadCount, val typing: Typing?)
+data class RoomFoo(
+    val overview: RoomOverview,
+    val unreadCount: UnreadCount,
+    val typing: Typing?
+)
 
 class DirectoryUseCase(
     private val syncService: SyncService,
@@ -35,6 +40,7 @@ class DirectoryUseCase(
             roomStore.observeUnreadCountById(),
             syncService.events()
         ) { userId, overviewState, localEchos, unread, events ->
+            Log.e("!!!", "got states")
             overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
                 RoomFoo(
                     overview = roomOverview,

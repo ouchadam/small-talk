@@ -12,9 +12,9 @@ interface RoomStore {
     fun latest(roomId: RoomId): Flow<RoomState>
     suspend fun insertUnread(roomId: RoomId, eventIds: List<EventId>)
     suspend fun markRead(roomId: RoomId)
-    suspend fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>>
+    fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>>
     fun observeUnreadCountById(): Flow<Map<RoomId, Int>>
-    suspend fun observeEvent(eventId: EventId): Flow<EventId>
+    fun observeEvent(eventId: EventId): Flow<EventId>
     suspend fun findEvent(eventId: EventId): RoomEvent?
 
 }

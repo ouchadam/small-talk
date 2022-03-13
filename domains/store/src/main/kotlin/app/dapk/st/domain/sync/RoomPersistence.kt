@@ -75,7 +75,7 @@ internal class RoomPersistence(
         }
     }
 
-    override suspend fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>> {
+    override fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>> {
         return database.roomEventQueries.selectAllUnread()
             .asFlow()
             .mapToList()
@@ -107,7 +107,7 @@ internal class RoomPersistence(
         }
     }
 
-    override suspend fun observeEvent(eventId: EventId): Flow<EventId> {
+    override fun observeEvent(eventId: EventId): Flow<EventId> {
         return database.roomEventQueries.selectEvent(event_id = eventId.value)
             .asFlow()
             .mapToOneNotNull()
