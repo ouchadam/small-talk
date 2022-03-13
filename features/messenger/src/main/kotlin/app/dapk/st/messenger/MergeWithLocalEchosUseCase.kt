@@ -29,13 +29,7 @@ internal class MergeWithLocalEchosUseCaseImpl(
         return with(localEventMapper) {
             echos
                 .filter { echo -> echo.eventId == null || stateByEventId[echo.eventId] == null }
-                .map { localEcho ->
-                    when (val message = localEcho.message) {
-                        is MessageService.Message.TextMessage -> {
-                            localEcho.toMessage(message, member)
-                        }
-                    }
-                }
+                .map { localEcho -> localEcho.toMessage(member) }
         }
     }
 

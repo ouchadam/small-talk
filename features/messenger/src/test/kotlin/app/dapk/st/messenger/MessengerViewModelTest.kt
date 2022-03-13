@@ -11,6 +11,7 @@ import app.dapk.st.matrix.sync.RoomState
 import fake.FakeCredentialsStore
 import fake.FakeRoomStore
 import fixture.*
+import internalfake.FakeLocalIdFactory
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf

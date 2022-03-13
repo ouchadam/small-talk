@@ -3,11 +3,9 @@ package app.dapk.st.messenger
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.MessageType
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.message.MessageService
 import fixture.*
-import io.mockk.every
-import io.mockk.mockk
+import internalfake.FakeLocalEventMapper
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
@@ -34,7 +32,7 @@ class MergeWithLocalEchosUseCaseTest {
     @Test
     fun `given local echo with sending state, when merging then maps to room event with local echo state`() {
         val second = createLocalEcho(A_LOCAL_ECHO_EVENT_ID, A_LOCAL_ECHO_BODY, state = MessageService.LocalEcho.State.Sending)
-        fakeLocalEchoMapper.givenMapping(second, aTextMessage(aTextContent(A_LOCAL_ECHO_BODY)), A_ROOM_MEMBER).returns(ANOTHER_ROOM_MESSAGE_EVENT)
+        fakeLocalEchoMapper.givenMapping(second, A_ROOM_MEMBER).returns(ANOTHER_ROOM_MESSAGE_EVENT)
         val roomState = aRoomState(events = listOf(A_ROOM_MESSAGE_EVENT))
 
         val result = mergeWithLocalEchosUseCase.invoke(roomState, A_ROOM_MEMBER, listOf(second))
@@ -52,31 +50,4 @@ class MergeWithLocalEchosUseCaseTest {
         aTextMessage(aTextContent(body)),
         state,
     )
-}
-
-fun aLocalEcho(
-    eventId: EventId? = anEventId(),
-    message: MessageService.Message = aTextMessage(),
-    state: MessageService.LocalEcho.State = MessageService.LocalEcho.State.Sending,
-) = MessageService.LocalEcho(eventId, message, state)
-
-
-fun aTextMessage(
-    content: MessageService.Message.Content.TextContent = aTextContent(),
-    sendEncrypted: Boolean = false,
-    roomId: RoomId = aRoomId(),
-    localId: String = "a-local-id",
-    timestampUtc: Long = 0,
-) = MessageService.Message.TextMessage(content, sendEncrypted, roomId, localId, timestampUtc)
-
-fun aTextContent(
-    body: String = "text content body",
-    type: String = MessageType.TEXT.value,
-) = MessageService.Message.Content.TextContent(body, type)
-
-class FakeLocalEventMapper {
-    val instance = mockk<LocalEchoMapper>()
-    fun givenMapping(echo: MessageService.LocalEcho, event: MessageService.Message.TextMessage, roomMember: RoomMember) = every {
-        with(instance) { echo.toMessage(event, roomMember) }
-    }
 }

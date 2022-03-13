@@ -21,5 +21,8 @@ class MessengerModule(
         return MessengerViewModel(messageService, roomService, roomStore, credentialsStore, timelineUseCase(), LocalIdFactory(), clock)
     }
 
-    private fun timelineUseCase() = TimelineUseCaseImpl(syncService, messageService, roomService, MergeWithLocalEchosUseCaseImpl(LocalEchoMapper()))
+    private fun timelineUseCase(): TimelineUseCaseImpl {
+        val mergeWithLocalEchosUseCase = MergeWithLocalEchosUseCaseImpl(LocalEchoMapper(MetaMapper()))
+        return TimelineUseCaseImpl(syncService, messageService, roomService, mergeWithLocalEchosUseCase)
+    }
 }

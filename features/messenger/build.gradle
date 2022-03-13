@@ -15,6 +15,7 @@ dependencies {
     kotlinTest(it)
 
     androidImportFixturesWorkaround(project, project(":matrix:services:sync"))
+    androidImportFixturesWorkaround(project, project(":matrix:services:message"))
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":domains:store"))
