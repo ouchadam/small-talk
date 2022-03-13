@@ -29,10 +29,10 @@ import androidx.compose.ui.unit.sp
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
 import app.dapk.st.directory.DirectoryScreenState.Content
 import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
-import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.matrix.sync.SyncService
@@ -119,9 +119,13 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
     val roomName = overview.roomName ?: "Empty room"
     val hasUnread = room.unreadCount.value > 0
 
-    Box(Modifier.height(IntrinsicSize.Min).fillMaxWidth().clickable {
-        onClick(overview.roomId)
-    }) {
+    Box(
+        Modifier
+            .height(IntrinsicSize.Min)
+            .fillMaxWidth()
+            .clickable {
+                onClick(overview.roomId)
+            }) {
         Row(Modifier.padding(20.dp)) {
             val secondaryText = MaterialTheme.colors.onBackground.copy(alpha = 0.5f)
 
@@ -164,13 +168,24 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                         Spacer(modifier = Modifier.width(6.dp))
                         Box(Modifier.align(Alignment.CenterVertically)) {
                             Box(
-                                Modifier.align(Alignment.Center).background(color = MaterialTheme.colors.primary, shape = CircleShape).size(22.dp),
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .background(color = MaterialTheme.colors.primary, shape = CircleShape)
+                                    .size(22.dp),
                                 contentAlignment = Alignment.Center
                             ) {
+                                val unreadTextSize = when (room.unreadCount.value > 99) {
+                                    true -> 9.sp
+                                    false -> 10.sp
+                                }
+                                val unreadLabelContent = when {
+                                    room.unreadCount.value > 99 -> "99+"
+                                    else -> room.unreadCount.value.toString()
+                                }
                                 Text(
-                                    fontSize = 10.sp,
+                                    fontSize = unreadTextSize,
                                     fontWeight = FontWeight.Medium,
-                                    text = room.unreadCount.value.toString(),
+                                    text = unreadLabelContent,
                                     color = MaterialTheme.colors.onPrimary
                                 )
                             }
