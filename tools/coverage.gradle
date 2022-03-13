@@ -89,7 +89,7 @@ def collectProjects(predicate) {
 task allCodeCoverageReport(type: JacocoReport) {
     outputs.upToDateWhen { false }
     rootProject.apply plugin: 'jacoco'
-    def projects = collectProjects { true }
+    def projects = collectProjects { !it.name.contains("stub") }
     dependsOn { ["app:assembleDebug"] + projects*.test }
     initializeReport(it, projects, excludes)
 }
