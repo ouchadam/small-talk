@@ -10,10 +10,9 @@ import app.dapk.st.matrix.common.RoomId
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 
 private var previousJob: Job? = null
 
@@ -70,8 +69,7 @@ class PushAndroidService : FirebaseMessagingService() {
 
     private suspend fun waitForEvent(timeout: Long, eventId: EventId): EventId? {
         return withTimeoutOrNull(timeout) {
-            val syncFlow = module.syncService().startSyncing().map { it as EventId }
-            merge(syncFlow, module.syncService().observeEvent(eventId))
+            combine(module.syncService().startSyncing(), module.syncService().observeEvent(eventId)) { _, event -> event }
                 .firstOrNull {
                     it == eventId
                 }

@@ -1,6 +1,5 @@
 package app.dapk.st.directory
 
-import android.util.Log
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
@@ -40,7 +39,6 @@ class DirectoryUseCase(
             roomStore.observeUnreadCountById(),
             syncService.events()
         ) { userId, overviewState, localEchos, unread, events ->
-            Log.e("!!!", "got states")
             overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
                 RoomFoo(
                     overview = roomOverview,
