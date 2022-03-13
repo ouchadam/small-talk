@@ -8,11 +8,13 @@ import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomState
+import app.dapk.st.matrix.sync.SyncService
 import fake.FakeCredentialsStore
 import fake.FakeRoomStore
 import fixture.*
 import internalfake.FakeLocalIdFactory
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
@@ -130,13 +132,21 @@ fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerState, m
 fun aMessengerState(
     self: UserId = aUserId(),
     roomState: RoomState,
-) = MessengerState(self, roomState, typing = null)
+    typing: SyncService.SyncEvent.Typing? = null
+) = MessengerState(self, roomState, typing)
 
 class FakeObserveTimelineUseCase : ObserveTimelineUseCase by mockk() {
     fun given(roomId: RoomId, selfId: UserId) = coEvery { this@FakeObserveTimelineUseCase.invoke(roomId, selfId) }.delegateReturn()
 }
 
-class FakeMessageService : MessageService by mockk()
-class FakeRoomService : RoomService by mockk()
+class FakeMessageService : MessageService by mockk() {
+
+    fun givenEchos(roomId: RoomId) = every { localEchos(roomId) }.delegateReturn()
+
+}
+
+class FakeRoomService : RoomService by mockk() {
+    fun givenFindMember(roomId: RoomId, userId: UserId) = coEvery { findMember(roomId, userId) }.delegateReturn()
+}
 
 fun fixedClock(timestamp: Long = 0) = Clock.fixed(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC)

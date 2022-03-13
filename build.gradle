@@ -136,6 +136,7 @@ ext.kotlinTest = { dependencies ->
 ext.kotlinFixtures = { dependencies ->
     dependencies.testFixturesImplementation 'io.mockk:mockk:1.12.2'
     dependencies.testFixturesImplementation Dependencies.mavenCentral.kluent
+    dependencies.testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
 }
 
 ext.androidImportFixturesWorkaround = { project, fixtures ->
