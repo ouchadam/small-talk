@@ -13,7 +13,6 @@ class ShortcutHandler(private val context: Context) {
     private val cachedRoomIds = mutableListOf<RoomId>()
 
     fun onDirectoryUpdate(overviews: List<RoomOverview>) {
-
         val update = overviews.map { it.roomId }
 
         if (cachedRoomIds != update) {

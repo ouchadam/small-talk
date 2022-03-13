@@ -10,4 +10,14 @@ dependencies {
     implementation project(":core")
     implementation project(":design-library")
     implementation("io.coil-kt:coil-compose:1.4.0")
+
+    kotlinTest(it)
+
+    androidImportFixturesWorkaround(project, project(":matrix:services:sync"))
+    androidImportFixturesWorkaround(project, project(":matrix:services:message"))
+    androidImportFixturesWorkaround(project, project(":matrix:common"))
+    androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":domains:store"))
+    androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
+    androidImportFixturesWorkaround(project, project(":domains:android:stub"))
 }

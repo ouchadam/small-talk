@@ -13,7 +13,7 @@ interface RoomStore {
     suspend fun insertUnread(roomId: RoomId, eventIds: List<EventId>)
     suspend fun markRead(roomId: RoomId)
     suspend fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>>
-    suspend fun observeUnreadCountById(): Flow<Map<RoomId, Int>>
+    fun observeUnreadCountById(): Flow<Map<RoomId, Int>>
     suspend fun observeEvent(eventId: EventId): Flow<EventId>
     suspend fun findEvent(eventId: EventId): RoomEvent?
 

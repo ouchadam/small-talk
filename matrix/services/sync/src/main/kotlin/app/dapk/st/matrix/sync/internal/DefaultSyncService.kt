@@ -100,7 +100,7 @@ internal class DefaultSyncService(
 
     override fun startSyncing() = syncFlow
     override suspend fun invites() = overviewStore.latestInvites()
-    override suspend fun overview() = overviewStore.latest()
+    override fun overview() = overviewStore.latest()
     override fun room(roomId: RoomId) = roomStore.latest(roomId)
     override fun events() = syncEventsFlow
     override suspend fun observeEvent(eventId: EventId) = roomStore.observeEvent(eventId)

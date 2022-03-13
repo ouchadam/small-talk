@@ -8,7 +8,6 @@ import app.dapk.st.matrix.MatrixServiceInstaller
 import app.dapk.st.matrix.ServiceDepFactory
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.sync.internal.DefaultSyncService
-import app.dapk.st.matrix.sync.internal.SideEffectFlowIterator
 import app.dapk.st.matrix.sync.internal.request.*
 import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.matrix.sync.internal.room.MissingMessageDecrypter
@@ -20,7 +19,7 @@ private val SERVICE_KEY = SyncService::class
 interface SyncService : MatrixService {
 
     suspend fun invites(): Flow<InviteState>
-    suspend fun overview(): Flow<OverviewState>
+    fun overview(): Flow<OverviewState>
     fun room(roomId: RoomId): Flow<RoomState>
     fun startSyncing(): Flow<Unit>
     fun events(): Flow<List<SyncEvent>>

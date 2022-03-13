@@ -10,6 +10,7 @@ import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.SyncService.SyncEvent.Typing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 @JvmInline
 value class UnreadCount(val value: Int)
@@ -26,18 +27,14 @@ class DirectoryUseCase(
     private val roomStore: RoomStore,
 ) {
 
-    suspend fun startSyncing(): Flow<Unit> {
-        return syncService.startSyncing()
-    }
-
-    suspend fun state(): Flow<DirectoryState> {
-        val userId = credentialsStore.credentials()!!.userId
+    fun state(): Flow<DirectoryState> {
         return combine(
+            syncService.startSyncing().map { credentialsStore.credentials()!!.userId },
             syncService.overview(),
             messageService.localEchos(),
             roomStore.observeUnreadCountById(),
             syncService.events()
-        ) { overviewState, localEchos, unread, events ->
+        ) { userId, overviewState, localEchos, unread, events ->
             overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
                 RoomFoo(
                     overview = roomOverview,
