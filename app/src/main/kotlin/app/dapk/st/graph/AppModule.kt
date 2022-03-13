@@ -171,7 +171,7 @@ internal class FeatureModules internal constructor(
             coroutineDispatchers
         )
     }
-    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync) }
+    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
             matrixModules.push,

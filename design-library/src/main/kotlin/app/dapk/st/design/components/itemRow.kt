@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TextRow(title: String, content: String? = null, includeDivider: Boolean = true, onClick: (() -> Unit)? = null) {
+fun TextRow(title: String, content: String? = null, includeDivider: Boolean = true, onClick: (() -> Unit)? = null, body: @Composable () -> Unit = {}) {
     val modifier = Modifier.padding(horizontal = 24.dp)
     Column(
         Modifier
@@ -31,6 +31,7 @@ fun TextRow(title: String, content: String? = null, includeDivider: Boolean = tr
                     Text(text = content, fontSize = 18.sp)
                 }
             }
+            body()
             Spacer(modifier = Modifier.height(24.dp))
         }
         if (includeDivider) {

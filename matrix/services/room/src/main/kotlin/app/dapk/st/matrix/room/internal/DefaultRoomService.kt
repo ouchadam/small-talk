@@ -62,6 +62,10 @@ class DefaultRoomService(
     override suspend fun joinRoom(roomId: RoomId) {
         httpClient.execute(joinRoomRequest(roomId))
     }
+
+    override suspend fun rejectJoinRoom(roomId: RoomId) {
+        httpClient.execute(rejectJoinRoomRequest(roomId))
+    }
 }
 
 internal fun joinedMembersRequest(roomId: RoomId) = httpRequest<JoinedMembersResponse>(
@@ -86,6 +90,13 @@ internal fun joinRoomRequest(roomId: RoomId) = httpRequest<Unit>(
     method = MatrixHttpClient.Method.POST,
     body = emptyJsonBody()
 )
+
+internal fun rejectJoinRoomRequest(roomId: RoomId) = httpRequest<Unit>(
+    path = "_matrix/client/r0/rooms/${roomId.value}/leave",
+    method = MatrixHttpClient.Method.POST,
+    body = emptyJsonBody()
+)
+
 
 @Suppress("EnumEntryName")
 @Serializable

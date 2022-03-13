@@ -2,6 +2,7 @@ applyAndroidLibraryModule(project)
 
 dependencies {
     implementation project(":matrix:services:sync")
+    implementation project(":matrix:services:room")
     implementation project(":matrix:services:profile")
     implementation project(":features:settings")
     implementation project(':domains:store')
