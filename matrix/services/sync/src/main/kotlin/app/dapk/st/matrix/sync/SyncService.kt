@@ -18,7 +18,7 @@ private val SERVICE_KEY = SyncService::class
 
 interface SyncService : MatrixService {
 
-    suspend fun invites(): Flow<InviteState>
+    fun invites(): Flow<InviteState>
     fun overview(): Flow<OverviewState>
     fun room(roomId: RoomId): Flow<RoomState>
     fun startSyncing(): Flow<Unit>

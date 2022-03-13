@@ -20,7 +20,6 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
-import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.TextRow
 import app.dapk.st.design.components.percentOfHeight
 import app.dapk.st.settings.SettingsActivity
@@ -29,9 +28,10 @@ import app.dapk.st.settings.SettingsActivity
 fun ProfileScreen(viewModel: ProfileViewModel) {
     viewModel.ObserveEvents()
 
-    LifecycleEffect(onStart = {
-        viewModel.start()
-    })
+    LifecycleEffect(
+        onStart = { viewModel.start() },
+        onStop = { viewModel.stop() }
+    )
 
     val context = LocalContext.current
 

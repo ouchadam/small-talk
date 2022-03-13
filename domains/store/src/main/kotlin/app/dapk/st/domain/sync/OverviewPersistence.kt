@@ -59,7 +59,7 @@ internal class OverviewPersistence(
     }
 
     override suspend fun retrieve(): OverviewState {
-        return withContext(Dispatchers.IO) {
+        return dispatchers.withIoContext {
             val overviews = database.overviewStateQueries.selectAll().executeAsList()
             overviews.map { json.decodeFromString(RoomOverview.serializer(), it.blob) }
         }
