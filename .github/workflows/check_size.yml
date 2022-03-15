@@ -1,11 +1,11 @@
-name: Assemble
+name: Check Size
 
 on:
   pull_request:
 
 jobs:
-  assemble-debug:
-    name: Assemble debug variant
+  check-size:
+    name: Check Size
     runs-on: ubuntu-latest
 
     concurrency:
@@ -27,6 +27,15 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '11'
+
+      - name: Fetch bundletool
+        run: |
+          curl -s -L https://github.com/google/bundletool/releases/download/1.9.0/bundletool-all-1.9.0.jar --create-dirs -o bin/bundletool.jar
+          chmod +x bin/bundletool.jar
+          echo "#!/bin/bash" >> bin/bundletool
+          echo 'java -jar $(dirname "$0")/bundletool.jar "$@"' >> bin/bundletool
+          chmod +x bin/bundletool
+          echo "$(pwd)/bin" >> $GITHUB_PATH
 
       - name: Check release size
         run: |
