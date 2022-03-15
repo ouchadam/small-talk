@@ -30,7 +30,10 @@ jobs:
 
       - name: Fetch bundletool
         run: |
-          curl -s -L https://github.com/google/bundletool/releases/download/1.9.0/bundletool-all-1.9.0.jar --create-dirs -o bin/bundletool
+          curl -s -L https://github.com/google/bundletool/releases/download/1.9.0/bundletool-all-1.9.0.jar --create-dirs -o bin/bundletool.jar
+          chmod +x bin/bundletool.jar
+          echo "#!/bin/bash" >> bin/bundletool
+          echo 'java -jar $(dirname "$0")/bundletool.jar "$@"' >> bin/bundletool
           chmod +x bin/bundletool
           echo "$(pwd)/bin" >> $GITHUB_PATH
 
