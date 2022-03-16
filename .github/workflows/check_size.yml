@@ -1,0 +1,66 @@
+name: Check Size
+
+## Workaround for allow size checks on external PRs/dependabot
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+permissions:
+  pull-requests: write
+
+jobs:
+  check-size:
+    name: Check Size
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Fetch bundletool
+        run: |
+          curl -s -L https://github.com/google/bundletool/releases/download/1.9.0/bundletool-all-1.9.0.jar --create-dirs -o bin/bundletool.jar
+          chmod +x bin/bundletool.jar
+          echo "#!/bin/bash" >> bin/bundletool
+          echo 'java -jar $(dirname "$0")/bundletool.jar "$@"' >> bin/bundletool
+          chmod +x bin/bundletool
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+
+      - name: Check release size
+        run: |
+          echo "::set-output name=APK_SIZE::$(./tools/check-size.sh | tail -1 | cut -d ',' -f2-)"
+        id: size
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: APK Size
+      - name: Publish size to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            APK Size: ${{ steps.size.outputs.APK_SIZE }}
+          edit-mode: replace
