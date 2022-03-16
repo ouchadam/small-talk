@@ -1,7 +1,14 @@
 name: Check Size
 
+## Workaround for allow size checks on external PRs/dependabot
 on:
-  pull_request:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+permissions:
+  pull-requests: write
 
 jobs:
   check-size:
