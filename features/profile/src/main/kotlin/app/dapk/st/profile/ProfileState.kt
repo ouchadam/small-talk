@@ -5,6 +5,7 @@ import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.room.ProfileService
+import app.dapk.st.matrix.sync.RoomInvite
 
 data class ProfileScreenState(
     val page: SpiderPage<out Page>,
@@ -18,7 +19,7 @@ sealed interface Page {
         )
     }
 
-    data class Invitations(val content: Lce<List<RoomId>>): Page
+    data class Invitations(val content: Lce<List<RoomInvite>>): Page
 
     object Routes {
         val profile = Route<Profile>("Profile")

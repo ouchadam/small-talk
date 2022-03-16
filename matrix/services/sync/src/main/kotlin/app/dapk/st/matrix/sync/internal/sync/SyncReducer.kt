@@ -4,11 +4,10 @@ import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.withIoContextAsync
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.common.MatrixLogTag.SYNC
+import app.dapk.st.matrix.sync.InviteMeta
 import app.dapk.st.matrix.sync.RoomInvite
 import app.dapk.st.matrix.sync.RoomState
-import app.dapk.st.matrix.sync.internal.request.ApiAccountEvent
-import app.dapk.st.matrix.sync.internal.request.ApiSyncResponse
-import app.dapk.st.matrix.sync.internal.request.ApiSyncRoom
+import app.dapk.st.matrix.sync.internal.request.*
 import app.dapk.st.matrix.sync.internal.room.SideEffectResult
 import kotlinx.coroutines.awaitAll
 
@@ -27,7 +26,7 @@ internal class SyncReducer(
     suspend fun reduce(isInitialSync: Boolean, sideEffects: SideEffectResult, response: ApiSyncResponse, userCredentials: UserCredentials): ReducerResult {
         val directMessages = response.directMessages()
 
-        val invites = response.rooms?.invite?.keys?.map { RoomInvite(it) } ?: emptyList()
+        val invites = response.rooms?.invite?.map { roomInvite(it, userCredentials) } ?: emptyList()
         val apiUpdatedRooms = response.rooms?.join?.keepRoomsWithChanges()
         val apiRoomsToProcess = apiUpdatedRooms?.map { (roomId, apiRoom) ->
             logger.matrixLog(SYNC, "reducing: $roomId")
@@ -51,6 +50,20 @@ internal class SyncReducer(
         }
 
         return ReducerResult((apiRoomsToProcess + roomsWithSideEffects).awaitAll().filterNotNull(), invites)
+    }
+
+    private fun roomInvite(entry: Map.Entry<RoomId, ApiSyncRoomInvite>, userCredentials: UserCredentials): RoomInvite {
+        val memberEvents = entry.value.state.events.filterIsInstance<ApiStrippedEvent.RoomMember>()
+        val invitee = memberEvents.first { it.content.membership?.isInvite() ?: false }
+        val from = memberEvents.first { it.sender == invitee.sender }
+        return RoomInvite(
+            RoomMember(from.sender, from.content.displayName, from.content.avatarUrl?.convertMxUrToUrl(userCredentials.homeServer)?.let { AvatarUrl(it) }),
+            roomId = entry.key,
+            inviteMeta = when (invitee.content.isDirect) {
+                true -> InviteMeta.DirectMessage
+                null, false -> InviteMeta.Room(entry.value.state.events.filterIsInstance<ApiStrippedEvent.RoomName>().firstOrNull()?.content?.name)
+            },
+        )
     }
 }
 

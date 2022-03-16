@@ -22,6 +22,8 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.*
+import app.dapk.st.matrix.sync.InviteMeta
+import app.dapk.st.matrix.sync.RoomInvite
 import app.dapk.st.settings.SettingsActivity
 
 @Composable
@@ -122,14 +124,20 @@ private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitatio
         is Lce.Content -> {
             LazyColumn {
                 items(state.value) {
-                    TextRow(title = it.value, includeDivider = false) {
+                    val text = when (val meta = it.inviteMeta) {
+                        InviteMeta.DirectMessage -> "${it.inviterName()} has invited you to chat"
+                        is InviteMeta.Room -> "${it.inviterName()} has invited you to ${meta.roomName ?: "unnamed room"}"
+                    }
+
+                    TextRow(title = text, includeDivider = false) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row {
-                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.acceptRoomInvite(it) }) {
-                                Text("Accept".uppercase())
+                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.rejectRoomInvite(it.roomId) }) {
+                                Text("Reject".uppercase())
                             }
                             Spacer(modifier = Modifier.fillMaxWidth(0.1f))
-                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.rejectRoomInvite(it) }) {
-                                Text("Reject".uppercase())
+                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.acceptRoomInvite(it.roomId) }) {
+                                Text("Accept".uppercase())
                             }
                         }
                     }
@@ -140,6 +148,8 @@ private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitatio
         is Lce.Error -> TODO()
     }
 }
+
+private fun RoomInvite.inviterName() = this.from.displayName?.let { "$it (${this.from.id.value})" } ?: this.from.id.value
 
 @Composable
 private fun ProfileViewModel.ObserveEvents() {

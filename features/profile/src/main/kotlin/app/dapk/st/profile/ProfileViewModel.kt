@@ -50,7 +50,7 @@ class ProfileViewModel(
         syncService.invites()
             .onEach {
                 updatePageState<Page.Invitations> {
-                    copy(content = Lce.Content(it.map { it.roomId }))
+                    copy(content = Lce.Content(it))
                 }
             }
             .launchPageJob()

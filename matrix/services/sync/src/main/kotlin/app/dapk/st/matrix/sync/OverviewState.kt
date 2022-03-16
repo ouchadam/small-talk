@@ -31,5 +31,18 @@ data class LastMessage(
 
 @Serializable
 data class RoomInvite(
+    @SerialName("from") val from: RoomMember,
     @SerialName("room_id") val roomId: RoomId,
+    @SerialName("meta") val inviteMeta: InviteMeta,
 )
+
+@Serializable
+sealed class InviteMeta {
+    @Serializable
+    @SerialName("direct_message")
+    object DirectMessage : InviteMeta()
+
+    @Serializable
+    @SerialName("room")
+    data class Room(val roomName: String? = null) : InviteMeta()
+}
