@@ -37,6 +37,13 @@ internal class RoomPersistence(
         }
     }
 
+    override suspend fun remove(rooms: List<RoomId>) {
+        coroutineDispatchers
+        database.roomEventQueries.transaction {
+            rooms.forEach { database.roomEventQueries.remove(it.value) }
+        }
+    }
+
     override fun latest(roomId: RoomId): Flow<RoomState> {
         val overviewFlow = database.overviewStateQueries.selectRoom(roomId.value).asFlow().mapToOneNotNull().map {
             json.decodeFromString(RoomOverview.serializer(), it)

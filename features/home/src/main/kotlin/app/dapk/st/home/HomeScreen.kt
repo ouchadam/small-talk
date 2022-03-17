@@ -1,6 +1,5 @@
 package app.dapk.st.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -38,8 +37,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                                 when (state.page) {
                                     Directory -> DirectoryScreen(homeViewModel.directory())
                                     Profile -> {
-                                        BackHandler { homeViewModel.changePage(Directory) }
-                                        ProfileScreen(homeViewModel.profile())
+                                        ProfileScreen(homeViewModel.profile()) {
+                                            homeViewModel.changePage(Directory)
+                                        }
                                     }
                                 }
                             }

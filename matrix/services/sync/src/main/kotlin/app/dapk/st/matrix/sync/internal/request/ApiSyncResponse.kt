@@ -214,6 +214,7 @@ sealed class ApiToDeviceEvent {
 internal data class ApiSyncRooms(
     @SerialName("join") val join: Map<RoomId, ApiSyncRoom>? = null,
     @SerialName("invite") val invite: Map<RoomId, ApiSyncRoomInvite>? = null,
+    @SerialName("leave") val leave: Map<RoomId, ApiSyncRoom>? = null,
 )
 
 @Serializable
@@ -230,14 +231,30 @@ internal data class ApiInviteEvents(
 sealed class ApiStrippedEvent {
 
     @Serializable
-    @SerialName("m.room.create")
-    internal data class RoomCreate(
+    @SerialName("m.room.member")
+    internal data class RoomMember(
+        @SerialName("content") val content: Content,
+        @SerialName("sender") val sender: UserId,
+    ) : ApiStrippedEvent() {
+
+        @Serializable
+        internal data class Content(
+            @SerialName("displayname") val displayName: String? = null,
+            @SerialName("membership") val membership: ApiTimelineEvent.RoomMember.Content.Membership? = null,
+            @SerialName("is_direct") val isDirect: Boolean? = null,
+            @SerialName("avatar_url") val avatarUrl: MxUrl? = null,
+        )
+    }
+
+    @Serializable
+    @SerialName("m.room.name")
+    internal data class RoomName(
         @SerialName("content") val content: Content,
     ) : ApiStrippedEvent() {
 
         @Serializable
         internal data class Content(
-            @SerialName("type") val type: String? = null
+            @SerialName("name") val name: String? = null
         )
     }
 
@@ -407,6 +424,7 @@ internal sealed class ApiTimelineEvent {
             value class Membership(val value: String) {
                 fun isJoin() = value == "join"
                 fun isInvite() = value == "invite"
+                fun isLeave() = value == "leave"
             }
 
         }

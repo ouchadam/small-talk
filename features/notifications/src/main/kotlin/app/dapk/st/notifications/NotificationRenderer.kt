@@ -15,7 +15,7 @@ class NotificationRenderer(
     private val notificationFactory: NotificationFactory,
 ) {
 
-    suspend fun render(result: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>) {
+    suspend fun render(result: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, onlyContainsRemovals: Boolean) {
         removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
         val notifications = notificationFactory.createNotifications(result)
 
@@ -26,7 +26,11 @@ class NotificationRenderer(
         notifications.delegates.forEach {
             when (it) {
                 is NotificationDelegate.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
-                is NotificationDelegate.Room -> notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification)
+                is NotificationDelegate.Room ->  {
+                    if (!onlyContainsRemovals) {
+                        notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification)
+                    }
+                }
             }
         }
 

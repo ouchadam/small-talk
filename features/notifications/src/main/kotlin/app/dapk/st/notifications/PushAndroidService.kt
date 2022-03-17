@@ -28,8 +28,10 @@ class PushAndroidService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
+        log(PUSH, "new push token received")
         GlobalScope.launch {
             module.pushUseCase().registerPush(token)
+            log(PUSH, "token registered")
         }
     }
 

@@ -25,6 +25,7 @@ interface RoomService : MatrixService {
     suspend fun createDm(userId: UserId, encrypted: Boolean): RoomId
 
     suspend fun joinRoom(roomId: RoomId)
+    suspend fun rejectJoinRoom(roomId: RoomId)
 
     data class JoinedMember(
         val userId: UserId,

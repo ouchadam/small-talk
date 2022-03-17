@@ -11,10 +11,8 @@ import app.dapk.st.matrix.sync.RoomInvite
 import app.dapk.st.matrix.sync.RoomOverview
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 private val json = Json
@@ -31,11 +29,22 @@ internal class OverviewPersistence(
             .map { it.map { json.decodeFromString(RoomOverview.serializer(), it.blob) } }
     }
 
+    override suspend fun removeRooms(roomsToRemove: List<RoomId>) {
+        dispatchers.withIoContext {
+            database.transaction {
+                roomsToRemove.forEach {
+                    database.inviteStateQueries.remove(it.value)
+                    database.overviewStateQueries.remove(it.value)
+                }
+            }
+        }
+    }
+
     override suspend fun persistInvites(invites: List<RoomInvite>) {
         dispatchers.withIoContext {
             database.inviteStateQueries.transaction {
                 invites.forEach {
-                    database.inviteStateQueries.insert(it.roomId.value)
+                    database.inviteStateQueries.insert(it.roomId.value, json.encodeToString(RoomInvite.serializer(), it))
                 }
             }
         }
@@ -45,7 +54,15 @@ internal class OverviewPersistence(
         return database.inviteStateQueries.selectAll()
             .asFlow()
             .mapToList()
-            .map { it.map { RoomInvite(RoomId(it)) } }
+            .map { it.map { json.decodeFromString(RoomInvite.serializer(), it.blob) } }
+    }
+
+    override suspend fun removeInvites(invites: List<RoomId>) {
+        dispatchers.withIoContext {
+            database.inviteStateQueries.transaction {
+                invites.forEach { database.inviteStateQueries.remove(it.value) }
+            }
+        }
     }
 
     override suspend fun persist(overviewState: OverviewState) {
@@ -59,7 +76,7 @@ internal class OverviewPersistence(
     }
 
     override suspend fun retrieve(): OverviewState {
-        return withContext(Dispatchers.IO) {
+        return dispatchers.withIoContext {
             val overviews = database.overviewStateQueries.selectAll().executeAsList()
             overviews.map { json.decodeFromString(RoomOverview.serializer(), it.blob) }
         }

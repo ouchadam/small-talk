@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface RoomStore {
 
     suspend fun persist(roomId: RoomId, state: RoomState)
+    suspend fun remove(rooms: List<RoomId>)
     suspend fun retrieve(roomId: RoomId): RoomState?
     fun latest(roomId: RoomId): Flow<RoomState>
     suspend fun insertUnread(roomId: RoomId, eventIds: List<EventId>)
@@ -28,6 +29,7 @@ interface FilterStore {
 
 interface OverviewStore {
 
+    suspend fun removeRooms(roomsToRemove: List<RoomId>)
     suspend fun persistInvites(invite: List<RoomInvite>)
     suspend fun persist(overviewState: OverviewState)
 
@@ -35,6 +37,7 @@ interface OverviewStore {
 
     fun latest(): Flow<OverviewState>
     fun latestInvites(): Flow<List<RoomInvite>>
+    suspend fun removeInvites(map: List<RoomId>)
 }
 
 interface SyncStore {

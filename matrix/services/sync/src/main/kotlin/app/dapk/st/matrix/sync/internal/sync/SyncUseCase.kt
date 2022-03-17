@@ -46,8 +46,14 @@ internal class SyncUseCase(
                         val nextState = logger.logP("reducing") { syncReducer.reduce(isInitialSync, sideEffects, response, credentials) }
                         val overview = nextState.roomState.map { it.roomOverview }
 
+                        if (nextState.roomsLeft.isNotEmpty()) {
+                            persistence.removeRooms(nextState.roomsLeft)
+                        }
                         if (nextState.invites.isNotEmpty()) {
                             persistence.persistInvites(nextState.invites)
+                        }
+                        if (nextState.newRoomsJoined.isNotEmpty()) {
+                            persistence.removeInvites(nextState.newRoomsJoined)
                         }
 
                         when {

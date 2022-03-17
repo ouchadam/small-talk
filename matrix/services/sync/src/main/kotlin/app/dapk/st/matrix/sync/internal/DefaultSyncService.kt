@@ -63,6 +63,7 @@ internal class DefaultSyncService(
                 EphemeralEventsUseCase(roomMembersService, syncEventsFlow),
             ),
             roomRefresher,
+            roomDataSource,
             logger,
             coroutineDispatchers,
         )
@@ -100,7 +101,7 @@ internal class DefaultSyncService(
     }
 
     override fun startSyncing() = syncFlow
-    override suspend fun invites() = overviewStore.latestInvites()
+    override fun invites() = overviewStore.latestInvites()
     override fun overview() = overviewStore.latest()
     override fun room(roomId: RoomId) = roomStore.latest(roomId)
     override fun events() = syncEventsFlow
