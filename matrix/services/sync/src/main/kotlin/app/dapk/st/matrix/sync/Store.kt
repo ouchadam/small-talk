@@ -28,6 +28,7 @@ interface FilterStore {
 
 interface OverviewStore {
 
+    suspend fun removeRooms(roomsToRemove: List<RoomId>)
     suspend fun persistInvites(invite: List<RoomInvite>)
     suspend fun persist(overviewState: OverviewState)
 
@@ -35,6 +36,7 @@ interface OverviewStore {
 
     fun latest(): Flow<OverviewState>
     fun latestInvites(): Flow<List<RoomInvite>>
+    suspend fun removeInvites(map: List<RoomId>)
 }
 
 interface SyncStore {

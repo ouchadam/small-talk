@@ -20,13 +20,16 @@ internal class SyncReducer(
 
     data class ReducerResult(
         val roomState: List<RoomState>,
-        val invites: List<RoomInvite>
+        val invites: List<RoomInvite>,
+        val roomsLeft: List<RoomId>
     )
 
     suspend fun reduce(isInitialSync: Boolean, sideEffects: SideEffectResult, response: ApiSyncResponse, userCredentials: UserCredentials): ReducerResult {
         val directMessages = response.directMessages()
 
         val invites = response.rooms?.invite?.map { roomInvite(it, userCredentials) } ?: emptyList()
+        val roomsLeft = findRoomsLeft(response, userCredentials)
+
         val apiUpdatedRooms = response.rooms?.join?.keepRoomsWithChanges()
         val apiRoomsToProcess = apiUpdatedRooms?.map { (roomId, apiRoom) ->
             logger.matrixLog(SYNC, "reducing: $roomId")
@@ -49,8 +52,14 @@ internal class SyncReducer(
             }
         }
 
-        return ReducerResult((apiRoomsToProcess + roomsWithSideEffects).awaitAll().filterNotNull(), invites)
+        return ReducerResult((apiRoomsToProcess + roomsWithSideEffects).awaitAll().filterNotNull(), invites, roomsLeft)
     }
+
+    private fun findRoomsLeft(response: ApiSyncResponse, userCredentials: UserCredentials) = response.rooms?.leave?.filter {
+        it.value.state.stateEvents.filterIsInstance<ApiTimelineEvent.RoomMember>().any {
+            it.content.membership.isLeave() && it.senderId == userCredentials.userId
+        }
+    }?.map { it.key } ?: emptyList()
 
     private fun roomInvite(entry: Map.Entry<RoomId, ApiSyncRoomInvite>, userCredentials: UserCredentials): RoomInvite {
         val memberEvents = entry.value.state.events.filterIsInstance<ApiStrippedEvent.RoomMember>()

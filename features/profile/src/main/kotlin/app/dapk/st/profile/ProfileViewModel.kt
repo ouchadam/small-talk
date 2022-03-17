@@ -79,15 +79,15 @@ class ProfileViewModel(
     }
 
     fun acceptRoomInvite(roomId: RoomId) {
-        viewModelScope.launch {
-            roomService.joinRoom(roomId)
-        }
+        launchCatching { roomService.joinRoom(roomId) }.fold(
+            onError = {}
+        )
     }
 
     fun rejectRoomInvite(roomId: RoomId) {
-        viewModelScope.launch {
-            roomService.rejectJoinRoom(roomId)
-        }
+        launchCatching { roomService.rejectJoinRoom(roomId) }.fold(
+            onError = {}
+        )
     }
 
     fun stop() {
@@ -102,4 +102,16 @@ class ProfileViewModel(
         updateState { copy(page = (page as SpiderPage<S>).copy(state = block(page.state))) }
     }
 
+}
+
+fun <S, VE, T> DapkViewModel<S, VE>.launchCatching(block: suspend () -> T): LaunchCatching<T> {
+    return object : LaunchCatching<T> {
+        override fun fold(onSuccess: (T) -> Unit, onError: (Throwable) -> Unit) {
+            viewModelScope.launch { runCatching { block() }.fold(onSuccess, onError) }
+        }
+    }
+}
+
+interface LaunchCatching<T> {
+    fun fold(onSuccess: (T) -> Unit = {}, onError: (Throwable) -> Unit = {})
 }

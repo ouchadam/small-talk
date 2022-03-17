@@ -214,6 +214,7 @@ sealed class ApiToDeviceEvent {
 internal data class ApiSyncRooms(
     @SerialName("join") val join: Map<RoomId, ApiSyncRoom>? = null,
     @SerialName("invite") val invite: Map<RoomId, ApiSyncRoomInvite>? = null,
+    @SerialName("leave") val leave: Map<RoomId, ApiSyncRoom>? = null,
 )
 
 @Serializable

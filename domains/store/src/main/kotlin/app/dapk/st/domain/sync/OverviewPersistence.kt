@@ -29,6 +29,18 @@ internal class OverviewPersistence(
             .map { it.map { json.decodeFromString(RoomOverview.serializer(), it.blob) } }
     }
 
+    override suspend fun removeRooms(roomsToRemove: List<RoomId>) {
+        dispatchers.withIoContext {
+            database.transaction {
+                roomsToRemove.forEach {
+                    database.inviteStateQueries.remove(it.value)
+                    database.overviewStateQueries.remove(it.value)
+                    database.roomEventQueries.remove(it.value)
+                }
+            }
+        }
+    }
+
     override suspend fun persistInvites(invites: List<RoomInvite>) {
         dispatchers.withIoContext {
             database.inviteStateQueries.transaction {
@@ -44,6 +56,14 @@ internal class OverviewPersistence(
             .asFlow()
             .mapToList()
             .map { it.map { json.decodeFromString(RoomInvite.serializer(), it.blob) } }
+    }
+
+    override suspend fun removeInvites(invites: List<RoomId>) {
+        dispatchers.withIoContext {
+            database.inviteStateQueries.transaction {
+                invites.forEach { database.inviteStateQueries.remove(it.value) }
+            }
+        }
     }
 
     override suspend fun persist(overviewState: OverviewState) {

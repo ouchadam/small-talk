@@ -32,7 +32,8 @@ class NotificationsUseCase(
                 val asRooms = changes.keys
                 val removedRooms = inferredCurrentNotifications.keys - asRooms
 
-                val onlyContainsRemovals = inferredCurrentNotifications.filterKeys { !removedRooms.contains(it) } == changes.filterKeys { !removedRooms.contains(it) }
+                val onlyContainsRemovals =
+                    inferredCurrentNotifications.filterKeys { !removedRooms.contains(it) } == changes.filterKeys { !removedRooms.contains(it) }
                 inferredCurrentNotifications.clear()
                 inferredCurrentNotifications.putAll(changes)
 

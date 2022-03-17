@@ -33,3 +33,7 @@ FROM dbUnreadEvent
 INNER JOIN dbRoomEvent ON dbUnreadEvent.event_id = dbRoomEvent.event_id
 ORDER BY dbRoomEvent.timestamp_utc DESC
 LIMIT 100;
+
+remove:
+DELETE FROM dbRoomEvent
+WHERE room_id = ?;

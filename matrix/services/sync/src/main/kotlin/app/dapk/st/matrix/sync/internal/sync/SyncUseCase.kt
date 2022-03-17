@@ -46,13 +46,23 @@ internal class SyncUseCase(
                         val nextState = logger.logP("reducing") { syncReducer.reduce(isInitialSync, sideEffects, response, credentials) }
                         val overview = nextState.roomState.map { it.roomOverview }
 
+                        if (nextState.roomsLeft.isNotEmpty()) {
+                            persistence.removeRooms(nextState.roomsLeft)
+                        }
                         if (nextState.invites.isNotEmpty()) {
                             persistence.persistInvites(nextState.invites)
                         }
 
+
                         when {
                             previousState == overview -> previousState.also { logger.matrixLog(SYNC, "no changes, not persisting new state") }
-                            overview.isNotEmpty() -> overview.also { persistence.persist(overview) }
+                            overview.isNotEmpty() -> overview.also {
+                                val newRooms = overview - (previousState ?: emptyList()).toSet()
+                                if (newRooms.isNotEmpty()) {
+                                    persistence.removeInvites(newRooms.map { it.roomId })
+                                }
+                                persistence.persist(overview)
+                            }
                             else -> previousState.also { logger.matrixLog(SYNC, "nothing to do") }
                         }
                     }
