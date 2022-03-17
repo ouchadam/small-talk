@@ -4,6 +4,8 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.app.Person
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
@@ -46,7 +48,7 @@ class NotificationFactory(
             }
         }
 
-        return Notification.Builder(context, channelId)
+        return builder()
             .setStyle(summaryInboxStyle)
             .setSmallIcon(R.drawable.ic_notification_small_icon)
             .setCategory(Notification.CATEGORY_MESSAGE)
@@ -55,7 +57,8 @@ class NotificationFactory(
             .build()
     }
 
-    private suspend fun createNotification(events: List<RoomEvent.Message>, roomOverview: RoomOverview): NotificationDelegate {
+    @RequiresApi(Build.VERSION_CODES.P)
+    private suspend fun createMessageStyle(events: List<RoomEvent.Message>, roomOverview: RoomOverview): Notification.MessagingStyle {
         val messageStyle = Notification.MessagingStyle(
             Person.Builder()
                 .setName("me")
@@ -66,7 +69,7 @@ class NotificationFactory(
         messageStyle.conversationTitle = roomOverview.roomName.takeIf { roomOverview.isGroup }
         messageStyle.isGroupConversation = roomOverview.isGroup
 
-        events.sortedBy { it.utcTimestamp }.forEach { message ->
+        events.forEach { message ->
             val sender = Person.Builder()
                 .setName(message.author.displayName ?: message.author.id.value)
                 .setIcon(message.author.avatarUrl?.let { iconLoader.load(it.value) })
@@ -80,6 +83,21 @@ class NotificationFactory(
                 )
             )
         }
+        return messageStyle
+    }
+
+    private suspend fun createNotification(events: List<RoomEvent.Message>, roomOverview: RoomOverview): NotificationDelegate {
+        val sortedEvents = events.sortedBy { it.utcTimestamp }
+
+        val messageStyle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            createMessageStyle(sortedEvents, roomOverview)
+        } else {
+            val inboxStyle = Notification.InboxStyle()
+            events.forEach {
+                inboxStyle.addLine("${it.author.displayName ?: it.author.id.value}: ${it.content}")
+            }
+            inboxStyle
+        }
 
         val openRoomIntent = PendingIntent.getActivity(
             context,
@@ -89,23 +107,35 @@ class NotificationFactory(
         )
 
         return NotificationDelegate.Room(
-            Notification.Builder(context, channelId)
-                .setWhen(messageStyle.messages.last().timestamp)
+            builder()
+                .setWhen(sortedEvents.last().utcTimestamp)
                 .setShowWhen(true)
                 .setGroup(GROUP_ID)
                 .setOnlyAlertOnce(roomOverview.isGroup)
                 .setContentIntent(openRoomIntent)
                 .setStyle(messageStyle)
                 .setCategory(Notification.CATEGORY_MESSAGE)
-                .setShortcutId(roomOverview.roomId.value)
+                .run {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        this.setShortcutId(roomOverview.roomId.value)
+                    } else {
+                        this
+                    }
+                }
                 .setSmallIcon(R.drawable.ic_notification_small_icon)
                 .setLargeIcon(roomOverview.roomAvatarUrl?.let { iconLoader.load(it.value) })
                 .setAutoCancel(true)
                 .build(),
             roomId = roomOverview.roomId,
-            summary = messageStyle.messages.last().text.toString()
+            summary = events.last().content
         )
 
+    }
+
+    private fun builder() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Notification.Builder(context, channelId)
+    } else {
+        Notification.Builder(context)
     }
 
 }
