@@ -199,9 +199,7 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
 @Composable
 private fun Encryption(viewModel: SettingsViewModel, page: Page.Security) {
     Column {
-        TextRow("Import room keys", includeDivider = false) {
-            viewModel.goToImportRoom()
-        }
+        TextRow("Import room keys", includeDivider = false, onClick = { viewModel.goToImportRoom() })
     }
 }
 
