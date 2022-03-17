@@ -3,6 +3,7 @@ package app.dapk.st.notifications
 import app.dapk.st.core.AppLogTag.NOTIFICATION
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
@@ -14,7 +15,7 @@ class NotificationsUseCase(
     notificationChannels: NotificationChannels,
 ) {
 
-    private val inferredCurrentNotifications = mutableSetOf<RoomId>()
+    private val inferredCurrentNotifications = mutableMapOf<RoomId, List<RoomEvent>>()
 
     init {
         notificationChannels.initChannels()
@@ -26,13 +27,16 @@ class NotificationsUseCase(
             .onEach { result ->
                 log(NOTIFICATION, "unread changed - render notifications")
 
-                val asRooms = result.keys.map { it.roomId }.toSet()
-                val removedRooms = inferredCurrentNotifications - asRooms
+                val changes = result.mapKeys { it.key.roomId }
 
+                val asRooms = changes.keys
+                val removedRooms = inferredCurrentNotifications.keys - asRooms
+
+                val onlyContainsRemovals = inferredCurrentNotifications.filterKeys { !removedRooms.contains(it) } == changes.filterKeys { !removedRooms.contains(it) }
                 inferredCurrentNotifications.clear()
-                inferredCurrentNotifications.addAll(asRooms)
+                inferredCurrentNotifications.putAll(changes)
 
-                notificationRenderer.render(result, removedRooms)
+                notificationRenderer.render(result, removedRooms, onlyContainsRemovals)
             }
             .collect()
     }
