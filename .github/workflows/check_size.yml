@@ -38,11 +38,16 @@ jobs:
           echo "$(pwd)/bin" >> $GITHUB_PATH
 
       - name: Save Size
+        env:
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           mkdir -p ./apk_size
           echo $(./tools/check-size.sh | tail -1 | cut -d ',' -f2-) > ./apk_size/size.txt
+          echo $PULL_REQUEST_NUMBER > ./apk_size/pr_number.txt
       - uses: actions/upload-artifact@v3
         with:
           name: apk-size
-          path: apk_size/size.txt
+          path: |
+            apk_size/size.txt
+            apk_size/pr_number.txt
           retention-days: 5
