@@ -31,28 +31,28 @@ internal fun anEphemeralTypingEvent(
 internal fun anApiTimelineTextEvent(
     id: EventId = anEventId(),
     senderId: UserId = aUserId(),
-    content: ApiTimelineEvent.TimelineText.Content = aTimelineTextEventContent(),
+    content: ApiTimelineEvent.TimelineMessage.Content = aTimelineTextEventContent(),
     utcTimestamp: Long = 0L,
     decryptionStatus: ApiTimelineEvent.DecryptionStatus? = null
-) = ApiTimelineEvent.TimelineText(id, senderId, content, utcTimestamp, decryptionStatus)
+) = ApiTimelineEvent.TimelineMessage(id, senderId, content, utcTimestamp, decryptionStatus)
 
 internal fun aTimelineTextEventContent(
     body: String? = null,
     formattedBody: String? = null,
     type: String? = null,
-    relation: ApiTimelineEvent.TimelineText.Relation? = null,
-) = ApiTimelineEvent.TimelineText.Content(body, formattedBody, type, relation)
+    relation: ApiTimelineEvent.TimelineMessage.Relation? = null,
+) = ApiTimelineEvent.TimelineMessage.Content(body, formattedBody, type, relation)
 
-internal fun anEditRelation(originalId: EventId) = ApiTimelineEvent.TimelineText.Relation(
+internal fun anEditRelation(originalId: EventId) = ApiTimelineEvent.TimelineMessage.Relation(
     relationType = "m.replace",
     inReplyTo = null,
     eventId = originalId,
 )
 
-internal fun aReplyRelation(originalId: EventId) = ApiTimelineEvent.TimelineText.Relation(
+internal fun aReplyRelation(originalId: EventId) = ApiTimelineEvent.TimelineMessage.Relation(
     relationType = null,
     eventId = null,
-    inReplyTo = ApiTimelineEvent.TimelineText.InReplyTo(originalId),
+    inReplyTo = ApiTimelineEvent.TimelineMessage.InReplyTo(originalId),
 )
 
 internal fun anEncryptedApiTimelineEvent(
@@ -104,7 +104,7 @@ internal fun aMegolmApiEncryptedContent(
     deviceId: DeviceId = aDeviceId(),
     senderKey: String = "a-sender-key",
     sessionId: SessionId = aSessionId(),
-    relation: ApiTimelineEvent.TimelineText.Relation? = null,
+    relation: ApiTimelineEvent.TimelineMessage.Relation? = null,
 ) = ApiEncryptedContent.MegOlmV1(cipherText, deviceId, senderKey, sessionId, relation)
 
 internal fun anOlmApiEncryptedContent(

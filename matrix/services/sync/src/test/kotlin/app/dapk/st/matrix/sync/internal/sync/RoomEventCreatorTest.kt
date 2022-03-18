@@ -270,7 +270,7 @@ internal class RoomEventCreatorTest {
         )
     }
 
-    private fun givenLookup(event: ApiTimelineEvent.TimelineText): suspend (EventId) -> LookupResult {
+    private fun givenLookup(event: ApiTimelineEvent.TimelineMessage): suspend (EventId) -> LookupResult {
         return {
             if (it == event.id) LookupResult(event, roomEvent = null) else throw IllegalArgumentException("unexpected id: $it")
         }
@@ -283,7 +283,7 @@ internal class RoomEventCreatorTest {
     }
 }
 
-private fun ApiTimelineEvent.TimelineText.toEditEvent(newTimestamp: Long, messageContent: String) = this.copy(
+private fun ApiTimelineEvent.TimelineMessage.toEditEvent(newTimestamp: Long, messageContent: String) = this.copy(
     id = anEventId("a-new-event-id"),
     utcTimestamp = newTimestamp,
     content = aTimelineTextEventContent(
@@ -301,7 +301,7 @@ private fun RoomEvent.Message.toEditEvent(newTimestamp: Long, messageContent: St
     )
 )
 
-private fun ApiTimelineEvent.TimelineText.toReplyEvent(messageContent: String) = anApiTimelineTextEvent(
+private fun ApiTimelineEvent.TimelineMessage.toReplyEvent(messageContent: String) = anApiTimelineTextEvent(
     id = anEventId("a-new-event-id"),
     content = aTimelineTextEventContent(
         body = "${this.content} $messageContent",

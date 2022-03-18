@@ -18,7 +18,7 @@ internal class FakeRoomEventCreator {
         coEvery { with(instance) { event.toRoomEvent(roomId) } } returns result
     }
 
-    fun givenCreatesUsingLookup(roomId: RoomId, eventIdToLookup: EventId, event: ApiTimelineEvent.TimelineText, result: RoomEvent, lookupResult: LookupResult) {
+    fun givenCreatesUsingLookup(roomId: RoomId, eventIdToLookup: EventId, event: ApiTimelineEvent.TimelineMessage, result: RoomEvent, lookupResult: LookupResult) {
         val slot = slot<suspend (EventId) -> LookupResult>()
         coEvery { with(instance) { event.toRoomEvent(roomId, capture(slot)) } } answers {
             runBlocking {

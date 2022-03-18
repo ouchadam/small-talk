@@ -311,7 +311,7 @@ internal sealed class DecryptedContent {
     @Serializable
     @SerialName("m.room.message")
     internal data class TimelineText(
-        @SerialName("content") val content: ApiTimelineEvent.TimelineText.Content,
+        @SerialName("content") val content: ApiTimelineEvent.TimelineMessage.Content,
     ) : DecryptedContent()
 
     @Serializable
@@ -333,7 +333,7 @@ internal sealed class ApiEncryptedContent {
         @SerialName("device_id") val deviceId: DeviceId,
         @SerialName("sender_key") val senderKey: String,
         @SerialName("session_id") val sessionId: SessionId,
-        @SerialName("m.relates_to") val relation: ApiTimelineEvent.TimelineText.Relation? = null,
+        @SerialName("m.relates_to") val relation: ApiTimelineEvent.TimelineMessage.Relation? = null,
     ) : ApiEncryptedContent()
 
     @Serializable
@@ -437,7 +437,7 @@ internal sealed class ApiTimelineEvent {
 
     @Serializable
     @SerialName("m.room.message")
-    internal data class TimelineText(
+    internal data class TimelineMessage(
         @SerialName("event_id") val id: EventId,
         @SerialName("sender") val senderId: UserId,
         @SerialName("content") val content: Content,

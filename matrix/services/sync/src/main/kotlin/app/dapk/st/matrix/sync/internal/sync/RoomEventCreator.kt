@@ -44,7 +44,7 @@ internal class RoomEventCreator(
         }
     }
 
-    suspend fun ApiTimelineEvent.TimelineText.toRoomEvent(roomId: RoomId, lookup: Lookup): RoomEvent? {
+    suspend fun ApiTimelineEvent.TimelineMessage.toRoomEvent(roomId: RoomId, lookup: Lookup): RoomEvent? {
         return when {
             this.isEdit() -> handleEdit(roomId, this.content.relation!!.eventId!!, lookup)
             this.isReply() -> handleReply(roomId, lookup)
@@ -52,7 +52,7 @@ internal class RoomEventCreator(
         }
     }
 
-    private suspend fun ApiTimelineEvent.TimelineText.handleEdit(roomId: RoomId, editedEventId: EventId, lookup: Lookup): RoomEvent? {
+    private suspend fun ApiTimelineEvent.TimelineMessage.handleEdit(roomId: RoomId, editedEventId: EventId, lookup: Lookup): RoomEvent? {
         return lookup(editedEventId).fold(
             onApiTimelineEvent = {
                 ifOrNull(this.utcTimestamp > it.utcTimestamp) {
@@ -76,13 +76,13 @@ internal class RoomEventCreator(
         )
     }
 
-    private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineText) = this.copy(
+    private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
         content = edit.content.body?.removePrefix(" * ")?.trim() ?: "redacted",
         utcTimestamp = edit.utcTimestamp,
         edited = true,
     )
 
-    private suspend fun ApiTimelineEvent.TimelineText.handleReply(roomId: RoomId, lookup: Lookup): RoomEvent {
+    private suspend fun ApiTimelineEvent.TimelineMessage.handleReply(roomId: RoomId, lookup: Lookup): RoomEvent {
         val replyTo = this.content.relation!!.inReplyTo!!
 
         val relationEvent = lookup(replyTo.eventId).fold(
@@ -107,7 +107,7 @@ internal class RoomEventCreator(
         }
     }
 
-    private suspend fun ApiTimelineEvent.TimelineText.toMessage(
+    private suspend fun ApiTimelineEvent.TimelineMessage.toMessage(
         roomId: RoomId,
         content: String = this.content.body ?: "redacted",
         edited: Boolean = false,
@@ -128,5 +128,5 @@ private fun String.stripTags() = this.substring(this.indexOf("</mx-reply>") + "<
     .replace("<em>", "")
     .replace("</em>", "")
 
-private fun ApiTimelineEvent.TimelineText.isEdit() = this.content.relation?.relationType == "m.replace" && this.content.relation.eventId != null
-private fun ApiTimelineEvent.TimelineText.isReply() = this.content.relation?.inReplyTo != null
+private fun ApiTimelineEvent.TimelineMessage.isEdit() = this.content.relation?.relationType == "m.replace" && this.content.relation.eventId != null
+private fun ApiTimelineEvent.TimelineMessage.isReply() = this.content.relation?.inReplyTo != null

@@ -36,7 +36,7 @@ internal class SyncEventDecrypter(
                     ApiEncryptedContent.Unknown -> null
                 }
                 when (it) {
-                    is DecryptedContent.TimelineText -> ApiTimelineEvent.TimelineText(
+                    is DecryptedContent.TimelineText -> ApiTimelineEvent.TimelineMessage(
                         event.eventId,
                         event.senderId,
                         it.content.copy(relation = relation),

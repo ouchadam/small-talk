@@ -28,7 +28,7 @@ internal class TimelineEventsProcessor(
             decryptedTimeline.value.mapNotNull { event ->
                 val roomEvent = when (event) {
                     is ApiTimelineEvent.Encrypted -> event.toRoomEvent(roomToProcess.roomId)
-                    is ApiTimelineEvent.TimelineText -> event.toRoomEvent(roomToProcess.roomId) { eventId ->
+                    is ApiTimelineEvent.TimelineMessage -> event.toRoomEvent(roomToProcess.roomId) { eventId ->
                         eventLookupUseCase.lookup(eventId, decryptedTimeline, decryptedPreviousEvents)
                     }
                     is ApiTimelineEvent.Encryption -> null

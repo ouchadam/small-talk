@@ -4,12 +4,12 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
 
 internal data class LookupResult(
-    private val apiTimelineEvent: ApiTimelineEvent.TimelineText?,
+    private val apiTimelineEvent: ApiTimelineEvent.TimelineMessage?,
     private val roomEvent: RoomEvent?,
 ) {
 
     inline fun <T> fold(
-        onApiTimelineEvent: (ApiTimelineEvent.TimelineText) -> T?,
+        onApiTimelineEvent: (ApiTimelineEvent.TimelineMessage) -> T?,
         onRoomEvent: (RoomEvent) -> T?,
         onEmpty: () -> T?,
     ): T? {
