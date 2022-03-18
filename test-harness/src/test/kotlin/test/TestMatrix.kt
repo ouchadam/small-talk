@@ -1,6 +1,7 @@
 package test
 
 import TestUser
+import app.dapk.st.core.Base64
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.SingletonFlows
 import app.dapk.st.domain.StoreModule
@@ -81,7 +82,7 @@ class TestMatrix(
             installAuthService(storeModule.credentialsStore(), AuthConfig(forceHttp = false))
             installEncryptionService(storeModule.knownDevicesStore())
 
-            val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore())
+            val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore(), JavaBase64())
             val olm = OlmWrapper(
                 olmStore = olmAccountStore,
                 singletonFlows = SingletonFlows(coroutineDispatchers),
@@ -270,4 +271,14 @@ class TestMatrix(
 
     suspend fun deviceId() = storeModule.credentialsStore().credentials()!!.deviceId
     suspend fun userId() = storeModule.credentialsStore().credentials()!!.userId
+}
+
+class JavaBase64 : Base64 {
+    override fun encode(input: ByteArray): String {
+        return java.util.Base64.getEncoder().encode(input).toString(Charsets.UTF_8)
+    }
+
+    override fun decode(input: String): ByteArray {
+        return java.util.Base64.getDecoder().decode(input)
+    }
 }

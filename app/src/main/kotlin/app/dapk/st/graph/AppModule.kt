@@ -7,10 +7,7 @@ import android.content.Intent
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
 import app.dapk.st.SharedPreferencesDelegate
-import app.dapk.st.core.BuildMeta
-import app.dapk.st.core.CoreAndroidModule
-import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.core.SingletonFlows
+import app.dapk.st.core.*
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
@@ -208,7 +205,7 @@ internal class MatrixModules(
                 installAuthService(credentialsStore)
                 installEncryptionService(store.knownDevicesStore())
 
-                val olmAccountStore = OlmPersistenceWrapper(store.olmStore())
+                val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), AndroidBase64())
                 val singletonFlows = SingletonFlows(coroutineDispatchers)
                 val olm = OlmWrapper(
                     olmStore = olmAccountStore,
@@ -415,5 +412,15 @@ class TaskRunnerAdapter(private val matrixTaskRunner: suspend (MatrixTask) -> Ma
                 MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success(it.source)
             }
         }
+    }
+}
+
+class AndroidBase64 : Base64 {
+    override fun encode(input: ByteArray): String {
+        return android.util.Base64.encodeToString(input, android.util.Base64.DEFAULT)
+    }
+
+    override fun decode(input: String): ByteArray {
+        return android.util.Base64.decode(input, android.util.Base64.DEFAULT)
     }
 }

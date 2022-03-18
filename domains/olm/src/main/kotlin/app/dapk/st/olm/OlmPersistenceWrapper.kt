@@ -1,5 +1,6 @@
 package app.dapk.st.olm
 
+import app.dapk.st.core.Base64
 import app.dapk.st.domain.OlmPersistence
 import app.dapk.st.domain.SerializedObject
 import app.dapk.st.matrix.common.Curve25519
@@ -10,10 +11,10 @@ import org.matrix.olm.OlmInboundGroupSession
 import org.matrix.olm.OlmOutboundGroupSession
 import org.matrix.olm.OlmSession
 import java.io.*
-import java.util.*
 
 class OlmPersistenceWrapper(
     private val olmPersistence: OlmPersistence,
+    private val base64: Base64,
 ) : OlmStore {
 
     override suspend fun read(): OlmAccount? {
@@ -49,21 +50,21 @@ class OlmPersistenceWrapper(
     override suspend fun readInbound(sessionId: SessionId): OlmInboundGroupSession? {
         return olmPersistence.readInbound(sessionId)?.value?.deserialize()
     }
-}
 
-private fun <T : Serializable> T.serialize(): String {
-    val baos = ByteArrayOutputStream()
-    ObjectOutputStream(baos).use {
-        it.writeObject(this)
+    private fun <T : Serializable> T.serialize(): String {
+        val baos = ByteArrayOutputStream()
+        ObjectOutputStream(baos).use {
+            it.writeObject(this)
+        }
+        return base64.encode(baos.toByteArray())
     }
-    return Base64.getEncoder().encode(baos.toByteArray()).toString(Charsets.UTF_8)
-}
 
-@Suppress("UNCHECKED_CAST")
-private fun <T : Serializable> String.deserialize(): T {
-    val decoded = Base64.getDecoder().decode(this)
-    val baos = ByteArrayInputStream(decoded)
-    return ObjectInputStream(baos).use {
-        it.readObject() as T
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Serializable> String.deserialize(): T {
+        val decoded = base64.decode(this)
+        val baos = ByteArrayInputStream(decoded)
+        return ObjectInputStream(baos).use {
+            it.readObject() as T
+        }
     }
 }
