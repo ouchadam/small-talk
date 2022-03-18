@@ -11,7 +11,7 @@
 
 
 ### Project mantra
-- Tiny app size - currently 1.72mb~ when provided via app bundle.
+- Tiny app size - currently 1.80mb~ when provided via app bundle.
 - Focused on reliability and stability.
 - Bare-bones feature set.
 
@@ -21,7 +21,7 @@
 
 ### Feature list
 
-- Login with username/password (home servers must serve `https://${domain}/.well-known/matrix/client`)
+- Login with username/password (homeservers must serve `https://${domain}/.well-known/matrix/client`)
 - Combined Room and DM interface
 - End to end encryption
 - Message bubbles, supporting text, replies and edits
