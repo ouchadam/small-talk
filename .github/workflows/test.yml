@@ -17,19 +17,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '11'
+      - uses: gradle/gradle-build-action@v2
 
       - name: Create pip requirements
         run: |
