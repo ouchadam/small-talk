@@ -8,6 +8,7 @@ on:
 
 jobs:
   unit-tests:
+    uses: ouchadam/small-talk/.github/workflows/with_env.yml@ref
     name: Run all unit tests (with coverage)
     runs-on: ubuntu-latest
 
@@ -16,21 +17,6 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '11'
-
       - name: Create pip requirements
         run: |
           echo "matrix-synapse" > requirements.txt

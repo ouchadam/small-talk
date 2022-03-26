@@ -8,20 +8,10 @@ on:
 
 jobs:
   assemble-debug:
+    uses: ouchadam/small-talk/.github/workflows/with_env.yml@ref
     name: Assemble debug variant
     runs-on: ubuntu-latest
 
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
-
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '11'
-      - uses: gradle/gradle-build-action@v2
-
       - name: Assemble debug variant
         run: ./gradlew assembleDebug --no-daemon

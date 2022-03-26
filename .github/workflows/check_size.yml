@@ -5,29 +5,11 @@ on:
 
 jobs:
   check-size:
+    uses: ouchadam/small-talk/.github/workflows/with_env.yml@ref
     name: Check Size
     runs-on: ubuntu-latest
 
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
-
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '11'
-
       - name: Fetch bundletool
         run: |
           curl -s -L https://github.com/google/bundletool/releases/download/1.9.0/bundletool-all-1.9.0.jar --create-dirs -o bin/bundletool.jar
