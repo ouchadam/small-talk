@@ -34,18 +34,22 @@ internal class SyncReducer(
         val newRooms = response.rooms?.join?.keys?.filterNot { roomDataSource.contains(it) } ?: emptyList()
 
         val apiUpdatedRooms = response.rooms?.join?.keepRoomsWithChanges()
-        val apiRoomsToProcess = apiUpdatedRooms?.map { (roomId, apiRoom) ->
+        val apiRoomsToProcess = apiUpdatedRooms?.mapNotNull { (roomId, apiRoom) ->
             logger.matrixLog(SYNC, "reducing: $roomId")
             coroutineDispatchers.withIoContextAsync {
-                roomProcessor.processRoom(
-                    roomToProcess = RoomToProcess(
-                        roomId = roomId,
-                        apiSyncRoom = apiRoom,
-                        directMessage = directMessages[roomId],
-                        userCredentials = userCredentials,
-                    ),
-                    isInitialSync = isInitialSync
-                )
+                runCatching {
+                    roomProcessor.processRoom(
+                        roomToProcess = RoomToProcess(
+                            roomId = roomId,
+                            apiSyncRoom = apiRoom,
+                            directMessage = directMessages[roomId],
+                            userCredentials = userCredentials,
+                        ),
+                        isInitialSync = isInitialSync
+                    )
+                }
+                    .onFailure { logger.matrixLog(SYNC, "failed to reduce: $roomId, skipping") }
+                    .getOrNull()
             }
         } ?: emptyList()
 

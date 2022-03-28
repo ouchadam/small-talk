@@ -69,7 +69,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val driver = AndroidSqliteDriver(DapkDb.Schema, context, "dapk.db")
     private val database = DapkDb(driver)
     private val clock = Clock.systemUTC()
-    private val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
+    val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
 
     val storeModule = unsafeLazy {
         StoreModule(
@@ -83,9 +83,12 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
                     sql = "SELECT name FROM sqlite_master WHERE type = 'table' ${if (includeCryptoAccount) "" else "AND name != 'dbCryptoAccount'"}",
                     parameters = 0
                 )
-                while (cursor.next()) {
-                    cursor.getString(0)?.let {
-                        driver.execute(null, "DELETE FROM $it", 0)
+                cursor.use {
+                    while (cursor.next()) {
+                        cursor.getString(0)?.let {
+                            log(AppLogTag.ERROR_NON_FATAL, "Deleting $it")
+                            driver.execute(null, "DELETE FROM $it", 0)
+                        }
                     }
                 }
             },
@@ -283,6 +286,14 @@ internal class MatrixModules(
                     store.roomStore(),
                     store.syncStore(),
                     store.filterStore(),
+                    deviceNotifier = { services ->
+                        val encryption = services.deviceService()
+                        val crypto = services.cryptoService()
+                        DeviceNotifier { userIds, syncToken ->
+                            encryption.updateStaleDevices(userIds)
+                            crypto.updateOlmSession(userIds, syncToken)
+                        }
+                    },
                     messageDecrypter = { serviceProvider ->
                         val cryptoService = serviceProvider.cryptoService()
                         MessageDecrypter {
@@ -296,9 +307,9 @@ internal class MatrixModules(
                         }
                     },
                     verificationHandler = { services ->
-                        logger.matrixLog(MatrixLogTag.VERIFICATION, "got a verification request $it")
                         val cryptoService = services.cryptoService()
                         VerificationHandler { apiEvent ->
+                            logger.matrixLog(MatrixLogTag.VERIFICATION, "got a verification request $it")
                             cryptoService.onVerificationEvent(
                                 when (apiEvent) {
                                     is ApiToDeviceEvent.VerificationRequest -> Verification.Event.Requested(
@@ -341,14 +352,6 @@ internal class MatrixModules(
                             )
                         }
                     },
-                    deviceNotifier = { services ->
-                        val encryption = services.deviceService()
-                        val crypto = services.cryptoService()
-                        DeviceNotifier { userIds, syncToken ->
-                            encryption.updateStaleDevices(userIds)
-                            crypto.updateOlmSession(userIds, syncToken)
-                        }
-                    },
                     oneTimeKeyProducer = { services ->
                         val cryptoService = services.cryptoService()
                         MaybeCreateMoreKeys {
@@ -367,8 +370,6 @@ internal class MatrixModules(
                 )
 
                 installPushService(credentialsStore)
-
-
             }
         }
     }
@@ -412,15 +413,5 @@ class TaskRunnerAdapter(private val matrixTaskRunner: suspend (MatrixTask) -> Ma
                 MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success(it.source)
             }
         }
-    }
-}
-
-class AndroidBase64 : Base64 {
-    override fun encode(input: ByteArray): String {
-        return android.util.Base64.encodeToString(input, android.util.Base64.DEFAULT)
-    }
-
-    override fun decode(input: String): ByteArray {
-        return android.util.Base64.decode(input, android.util.Base64.DEFAULT)
     }
 }

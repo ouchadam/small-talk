@@ -21,3 +21,25 @@ inline fun <T, T1 : T, T2 : T> Iterable<T>.firstOrNull(predicate: (T) -> Boolean
 }
 
 fun <T> unsafeLazy(initializer: () -> T): Lazy<T> = lazy(mode = LazyThreadSafetyMode.NONE, initializer = initializer)
+
+class ResettableUnsafeLazy<T>(private val initializer: () -> T) : Lazy<T> {
+
+    private var _value: T? = null
+
+    override val value: T
+        get() {
+            return if (_value == null) {
+                initializer().also { _value = it }
+            } else {
+                _value!!
+            }
+        }
+
+    override fun isInitialized(): Boolean {
+        return _value != null
+    }
+
+    fun reset() {
+        _value = null
+    }
+}

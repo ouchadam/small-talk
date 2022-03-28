@@ -23,7 +23,6 @@ interface RoomStore {
 interface FilterStore {
 
     suspend fun store(key: String, filterId: String)
-
     suspend fun read(key: String): String?
 }
 

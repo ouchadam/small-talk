@@ -19,7 +19,6 @@ class SettingsModule(
 ) : ProvidableModule {
 
     internal fun settingsViewModel() = SettingsViewModel(
-        storeModule.credentialsStore(),
         storeModule.cacheCleaner(),
         contentResolver,
         cryptoService,

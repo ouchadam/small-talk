@@ -12,6 +12,10 @@ class RegisterFirebasePushTokenUseCase(
     override val errorTracker: ErrorTracker,
 ) : CrashScope {
 
+    fun unregister() {
+        FirebaseMessaging.getInstance().deleteToken()
+    }
+
     suspend fun registerCurrentToken() {
         kotlin.runCatching {
             FirebaseMessaging.getInstance().token().also {

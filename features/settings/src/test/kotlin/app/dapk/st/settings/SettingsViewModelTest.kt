@@ -38,7 +38,6 @@ internal class SettingsViewModelTest {
     private val fakeSettingsItemFactory = FakeSettingsItemFactory()
 
     private val viewModel = SettingsViewModel(
-        fakeCredentialsStore,
         fakeStoreCleaner,
         fakeContentResolver.instance,
         fakeCryptoService,
@@ -77,8 +76,8 @@ internal class SettingsViewModelTest {
     }
 
     @Test
-    fun `when sign out clicked, then clears credentials`() = runViewModelTest {
-        fakeCredentialsStore.expectUnit { it.clear() }
+    fun `when sign out clicked, then clears store`() = runViewModelTest {
+        fakeStoreCleaner.expectUnit { it.cleanCache(removeCredentials = true) }
         val aSignOutItem = aSettingTextItem(id = SettingItem.Id.SignOut)
 
         viewModel.test().onClick(aSignOutItem)

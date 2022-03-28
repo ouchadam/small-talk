@@ -3,10 +3,11 @@ package app.dapk.st.settings
 import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.Lce
+import app.dapk.st.core.log
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
-import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.settings.SettingItem.Id.*
@@ -19,7 +20,6 @@ import kotlinx.coroutines.launch
 private const val PRIVACY_POLICY_URL = "https://ouchadam.github.io/small-talk/privacy/"
 
 internal class SettingsViewModel(
-    private val credentialsStore: CredentialsStore,
     private val cacheCleaner: StoreCleaner,
     private val contentResolver: ContentResolver,
     private val cryptoService: CryptoService,
@@ -49,9 +49,9 @@ internal class SettingsViewModel(
         when (item.id) {
             SignOut -> {
                 viewModelScope.launch {
-                    credentialsStore.clear()
+                    log(AppLogTag.ERROR_NON_FATAL, "Sign out triggered")
+                    cacheCleaner.cleanCache(removeCredentials = true)
                     _events.emit(SignedOut)
-                    println("emitted")
                 }
             }
             AccessToken -> {

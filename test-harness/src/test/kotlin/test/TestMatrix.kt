@@ -157,6 +157,14 @@ class TestMatrix(
                 storeModule.roomStore(),
                 storeModule.syncStore(),
                 storeModule.filterStore(),
+                deviceNotifier = { services ->
+                    val encryptionService = services.deviceService()
+                    val cryptoService = services.cryptoService()
+                    DeviceNotifier { userIds, syncToken ->
+                        encryptionService.updateStaleDevices(userIds)
+                        cryptoService.updateOlmSession(userIds, syncToken)
+                    }
+                },
                 messageDecrypter = { serviceProvider ->
                     MessageDecrypter {
                         serviceProvider.cryptoService().decrypt(it)
@@ -220,14 +228,6 @@ class TestMatrix(
                                 )
                             }
                         )
-                    }
-                },
-                deviceNotifier = { services ->
-                    val encryptionService = services.deviceService()
-                    val cryptoService = services.cryptoService()
-                    DeviceNotifier { userIds, syncToken ->
-                        encryptionService.updateStaleDevices(userIds)
-                        cryptoService.updateOlmSession(userIds, syncToken)
                     }
                 },
                 oneTimeKeyProducer = { services ->

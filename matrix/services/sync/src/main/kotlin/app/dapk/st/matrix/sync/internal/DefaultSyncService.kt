@@ -2,6 +2,7 @@ package app.dapk.st.matrix.sync.internal
 
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.extensions.ErrorTracker
+import app.dapk.st.core.withIoContext
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.sync.*
@@ -12,10 +13,14 @@ import app.dapk.st.matrix.sync.internal.room.RoomEventsDecrypter
 import app.dapk.st.matrix.sync.internal.room.SyncEventDecrypter
 import app.dapk.st.matrix.sync.internal.room.SyncSideEffects
 import app.dapk.st.matrix.sync.internal.sync.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 import java.util.concurrent.atomic.AtomicInteger
+
+private val syncSubscriptionCount = AtomicInteger()
 
 internal class DefaultSyncService(
     httpClient: MatrixHttpClient,
@@ -34,11 +39,10 @@ internal class DefaultSyncService(
     roomMembersService: RoomMembersService,
     logger: MatrixLogger,
     errorTracker: ErrorTracker,
-    coroutineDispatchers: CoroutineDispatchers,
+    private val coroutineDispatchers: CoroutineDispatchers,
     syncConfig: SyncConfig,
 ) : SyncService {
 
-    private val syncSubscriptionCount = AtomicInteger()
     private val syncEventsFlow = MutableStateFlow<List<SyncService.SyncEvent>>(emptyList())
 
     private val roomDataSource by lazy { RoomDataSource(roomStore, logger) }
@@ -107,7 +111,7 @@ internal class DefaultSyncService(
     override fun events() = syncEventsFlow
     override suspend fun observeEvent(eventId: EventId) = roomStore.observeEvent(eventId)
     override suspend fun forceManualRefresh(roomIds: List<RoomId>) {
-        withContext(Dispatchers.IO) {
+        coroutineDispatchers.withIoContext {
             roomIds.map {
                 async {
                     roomRefresher.refreshRoomContent(it)?.also {
