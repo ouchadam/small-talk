@@ -36,6 +36,7 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomEvent.Message
 import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.navigator.Navigator
+import coil.compose.rememberImagePainter
 import kotlinx.coroutines.launch
 
 @Composable
@@ -155,27 +156,69 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState) {
             items = state.events,
             key = { _, item -> item.eventId.value },
         ) { index, item ->
+            val previousEvent = if (index != 0) state.events[index - 1] else null
+            val wasPreviousMessageSameSender = previousEvent?.author?.id == item.author.id
+
             when (item) {
-                is Message -> {
-                    val wasPreviousMessageSameSender = when (val previousEvent = if (index != 0) state.events[index - 1] else null) {
-                        null -> false
-                        is Message -> previousEvent.author.id == item.author.id
-                        is RoomEvent.Reply -> previousEvent.message.author.id == item.author.id
+                is Message -> Message(self, item, wasPreviousMessageSameSender)
+                is RoomEvent.Reply -> Reply(self, item, wasPreviousMessageSameSender)
+                is RoomEvent.Image -> Image(self, item, wasPreviousMessageSameSender)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LazyItemScope.Image(self: UserId, message: RoomEvent.Image, wasPreviousMessageSameSender: Boolean) {
+    when (message.author.id == self) {
+        true -> {
+            Box(modifier = Modifier.fillParentMaxWidth(), contentAlignment = Alignment.TopEnd) {
+                Box(modifier = Modifier.fillParentMaxWidth(0.85f), contentAlignment = Alignment.TopEnd) {
+                    Bubble(
+                        message = message,
+                        isNotSelf = false,
+                        wasPreviousMessageSameSender = wasPreviousMessageSameSender
+                    ) {
+                        Text(message.imageMeta.url)
+                        androidx.compose.foundation.Image(
+                            painter = rememberImagePainter(
+                                data = message.imageMeta.url,
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .align(Alignment.Center)
+                        )
                     }
-                    Message(self, item, wasPreviousMessageSameSender)
                 }
-                is RoomEvent.Reply -> {
-                    val wasPreviousMessageSameSender = when (val previousEvent = if (index != 0) state.events[index - 1] else null) {
-                        null -> false
-                        is Message -> previousEvent.author.id == item.message.author.id
-                        is RoomEvent.Reply -> previousEvent.message.author.id == item.message.author.id
-                    }
-                    Reply(self, item, wasPreviousMessageSameSender)
+            }
+        }
+        false -> {
+            Box(modifier = Modifier.fillParentMaxWidth(0.95f), contentAlignment = Alignment.TopStart) {
+                Bubble(
+                    message = message,
+                    isNotSelf = true,
+                    wasPreviousMessageSameSender = wasPreviousMessageSameSender
+                ) {
+                    Text(message.imageMeta.url)
+                    androidx.compose.foundation.Image(
+                        painter = rememberImagePainter(
+                            data = message.imageMeta.url,
+                            builder = {
+
+                            }
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .align(Alignment.Center)
+                    )
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun LazyItemScope.Message(self: UserId, message: Message, wasPreviousMessageSameSender: Boolean) {
@@ -243,7 +286,7 @@ private val othersBackgroundShape = RoundedCornerShape(0.dp, 12.dp, 12.dp, 12.dp
 
 @Composable
 private fun Bubble(
-    message: Message,
+    message: RoomEvent,
     isNotSelf: Boolean,
     wasPreviousMessageSameSender: Boolean,
     content: @Composable () -> Unit
@@ -346,13 +389,17 @@ private fun ReplyBubbleContent(shape: RoundedCornerShape, background: Color, isN
                         maxLines = 1,
                         color = MaterialTheme.colors.onPrimary
                     )
-                    Text(
-                        text = reply.replyingTo.content,
-                        color = MaterialTheme.colors.onPrimary,
-                        fontSize = 15.sp,
-                        modifier = Modifier.wrapContentSize(),
-                        textAlign = TextAlign.Start,
-                    )
+                    when (val replyingTo = reply.replyingTo) {
+                        is Message -> {
+                            Text(
+                                text = replyingTo.content,
+                                color = MaterialTheme.colors.onPrimary,
+                                fontSize = 15.sp,
+                                modifier = Modifier.wrapContentSize(),
+                                textAlign = TextAlign.Start,
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -365,13 +412,17 @@ private fun ReplyBubbleContent(shape: RoundedCornerShape, background: Color, isN
                         color = MaterialTheme.colors.onPrimary
                     )
                 }
-                Text(
-                    text = reply.message.content,
-                    color = MaterialTheme.colors.onPrimary,
-                    fontSize = 15.sp,
-                    modifier = Modifier.wrapContentSize(),
-                    textAlign = TextAlign.Start,
-                )
+                when (val message = reply.message) {
+                    is Message -> {
+                        Text(
+                            text = message.content,
+                            color = MaterialTheme.colors.onPrimary,
+                            fontSize = 15.sp,
+                            modifier = Modifier.wrapContentSize(),
+                            textAlign = TextAlign.Start,
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -391,7 +442,7 @@ private fun ReplyBubbleContent(shape: RoundedCornerShape, background: Color, isN
 
 
 @Composable
-private fun RowScope.SendStatus(message: Message) {
+private fun RowScope.SendStatus(message: RoomEvent) {
     when (val meta = message.meta) {
         MessageMeta.FromServer -> {
             // last message is self

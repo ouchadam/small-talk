@@ -22,6 +22,7 @@ private val A_TEXT_TIMELINE_EVENT = anApiTimelineTextEvent()
 private val A_MESSAGE_ROOM_EVENT = aRoomMessageEvent(anEventId("a-message"))
 private val AN_ENCRYPTED_ROOM_EVENT = anEncryptedRoomMessageEvent(anEventId("encrypted-message"))
 private val A_LOOKUP_EVENT_ID = anEventId("lookup-id")
+private val A_USER_CREDENTIALS = aUserCredentials()
 
 class TimelineEventsProcessorTest {
 
@@ -41,7 +42,7 @@ class TimelineEventsProcessorTest {
     fun `given a room with no events then returns empty`() = runTest {
         val previousEvents = emptyList<RoomEvent>()
         val roomToProcess = aRoomToProcess()
-        fakeRoomEventsDecrypter.givenDecrypts(previousEvents)
+        fakeRoomEventsDecrypter.givenDecrypts(A_USER_CREDENTIALS, previousEvents)
         fakeSyncEventDecrypter.givenDecrypts(roomToProcess.apiSyncRoom.timeline.apiTimelineEvents)
 
         val result = timelineEventsProcessor.process(roomToProcess, previousEvents)
@@ -54,11 +55,18 @@ class TimelineEventsProcessorTest {
         val previousEvents = listOf(aRoomMessageEvent(eventId = anEventId("previous-event")))
         val newTimelineEvents = listOf(AN_ENCRYPTED_TIMELINE_EVENT, A_TEXT_TIMELINE_EVENT)
         val roomToProcess = aRoomToProcess(apiSyncRoom = anApiSyncRoom(anApiSyncRoomTimeline(newTimelineEvents)))
-        fakeRoomEventsDecrypter.givenDecrypts(previousEvents)
+        fakeRoomEventsDecrypter.givenDecrypts(A_USER_CREDENTIALS, previousEvents)
         fakeSyncEventDecrypter.givenDecrypts(newTimelineEvents)
         fakeEventLookup.givenLookup(A_LOOKUP_EVENT_ID, DecryptedTimeline(newTimelineEvents), DecryptedRoomEvents(previousEvents), ANY_LOOKUP_RESULT)
         fakeRoomEventCreator.givenCreates(A_ROOM_ID, AN_ENCRYPTED_TIMELINE_EVENT, AN_ENCRYPTED_ROOM_EVENT)
-        fakeRoomEventCreator.givenCreatesUsingLookup(A_ROOM_ID, A_LOOKUP_EVENT_ID, A_TEXT_TIMELINE_EVENT, A_MESSAGE_ROOM_EVENT, ANY_LOOKUP_RESULT)
+        fakeRoomEventCreator.givenCreatesUsingLookup(
+            A_USER_CREDENTIALS,
+            A_ROOM_ID,
+            A_LOOKUP_EVENT_ID,
+            A_TEXT_TIMELINE_EVENT,
+            A_MESSAGE_ROOM_EVENT,
+            ANY_LOOKUP_RESULT
+        )
 
         val result = timelineEventsProcessor.process(roomToProcess, previousEvents)
 
@@ -79,7 +87,7 @@ class TimelineEventsProcessorTest {
             anIgnoredApiTimelineEvent()
         )
         val roomToProcess = aRoomToProcess(apiSyncRoom = anApiSyncRoom(anApiSyncRoomTimeline(newTimelineEvents)))
-        fakeRoomEventsDecrypter.givenDecrypts(previousEvents)
+        fakeRoomEventsDecrypter.givenDecrypts(A_USER_CREDENTIALS, previousEvents)
         fakeSyncEventDecrypter.givenDecrypts(newTimelineEvents)
 
         val result = timelineEventsProcessor.process(roomToProcess, previousEvents)

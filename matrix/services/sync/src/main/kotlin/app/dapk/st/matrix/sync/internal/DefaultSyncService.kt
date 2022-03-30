@@ -35,7 +35,7 @@ internal class DefaultSyncService(
     json: Json,
     oneTimeKeyProducer: MaybeCreateMoreKeys,
     scope: CoroutineScope,
-    credentialsStore: CredentialsStore,
+    private val credentialsStore: CredentialsStore,
     roomMembersService: RoomMembersService,
     logger: MatrixLogger,
     errorTracker: ErrorTracker,
@@ -57,7 +57,7 @@ internal class DefaultSyncService(
                 roomMembersService,
                 roomDataSource,
                 TimelineEventsProcessor(
-                    RoomEventCreator(roomMembersService, logger, errorTracker),
+                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService)),
                     roomEventsDecrypter,
                     eventDecrypter,
                     EventLookupUseCase(roomStore)
@@ -69,6 +69,7 @@ internal class DefaultSyncService(
             roomRefresher,
             roomDataSource,
             logger,
+            errorTracker,
             coroutineDispatchers,
         )
         SyncUseCase(
@@ -114,7 +115,7 @@ internal class DefaultSyncService(
         coroutineDispatchers.withIoContext {
             roomIds.map {
                 async {
-                    roomRefresher.refreshRoomContent(it)?.also {
+                    roomRefresher.refreshRoomContent(it, credentialsStore.credentials()!!)?.also {
                         overviewStore.persist(listOf(it.roomOverview))
                     }
                 }

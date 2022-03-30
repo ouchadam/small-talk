@@ -1,6 +1,7 @@
 package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.withIoContextAsync
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.common.MatrixLogTag.SYNC
@@ -16,6 +17,7 @@ internal class SyncReducer(
     private val roomRefresher: RoomRefresher,
     private val roomDataSource: RoomDataSource,
     private val logger: MatrixLogger,
+    private val errorTracker: ErrorTracker,
     private val coroutineDispatchers: CoroutineDispatchers,
 ) {
 
@@ -48,14 +50,14 @@ internal class SyncReducer(
                         isInitialSync = isInitialSync
                     )
                 }
-                    .onFailure { logger.matrixLog(SYNC, "failed to reduce: $roomId, skipping") }
+                    .onFailure { errorTracker.track(it, "failed to reduce: $roomId, skipping") }
                     .getOrNull()
             }
         } ?: emptyList()
 
         val roomsWithSideEffects = sideEffects.roomsToRefresh(alreadyHandledRooms = apiUpdatedRooms?.keys ?: emptySet()).map { roomId ->
             coroutineDispatchers.withIoContextAsync {
-                roomRefresher.refreshRoomContent(roomId)
+                roomRefresher.refreshRoomContent(roomId, userCredentials)
             }
         }
 
