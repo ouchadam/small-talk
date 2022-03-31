@@ -1,5 +1,6 @@
 package app.dapk.st.messenger
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -179,16 +180,9 @@ private fun LazyItemScope.Image(self: UserId, message: RoomEvent.Image, wasPrevi
                         isNotSelf = false,
                         wasPreviousMessageSameSender = wasPreviousMessageSameSender
                     ) {
-                        Text(message.imageMeta.url)
-                        androidx.compose.foundation.Image(
-                            painter = rememberImagePainter(
-                                data = message.imageMeta.url,
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(100.dp)
-                                .align(Alignment.Center)
-                        )
+                        Box {
+                            MessageImage(message)
+                        }
                     }
                 }
             }
@@ -200,25 +194,29 @@ private fun LazyItemScope.Image(self: UserId, message: RoomEvent.Image, wasPrevi
                     isNotSelf = true,
                     wasPreviousMessageSameSender = wasPreviousMessageSameSender
                 ) {
-                    Text(message.imageMeta.url)
-                    androidx.compose.foundation.Image(
-                        painter = rememberImagePainter(
-                            data = message.imageMeta.url,
-                            builder = {
-
-                            }
-                        ),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(100.dp)
-                            .align(Alignment.Center)
-                    )
+                    Box {
+                        MessageImage(message)
+                    }
                 }
             }
         }
     }
 }
 
+@Composable
+private fun MessageImage(message: RoomEvent.Image) {
+    val width = with(LocalDensity.current) { message.imageMeta.width.toDp() }
+    val height = with(LocalDensity.current) { message.imageMeta.height.toDp() }
+
+    Image(
+        modifier = Modifier.size(width, height),
+        painter = rememberImagePainter(
+            data = message,
+            builder = { fetcher(DecryptingFetcher()) }
+        ),
+        contentDescription = null,
+    )
+}
 
 @Composable
 private fun LazyItemScope.Message(self: UserId, message: Message, wasPreviousMessageSameSender: Boolean) {

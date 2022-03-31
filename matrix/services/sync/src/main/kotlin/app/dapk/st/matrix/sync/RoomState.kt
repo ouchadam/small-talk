@@ -93,7 +93,18 @@ sealed class RoomEvent {
             @SerialName("width") val width: Int,
             @SerialName("height") val height: Int,
             @SerialName("url") val url: String,
-        )
+            @SerialName("keys") val keys: Keys?,
+        ) {
+
+            @Serializable
+            data class Keys(
+                @SerialName("k") val k: String,
+                @SerialName("iv") val iv: String,
+                @SerialName("v") val v: String,
+                @SerialName("hashes") val hashes: Map<String, String>,
+            )
+
+        }
     }
 
 }

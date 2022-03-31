@@ -459,7 +459,8 @@ internal sealed class ApiTimelineEvent {
 
             @Serializable
             data class Image(
-                @SerialName("file") val file: File,
+                @SerialName("url") val url: MxUrl? = null,
+                @SerialName("file") val file: File? = null,
                 @SerialName("info") val info: Info,
                 @SerialName("m.relates_to") override val relation: Relation? = null,
                 @SerialName("msgtype") val messageType: String = "m.image",
@@ -468,14 +469,24 @@ internal sealed class ApiTimelineEvent {
                 @Serializable
                 data class File(
                     @SerialName("url") val url: MxUrl,
-                )
+                    @SerialName("iv") val iv: String,
+                    @SerialName("v") val v: String,
+                    @SerialName("hashes") val hashes: Map<String, String>,
+                    @SerialName("key") val key: Key,
+                ) {
+
+                    @Serializable
+                    data class Key(
+                        @SerialName("k") val k: String,
+                    )
+
+                }
 
                 @Serializable
                 internal data class Info(
                     @SerialName("h") val height: Int,
                     @SerialName("w") val width: Int,
                 )
-
             }
 
             @Serializable
@@ -553,10 +564,7 @@ internal object ApiTimelineMessageContentDeserializer : KSerializer<ApiTimelineE
         val element = decoder.decodeJsonElement()
         return when (element.jsonObject["msgtype"]?.jsonPrimitive?.content) {
             "m.text" -> ApiTimelineEvent.TimelineMessage.Content.Text.serializer().deserialize(decoder)
-            "m.image" -> when (element.jsonObject["file"]) {
-                null -> ApiTimelineEvent.TimelineMessage.Content.Ignored
-                else -> ApiTimelineEvent.TimelineMessage.Content.Image.serializer().deserialize(decoder)
-            }
+            "m.image" -> ApiTimelineEvent.TimelineMessage.Content.Image.serializer().deserialize(decoder)
             else -> {
                 println(element)
                 ApiTimelineEvent.TimelineMessage.Content.Ignored
