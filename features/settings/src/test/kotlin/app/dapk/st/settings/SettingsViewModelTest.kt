@@ -29,7 +29,6 @@ internal class SettingsViewModelTest {
 
     private val runViewModelTest = ViewModelTest()
 
-    private val fakeCredentialsStore = FakeCredentialsStore()
     private val fakeStoreCleaner = FakeStoreCleaner()
     private val fakeContentResolver = FakeContentResolver()
     private val fakeCryptoService = FakeCryptoService()

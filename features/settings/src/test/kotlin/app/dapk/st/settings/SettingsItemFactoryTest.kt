@@ -20,6 +20,8 @@ class SettingsItemFactoryTest {
             aSettingHeaderItem("General"),
             aSettingTextItem(SettingItem.Id.Encryption, "Encryption"),
             aSettingTextItem(SettingItem.Id.EventLog, "Event log"),
+            aSettingHeaderItem("Data"),
+            aSettingTextItem(SettingItem.Id.ClearCache, "Clear cache"),
             aSettingHeaderItem("Account"),
             aSettingTextItem(SettingItem.Id.SignOut, "Sign out"),
             aSettingHeaderItem("About"),
