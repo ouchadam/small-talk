@@ -11,9 +11,11 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,6 +27,7 @@ import app.dapk.st.core.StartObserving
 import app.dapk.st.login.LoginEvent.LoginComplete
 import app.dapk.st.login.LoginScreenState.*
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
     loginViewModel.ObserveEvents(onLoggedIn)
@@ -34,6 +37,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
 
     var userName by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     when (loginViewModel.state) {
         is Error -> {
@@ -117,7 +121,10 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
 
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { loginViewModel.login(userName, password) },
+                        onClick = {
+                            keyboardController?.hide()
+                            loginViewModel.login(userName, password)
+                        },
                         enabled = canDoLoginAttempt
                     ) {
                         Text("Sign in".uppercase(), fontSize = 18.sp)
