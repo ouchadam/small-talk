@@ -180,9 +180,7 @@ private fun LazyItemScope.Image(self: UserId, message: RoomEvent.Image, wasPrevi
                         isNotSelf = false,
                         wasPreviousMessageSameSender = wasPreviousMessageSameSender
                     ) {
-                        Box {
-                            MessageImage(message)
-                        }
+                        MessageImage(selfBackgroundShape, SmallTalkTheme.extendedColors.selfBubble, false, message)
                     }
                 }
             }
@@ -194,9 +192,7 @@ private fun LazyItemScope.Image(self: UserId, message: RoomEvent.Image, wasPrevi
                     isNotSelf = true,
                     wasPreviousMessageSameSender = wasPreviousMessageSameSender
                 ) {
-                    Box {
-                        MessageImage(message)
-                    }
+                    MessageImage(othersBackgroundShape, SmallTalkTheme.extendedColors.othersBubble, true, message)
                 }
             }
         }
@@ -204,18 +200,59 @@ private fun LazyItemScope.Image(self: UserId, message: RoomEvent.Image, wasPrevi
 }
 
 @Composable
-private fun MessageImage(message: RoomEvent.Image) {
-    val width = with(LocalDensity.current) { message.imageMeta.width.toDp() }
-    val height = with(LocalDensity.current) { message.imageMeta.height.toDp() }
+private fun MessageImage(shape: RoundedCornerShape, background: Color, isNotSelf: Boolean, message: RoomEvent.Image) {
+    Box(modifier = Modifier.padding(start = 6.dp)) {
+        Box(
+            Modifier
+                .padding(4.dp)
+                .clip(shape)
+                .background(background)
+                .height(IntrinsicSize.Max),
+        ) {
+            Column(
+                Modifier
+                    .padding(8.dp)
+                    .width(IntrinsicSize.Max)
+                    .defaultMinSize(minWidth = 50.dp)
+            ) {
+                if (isNotSelf) {
+                    Text(
+                        fontSize = 11.sp,
+                        text = message.author.displayName ?: message.author.id.value,
+                        maxLines = 1,
+                        color = MaterialTheme.colors.onPrimary
+                    )
+                }
 
-    Image(
-        modifier = Modifier.size(width, height),
-        painter = rememberImagePainter(
-            data = message,
-            builder = { fetcher(DecryptingFetcher()) }
-        ),
-        contentDescription = null,
-    )
+                val width = with(LocalDensity.current) { message.imageMeta.width.toDp() }
+                val height = with(LocalDensity.current) { message.imageMeta.height.toDp() }
+                Spacer(modifier = Modifier.height(4.dp))
+                Image(
+                    modifier = Modifier.size(width, height),
+                    painter = rememberImagePainter(
+                        data = message,
+                        builder = { fetcher(DecryptingFetcher()) }
+                    ),
+                    contentDescription = null,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    val editedPrefix = if (message.edited) "(edited) " else null
+                    Text(
+                        fontSize = 9.sp,
+                        text = "${editedPrefix ?: ""}${message.time}",
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colors.onPrimary,
+                        modifier = Modifier.wrapContentSize()
+                    )
+                    SendStatus(message)
+                }
+            }
+        }
+    }
+
+
 }
 
 @Composable
