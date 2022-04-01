@@ -42,6 +42,7 @@ internal class UnreadEventsUseCase(
                     when (it) {
                         is RoomEvent.Message -> it.author.id == selfId
                         is RoomEvent.Reply -> it.message.author.id == selfId
+                        is RoomEvent.Image -> it.author.id == selfId
                     }
                 }.map { it.eventId }
                 roomStore.insertUnread(overview.roomId, eventsFromOthers)

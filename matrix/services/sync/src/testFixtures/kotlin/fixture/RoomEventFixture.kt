@@ -15,8 +15,8 @@ fun aRoomMessageEvent(
 ) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, encryptedContent, edited)
 
 fun aRoomReplyMessageEvent(
-    message: RoomEvent.Message = aRoomMessageEvent(),
-    replyingTo: RoomEvent.Message = aRoomMessageEvent(eventId = anEventId("in-reply-to-id")),
+    message: RoomEvent = aRoomMessageEvent(),
+    replyingTo: RoomEvent = aRoomMessageEvent(eventId = anEventId("in-reply-to-id")),
 ) = RoomEvent.Reply(message, replyingTo)
 
 fun anEncryptedRoomMessageEvent(

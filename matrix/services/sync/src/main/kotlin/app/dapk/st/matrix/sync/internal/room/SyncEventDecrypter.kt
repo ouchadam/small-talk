@@ -39,7 +39,11 @@ internal class SyncEventDecrypter(
                     is DecryptedContent.TimelineText -> ApiTimelineEvent.TimelineMessage(
                         event.eventId,
                         event.senderId,
-                        it.content.copy(relation = relation),
+                        when (it.content) {
+                            is ApiTimelineEvent.TimelineMessage.Content.Image -> it.content.copy(relation = relation)
+                            is ApiTimelineEvent.TimelineMessage.Content.Text -> it.content.copy(relation = relation)
+                            ApiTimelineEvent.TimelineMessage.Content.Ignored -> it.content
+                        },
                         event.utcTimestamp,
                     ).also { logger.matrixLog("decrypted to timeline text: $it") }
                     DecryptedContent.Ignored -> event

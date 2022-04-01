@@ -22,9 +22,10 @@ internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
         }
     }
 
-    fun RoomEvent.mergeWith(echo: MessageService.LocalEcho) = when (this) {
+    fun RoomEvent.mergeWith(echo: MessageService.LocalEcho): RoomEvent = when (this) {
         is RoomEvent.Message -> this.copy(meta = metaMapper.toMeta(echo))
-        is RoomEvent.Reply -> this.copy(message = this.message.copy(meta = metaMapper.toMeta(echo)))
+        is RoomEvent.Reply -> this.copy(message = this.message.mergeWith(echo))
+        is RoomEvent.Image -> this.copy(meta = metaMapper.toMeta(echo))
     }
 }
 
