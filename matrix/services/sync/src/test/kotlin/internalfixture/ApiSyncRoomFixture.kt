@@ -39,9 +39,8 @@ internal fun anApiTimelineTextEvent(
 internal fun aTimelineTextEventContent(
     body: String? = null,
     formattedBody: String? = null,
-    type: String? = null,
     relation: ApiTimelineEvent.TimelineMessage.Relation? = null,
-) = ApiTimelineEvent.TimelineMessage.Content(body, formattedBody, type, relation)
+) = ApiTimelineEvent.TimelineMessage.Content.Text(body, formattedBody, relation)
 
 internal fun anEditRelation(originalId: EventId) = ApiTimelineEvent.TimelineMessage.Relation(
     relationType = "m.replace",

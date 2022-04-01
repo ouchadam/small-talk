@@ -22,6 +22,7 @@ private object ARoom {
     val DECRYPTED_EVENTS = listOf(MESSAGE_EVENT, DECRYPTED_EVENT)
     val NEW_STATE = RoomState(aRoomOverview(lastMessage = DECRYPTED_EVENT.asLastMessage()), DECRYPTED_EVENTS)
 }
+private val A_USER_CREDENTIALS = aUserCredentials()
 
 internal class RoomRefresherTest {
 
@@ -38,7 +39,7 @@ internal class RoomRefresherTest {
     fun `given no existing room when refreshing then does nothing`() = runTest {
         fakeRoomDataSource.givenNoCachedRoom(A_ROOM_ID)
 
-        val result = roomRefresher.refreshRoomContent(aRoomId())
+        val result = roomRefresher.refreshRoomContent(aRoomId(), A_USER_CREDENTIALS)
 
         result shouldBeEqualTo null
         fakeRoomDataSource.verifyNoChanges()
@@ -48,9 +49,9 @@ internal class RoomRefresherTest {
     fun `given existing room when refreshing then processes existing state`() = runTest {
         fakeRoomDataSource.expect { it.instance.persist(RoomId(any()), any(), any()) }
         fakeRoomDataSource.givenRoom(A_ROOM_ID, ARoom.PREVIOUS_STATE)
-        fakeRoomEventsDecrypter.givenDecrypts(ARoom.PREVIOUS_STATE.events, ARoom.DECRYPTED_EVENTS)
+        fakeRoomEventsDecrypter.givenDecrypts(A_USER_CREDENTIALS, ARoom.PREVIOUS_STATE.events, ARoom.DECRYPTED_EVENTS)
 
-        val result = roomRefresher.refreshRoomContent(aRoomId())
+        val result = roomRefresher.refreshRoomContent(aRoomId(), A_USER_CREDENTIALS)
 
         fakeRoomDataSource.verifyRoomUpdated(ARoom.PREVIOUS_STATE, ARoom.NEW_STATE)
         result shouldBeEqualTo ARoom.NEW_STATE

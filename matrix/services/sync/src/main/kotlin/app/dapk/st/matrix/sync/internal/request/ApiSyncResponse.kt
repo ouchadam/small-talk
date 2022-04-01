@@ -445,13 +445,55 @@ internal sealed class ApiTimelineEvent {
         @SerialName("st.decryption_status") val decryptionStatus: DecryptionStatus? = null
     ) : ApiTimelineEvent() {
 
-        @Serializable
-        internal data class Content(
-            @SerialName("body") val body: String? = null,
-            @SerialName("formatted_body") val formattedBody: String? = null,
-            @SerialName("msgtype") val type: String? = null,
-            @SerialName("m.relates_to") val relation: Relation? = null,
-        )
+        @Serializable(with = ApiTimelineMessageContentDeserializer::class)
+        internal sealed interface Content {
+            val relation: Relation?
+
+            @Serializable
+            data class Text(
+                @SerialName("body") val body: String? = null,
+                @SerialName("formatted_body") val formattedBody: String? = null,
+                @SerialName("m.relates_to") override val relation: Relation? = null,
+                @SerialName("msgtype") val messageType: String = "m.text",
+            ) : Content
+
+            @Serializable
+            data class Image(
+                @SerialName("url") val url: MxUrl? = null,
+                @SerialName("file") val file: File? = null,
+                @SerialName("info") val info: Info,
+                @SerialName("m.relates_to") override val relation: Relation? = null,
+                @SerialName("msgtype") val messageType: String = "m.image",
+            ) : Content {
+
+                @Serializable
+                data class File(
+                    @SerialName("url") val url: MxUrl,
+                    @SerialName("iv") val iv: String,
+                    @SerialName("v") val v: String,
+                    @SerialName("hashes") val hashes: Map<String, String>,
+                    @SerialName("key") val key: Key,
+                ) {
+
+                    @Serializable
+                    data class Key(
+                        @SerialName("k") val k: String,
+                    )
+
+                }
+
+                @Serializable
+                internal data class Info(
+                    @SerialName("h") val height: Int,
+                    @SerialName("w") val width: Int,
+                )
+            }
+
+            @Serializable
+            object Ignored : Content {
+                override val relation: Relation? = null
+            }
+        }
 
         @Serializable
         data class Relation(
@@ -510,5 +552,30 @@ internal object EncryptedContentDeserializer : KSerializer<ApiEncryptedContent> 
     }
 
     override fun serialize(encoder: Encoder, value: ApiEncryptedContent) = TODO("Not yet implemented")
+
+}
+
+internal object ApiTimelineMessageContentDeserializer : KSerializer<ApiTimelineEvent.TimelineMessage.Content> {
+
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("messageContent")
+
+    override fun deserialize(decoder: Decoder): ApiTimelineEvent.TimelineMessage.Content {
+        require(decoder is JsonDecoder)
+        val element = decoder.decodeJsonElement()
+        return when (element.jsonObject["msgtype"]?.jsonPrimitive?.content) {
+            "m.text" -> ApiTimelineEvent.TimelineMessage.Content.Text.serializer().deserialize(decoder)
+            "m.image" -> ApiTimelineEvent.TimelineMessage.Content.Image.serializer().deserialize(decoder)
+            else -> {
+                println(element)
+                ApiTimelineEvent.TimelineMessage.Content.Ignored
+            }
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: ApiTimelineEvent.TimelineMessage.Content) = when (value) {
+        ApiTimelineEvent.TimelineMessage.Content.Ignored -> {}
+        is ApiTimelineEvent.TimelineMessage.Content.Image -> ApiTimelineEvent.TimelineMessage.Content.Image.serializer().serialize(encoder, value)
+        is ApiTimelineEvent.TimelineMessage.Content.Text -> ApiTimelineEvent.TimelineMessage.Content.Text.serializer().serialize(encoder, value)
+    }
 
 }

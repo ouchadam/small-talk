@@ -26,12 +26,13 @@ private val A_TEXT_EVENT_WITHOUT_CONTENT = anApiTimelineTextEvent(
     senderId = A_SENDER.id,
     content = aTimelineTextEventContent(body = null)
 )
+private val A_USER_CREDENTIALS = aUserCredentials()
 
 internal class RoomEventCreatorTest {
 
     private val fakeRoomMembersService = FakeRoomMembersService()
 
-    private val roomEventCreator = RoomEventCreator(fakeRoomMembersService, FakeMatrixLogger(), FakeErrorTracker())
+    private val roomEventCreator = RoomEventCreator(fakeRoomMembersService, FakeErrorTracker(), RoomEventFactory(fakeRoomMembersService))
 
     @Test
     fun `given Megolm encrypted event then maps to encrypted room message`() = runTest {
@@ -71,7 +72,7 @@ internal class RoomEventCreatorTest {
     fun `given text event then maps to room message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
 
-        val result = with(roomEventCreator) { A_TEXT_EVENT.toRoomEvent(A_ROOM_ID, EMPTY_LOOKUP) }
+        val result = with(roomEventCreator) { A_TEXT_EVENT.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
 
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = A_TEXT_EVENT.id,
@@ -85,7 +86,7 @@ internal class RoomEventCreatorTest {
     fun `given text event without body then maps to redacted room message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
 
-        val result = with(roomEventCreator) { A_TEXT_EVENT_WITHOUT_CONTENT.toRoomEvent(A_ROOM_ID, EMPTY_LOOKUP) }
+        val result = with(roomEventCreator) { A_TEXT_EVENT_WITHOUT_CONTENT.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
 
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = A_TEXT_EVENT_WITHOUT_CONTENT.id,
@@ -100,12 +101,12 @@ internal class RoomEventCreatorTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val editEvent = anApiTimelineTextEvent().toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE)
 
-        val result = with(roomEventCreator) { editEvent.toRoomEvent(A_ROOM_ID, EMPTY_LOOKUP) }
+        val result = with(roomEventCreator) { editEvent.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
 
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = editEvent.id,
             utcTimestamp = editEvent.utcTimestamp,
-            content = editEvent.content.body!!,
+            content = editEvent.asTextContent().body!!,
             author = A_SENDER,
             edited = true
         )
@@ -118,7 +119,7 @@ internal class RoomEventCreatorTest {
         val editedMessage = originalMessage.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = originalMessage.id,
@@ -136,7 +137,7 @@ internal class RoomEventCreatorTest {
         val editedMessage = originalMessage.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = originalMessage.eventId,
@@ -151,10 +152,10 @@ internal class RoomEventCreatorTest {
     fun `given edited event which relates to a room reply event then only updates message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = aRoomReplyMessageEvent(message = aRoomMessageEvent())
-        val editedMessage = originalMessage.message.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editedMessage = (originalMessage.message as RoomEvent.Message).toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo aRoomReplyMessageEvent(
             replyingTo = originalMessage.replyingTo,
@@ -174,7 +175,7 @@ internal class RoomEventCreatorTest {
         val editedMessage = originalMessage.toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo null
     }
@@ -185,22 +186,23 @@ internal class RoomEventCreatorTest {
         val editedMessage = originalMessage.toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo null
     }
 
     @Test
-    fun `given reply event with no relation then maps to new room message`() = runTest {
+    fun `given reply event with no relation then maps to new room message using the full body`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val replyEvent = anApiTimelineTextEvent().toReplyEvent(messageContent = A_TEXT_EVENT_MESSAGE)
 
-        val result = with(roomEventCreator) { replyEvent.toRoomEvent(A_ROOM_ID, EMPTY_LOOKUP) }
+        println(replyEvent.content)
+        val result = with(roomEventCreator) { replyEvent.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
 
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = replyEvent.id,
             utcTimestamp = replyEvent.utcTimestamp,
-            content = "${replyEvent.content.body}",
+            content = replyEvent.asTextContent().body!!,
             author = A_SENDER,
         )
     }
@@ -212,13 +214,13 @@ internal class RoomEventCreatorTest {
         val replyMessage = originalMessage.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo aRoomReplyMessageEvent(
             replyingTo = aRoomMessageEvent(
                 eventId = originalMessage.id,
                 utcTimestamp = originalMessage.utcTimestamp,
-                content = originalMessage.content.body!!,
+                content = originalMessage.asTextContent().body!!,
                 author = A_SENDER,
             ),
             message = aRoomMessageEvent(
@@ -237,7 +239,7 @@ internal class RoomEventCreatorTest {
         val replyMessage = originalMessage.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo aRoomReplyMessageEvent(
             replyingTo = originalMessage,
@@ -254,10 +256,10 @@ internal class RoomEventCreatorTest {
     fun `given reply event which relates to another room reply event then maps to reply with the reply's message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = aRoomReplyMessageEvent()
-        val replyMessage = originalMessage.message.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
+        val replyMessage = (originalMessage.message as RoomEvent.Message).toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
         val lookup = givenLookup(originalMessage)
 
-        val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_ROOM_ID, lookup) }
+        val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
 
         result shouldBeEqualTo aRoomReplyMessageEvent(
             replyingTo = originalMessage.message,
@@ -327,3 +329,5 @@ private fun ApiEncryptedContent.toMegolm(): RoomEvent.Message.MegOlmV1 {
 private class FakeLookup(private val result: LookupResult) : suspend (EventId) -> LookupResult {
     override suspend fun invoke(p1: EventId) = result
 }
+
+private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text

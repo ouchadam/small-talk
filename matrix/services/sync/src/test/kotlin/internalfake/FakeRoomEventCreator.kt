@@ -2,6 +2,7 @@ package internalfake
 
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
 import app.dapk.st.matrix.sync.internal.sync.LookupResult
@@ -18,9 +19,16 @@ internal class FakeRoomEventCreator {
         coEvery { with(instance) { event.toRoomEvent(roomId) } } returns result
     }
 
-    fun givenCreatesUsingLookup(roomId: RoomId, eventIdToLookup: EventId, event: ApiTimelineEvent.TimelineMessage, result: RoomEvent, lookupResult: LookupResult) {
+    fun givenCreatesUsingLookup(
+        userCredentials: UserCredentials,
+        roomId: RoomId,
+        eventIdToLookup: EventId,
+        event: ApiTimelineEvent.TimelineMessage,
+        result: RoomEvent,
+        lookupResult: LookupResult
+    ) {
         val slot = slot<suspend (EventId) -> LookupResult>()
-        coEvery { with(instance) { event.toRoomEvent(roomId, capture(slot)) } } answers {
+        coEvery { with(instance) { event.toRoomEvent(userCredentials, roomId, capture(slot)) } } answers {
             runBlocking {
                 if (slot.captured.invoke(eventIdToLookup) == lookupResult) {
                     result
