@@ -8,6 +8,8 @@ internal class SettingsItemFactory(private val buildMeta: BuildMeta) {
         SettingItem.Header("General"),
         SettingItem.Text(SettingItem.Id.Encryption, "Encryption"),
         SettingItem.Text(SettingItem.Id.EventLog, "Event log"),
+        SettingItem.Header("Data"),
+        SettingItem.Text(SettingItem.Id.ClearCache, "Clear cache"),
         SettingItem.Header("Account"),
         SettingItem.Text(SettingItem.Id.SignOut, "Sign out"),
         SettingItem.Header("About"),

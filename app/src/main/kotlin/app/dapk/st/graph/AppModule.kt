@@ -77,17 +77,21 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
             preferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", coroutineDispatchers),
             errorTracker = trackingModule.errorTracker,
             credentialPreferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-credentials-preferences", coroutineDispatchers),
-            databaseDropper = { includeCryptoAccount ->
+            databaseDropper = { deleteCrypto ->
                 val cursor = driver.executeQuery(
                     identifier = null,
-                    sql = "SELECT name FROM sqlite_master WHERE type = 'table' ${if (includeCryptoAccount) "" else "AND name != 'dbCryptoAccount'"}",
+                    sql = "SELECT name FROM sqlite_master WHERE type = 'table'",
                     parameters = 0
                 )
                 cursor.use {
                     while (cursor.next()) {
                         cursor.getString(0)?.let {
-                            log(AppLogTag.ERROR_NON_FATAL, "Deleting $it")
-                            driver.execute(null, "DELETE FROM $it", 0)
+                            if (!deleteCrypto && it.startsWith("dbCrypto")) {
+                                // skip
+                            } else {
+                                log(AppLogTag.ERROR_NON_FATAL, "Deleting $it")
+                                driver.execute(null, "DELETE FROM $it", 0)
+                            }
                         }
                     }
                 }

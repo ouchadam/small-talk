@@ -3,9 +3,7 @@ package app.dapk.st.settings
 import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.Lce
-import app.dapk.st.core.log
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.matrix.crypto.CryptoService
@@ -37,7 +35,6 @@ internal class SettingsViewModel(
             val root = Page.Root(Lce.Content(settingsItemFactory.root()))
             val rootPage = SpiderPage(Page.Routes.root, "Settings", null, root)
             updateState { copy(page = rootPage) }
-            println("state updated")
         }
     }
 
@@ -49,7 +46,6 @@ internal class SettingsViewModel(
         when (item.id) {
             SignOut -> {
                 viewModelScope.launch {
-                    log(AppLogTag.ERROR_NON_FATAL, "Sign out triggered")
                     cacheCleaner.cleanCache(removeCredentials = true)
                     _events.emit(SignedOut)
                 }
