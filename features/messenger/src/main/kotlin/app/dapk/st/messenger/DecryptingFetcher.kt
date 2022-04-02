@@ -27,6 +27,9 @@ class DecryptingFetcher : Fetcher<RoomEvent.Image> {
     private val http = OkHttpClient()
 
     override suspend fun fetch(pool: BitmapPool, data: RoomEvent.Image, size: Size, options: Options): FetchResult {
+        val response = http.newCall(Request.Builder().url(data.imageMeta.url).build()).execute()
+        val outputStream = Buffer()
+
         val keys = data.imageMeta.keys!!
         val key = Base64.decode(keys.k.replace('-', '+').replace('_', '/'), Base64.DEFAULT)
         val initVectorBytes = Base64.decode(keys.iv, Base64.DEFAULT)
@@ -41,9 +44,6 @@ class DecryptingFetcher : Fetcher<RoomEvent.Image> {
         var read: Int
         val d = ByteArray(CRYPTO_BUFFER_SIZE)
         var decodedBytes: ByteArray
-
-        val response = http.newCall(Request.Builder().url(data.imageMeta.url).build()).execute()
-        val outputStream = Buffer()
 
         response.body()?.let {
             it.byteStream().use {
