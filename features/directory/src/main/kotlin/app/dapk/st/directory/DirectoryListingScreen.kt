@@ -13,23 +13,27 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
+import app.dapk.st.design.components.Toolbar
 import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
 import app.dapk.st.directory.DirectoryScreenState.Content
 import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
@@ -44,6 +48,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.math.roundToInt
 
 @Composable
 fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
@@ -54,21 +59,42 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
         onStop = { directoryViewModel.stop() }
     )
 
-    when (state) {
-        is Content -> {
-            Content(state)
+    val toolbarHeight = 72.dp
+    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.roundToPx().toFloat() }
+    val toolbarOffsetHeightPx = remember { mutableStateOf(0f) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                val newOffset = toolbarOffsetHeightPx.value + delta
+                toolbarOffsetHeightPx.value = newOffset.coerceIn(-toolbarHeightPx, 0f)
+                return Offset.Zero
+            }
         }
-        EmptyLoading -> CenteredLoading()
-        is Error -> {
-            Box(contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Something went wrong...")
-                    Button(onClick = {}) {
-                        Text("Retry")
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(nestedScrollConnection)
+    ) {
+        when (state) {
+            is Content -> {
+                Content(state)
+            }
+            EmptyLoading -> CenteredLoading()
+            is Error -> {
+                Box(contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Something went wrong...")
+                        Button(onClick = {}) {
+                            Text("Retry")
+                        }
                     }
                 }
             }
         }
+        Toolbar(title = "Messages", offset = { IntOffset(x = 0, y = toolbarOffsetHeightPx.value.roundToInt()) })
     }
 }
 
@@ -103,7 +129,7 @@ private fun Content(state: Content) {
             scope.launch { listState.scrollToItem(0) }
         }
     }
-    LazyColumn(Modifier.fillMaxSize(), state = listState) {
+    LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(top = 72.dp)) {
         items(
             items = state.overviewState,
             key = { it.overview.roomId.value },
