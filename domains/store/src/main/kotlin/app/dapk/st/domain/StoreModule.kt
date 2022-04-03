@@ -34,6 +34,8 @@ class StoreModule(
     fun filterStore(): FilterStore = FilterPreferences(preferences)
     val localEchoStore: LocalEchoStore by unsafeLazy { LocalEchoPersistence(errorTracker, database) }
 
+    fun applicationStore() = ApplicationPreferences(preferences)
+
     fun olmStore() = OlmPersistence(database, credentialsStore())
     fun knownDevicesStore() = DevicePersistence(database, KnownDevicesCache(), coroutineDispatchers)
 

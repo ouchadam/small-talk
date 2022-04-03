@@ -8,7 +8,7 @@ import org.junit.Test
 
 class SettingsItemFactoryTest {
 
-    private val buildMeta = BuildMeta(versionName = "a-version-name")
+    private val buildMeta = BuildMeta(versionName = "a-version-name", versionCode = 100)
 
     private val settingsItemFactory = SettingsItemFactory(buildMeta)
 
