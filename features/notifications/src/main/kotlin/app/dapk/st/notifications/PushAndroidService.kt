@@ -7,6 +7,7 @@ import app.dapk.st.core.log
 import app.dapk.st.core.module
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.work.WorkScheduler
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.*
@@ -29,10 +30,13 @@ class PushAndroidService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         log(PUSH, "new push token received")
-        GlobalScope.launch {
-            module.pushUseCase().registerPush(token)
-            log(PUSH, "token registered")
-        }
+        module.workScheduler().schedule(
+            WorkScheduler.WorkTask(
+                type = "push_token",
+                jobId = 2,
+                jsonPayload = token
+            )
+        )
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

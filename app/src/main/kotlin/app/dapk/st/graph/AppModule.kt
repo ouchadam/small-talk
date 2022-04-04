@@ -32,6 +32,7 @@ import app.dapk.st.matrix.device.internal.ApiMessage
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.*
+import app.dapk.st.matrix.push.PushService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
@@ -54,6 +55,7 @@ import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
 import app.dapk.st.work.WorkScheduler
 import com.squareup.sqldelight.android.AndroidSqliteDriver
+import io.ktor.client.features.*
 import kotlinx.coroutines.Dispatchers
 import java.time.Clock
 
@@ -118,6 +120,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         matrixModules,
         domainModules,
         trackingModule,
+        workModule,
         imageLoaderModule,
         context,
         buildMeta,
@@ -131,6 +134,7 @@ internal class FeatureModules internal constructor(
     private val matrixModules: MatrixModules,
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
+    private val workModule: WorkModule,
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
@@ -187,6 +191,7 @@ internal class FeatureModules internal constructor(
             imageLoaderModule.iconLoader(),
             storeModule.value.roomStore(),
             context,
+            workModule.workScheduler(),
         )
     }
 
@@ -395,7 +400,7 @@ internal class DomainModules(
 ) {
 
     val pushModule by unsafeLazy { PushModule(matrixModules.push, errorTracker) }
-    val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run)) }
+    val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
 }
 
 class BackgroundWorkAdapter(private val workScheduler: WorkScheduler) : BackgroundScheduler {
@@ -410,14 +415,50 @@ class BackgroundWorkAdapter(private val workScheduler: WorkScheduler) : Backgrou
     }
 }
 
-class TaskRunnerAdapter(private val matrixTaskRunner: suspend (MatrixTask) -> MatrixTaskRunner.TaskResult) : TaskRunner {
+class TaskRunnerAdapter(
+    private val matrixTaskRunner: suspend (MatrixTask) -> MatrixTaskRunner.TaskResult,
+    private val appTaskRunner: AppTaskRunner,
+) : TaskRunner {
 
     override suspend fun run(tasks: List<TaskRunner.RunnableWorkTask>): List<TaskRunner.TaskResult> {
         return tasks.map {
-            when (val result = matrixTaskRunner(MatrixTask(it.task.type, it.task.jsonPayload))) {
-                is MatrixTaskRunner.TaskResult.Failure -> TaskRunner.TaskResult.Failure(it.source, canRetry = result.canRetry)
-                MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success(it.source)
+            when {
+                it.task.type.startsWith("matrix") -> {
+                    when (val result = matrixTaskRunner(MatrixTask(it.task.type, it.task.jsonPayload))) {
+                        is MatrixTaskRunner.TaskResult.Failure -> TaskRunner.TaskResult.Failure(it.source, canRetry = result.canRetry)
+                        MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success(it.source)
+                    }
+                }
+                else -> appTaskRunner.run(it)
             }
         }
     }
+}
+
+class AppTaskRunner(
+    private val pushService: PushService,
+) {
+
+    suspend fun run(workTask: TaskRunner.RunnableWorkTask): TaskRunner.TaskResult {
+        return when (val type = workTask.task.type) {
+            "push_token" -> {
+                runCatching {
+                    pushService.registerPush(workTask.task.jsonPayload)
+                }.fold(
+                    onSuccess = { TaskRunner.TaskResult.Success(workTask.source) },
+                    onFailure = {
+                        val canRetry = if (it is ClientRequestException) {
+                            it.response.status.value !in (400 until 500)
+                        } else {
+                            true
+                        }
+                        TaskRunner.TaskResult.Failure(workTask.source, canRetry = canRetry)
+                    }
+                )
+            }
+            else -> throw IllegalArgumentException("Unknown work type: $type")
+        }
+
+    }
+
 }
