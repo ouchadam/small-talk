@@ -12,6 +12,8 @@ import kotlinx.serialization.json.Json
 import java.net.SocketException
 import java.net.UnknownHostException
 
+private const val MATRIX_MESSAGE_TASK_TYPE = "matrix-text-message"
+
 internal class DefaultMessageService(
     httpClient: MatrixHttpClient,
     private val localEchoStore: LocalEchoStore,
@@ -22,10 +24,10 @@ internal class DefaultMessageService(
     private val sendMessageUseCase = SendMessageUseCase(httpClient, messageEncrypter)
     private val sendEventMessageUseCase = SendEventMessageUseCase(httpClient)
 
-    override suspend fun canRun(task: MatrixTaskRunner.MatrixTask) = task.type == "text-message"
+    override suspend fun canRun(task: MatrixTaskRunner.MatrixTask) = task.type == MATRIX_MESSAGE_TASK_TYPE
 
     override suspend fun run(task: MatrixTaskRunner.MatrixTask): MatrixTaskRunner.TaskResult {
-        require(task.type == "text-message")
+        require(task.type == MATRIX_MESSAGE_TASK_TYPE)
         val message = Json.decodeFromString(MessageService.Message.TextMessage.serializer(), task.jsonPayload)
         return try {
             sendMessage(message)
@@ -61,7 +63,10 @@ internal class DefaultMessageService(
     private fun MessageService.Message.toTask(): BackgroundScheduler.Task {
         return when (this) {
             is MessageService.Message.TextMessage -> {
-                BackgroundScheduler.Task(type = "text-message", Json.encodeToString(MessageService.Message.TextMessage.serializer(), this))
+                BackgroundScheduler.Task(
+                    type = MATRIX_MESSAGE_TASK_TYPE,
+                    Json.encodeToString(MessageService.Message.TextMessage.serializer(), this)
+                )
             }
         }
     }
