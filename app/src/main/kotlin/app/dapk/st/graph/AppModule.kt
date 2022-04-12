@@ -55,7 +55,7 @@ import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
 import app.dapk.st.work.WorkScheduler
 import com.squareup.sqldelight.android.AndroidSqliteDriver
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import kotlinx.coroutines.Dispatchers
 import java.time.Clock
 

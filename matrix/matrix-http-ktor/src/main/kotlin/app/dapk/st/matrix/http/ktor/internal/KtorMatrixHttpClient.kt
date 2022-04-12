@@ -5,10 +5,10 @@ import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.MatrixHttpClient.Method
 import io.ktor.client.*
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.util.*
 
 internal class KtorMatrixHttpClient(
     private val client: HttpClient,
@@ -67,6 +67,7 @@ internal class KtorMatrixHttpClient(
 //        return tokenResult.accessToken
     }
 
+    @OptIn(InternalAPI::class)
     private fun <T> HttpRequestBuilder.buildRequest(
         credentials: UserCredentials?,
         request: MatrixHttpClient.HttpRequest<T>
@@ -100,7 +101,7 @@ internal class KtorMatrixHttpClient(
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun <T> MatrixHttpClient.HttpRequest<T>.execute(requestBuilder: HttpRequestBuilder.() -> Unit): T {
-        return client.request<HttpResponse> { requestBuilder(this) }.call.receive(this.typeInfo) as T
+        return client.request { requestBuilder(this) }.call.body(this.typeInfo) as T
     }
 
 }
