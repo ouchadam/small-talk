@@ -5,7 +5,7 @@ import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ensureTrailingSlash
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import io.ktor.client.statement.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -28,7 +28,7 @@ class RegisterUseCase(
         } catch (error: ClientRequestException) {
             when (error.response.status.value) {
                 401 -> {
-                    val stage0 = json.decodeFromString(ApiUserInteractive.serializer(), error.response.readText())
+                    val stage0 = json.decodeFromString(ApiUserInteractive.serializer(), error.response.bodyAsText())
                     val supportsDummy = stage0.flows.any { it.stages.any { it == "m.login.dummy" } }
                     if (supportsDummy) {
                         registerAccount(userName, password, baseUrl, stage0.session)

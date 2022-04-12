@@ -91,7 +91,7 @@ ext.Dependencies.with {
     def kotlinVer = "1.6.10"
     def sqldelightVer = "1.5.3"
     def composeVer = "1.1.0"
-    def ktorVer = "1.6.8"
+    def ktorVer = "2.0.0"
 
     google = new DependenciesContainer()
     google.with {
