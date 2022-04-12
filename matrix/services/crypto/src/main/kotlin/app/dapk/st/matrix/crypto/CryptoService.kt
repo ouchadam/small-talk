@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.crypto
 
+import app.dapk.st.core.Base64
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
@@ -118,6 +119,7 @@ fun MatrixServiceInstaller.installCryptoService(
     credentialsStore: CredentialsStore,
     olm: Olm,
     roomMembersProvider: ServiceDepFactory<RoomMembersProvider>,
+    base64: Base64,
     coroutineDispatchers: CoroutineDispatchers,
 ) {
     this.install { (_, _, services, logger) ->
@@ -148,7 +150,7 @@ fun MatrixServiceInstaller.installCryptoService(
             logger
         )
         val verificationHandler = VerificationHandler(deviceService, credentialsStore, logger, JsonCanonicalizer(), olm)
-        val roomKeyImporter = RoomKeyImporter(coroutineDispatchers)
+        val roomKeyImporter = RoomKeyImporter(base64, coroutineDispatchers)
         SERVICE_KEY to DefaultCryptoService(olmCrypto, verificationHandler, roomKeyImporter, logger)
     }
 }

@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.crypto.internal
 
+import app.dapk.st.core.Base64
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.withIoContext
 import app.dapk.st.matrix.common.AlgorithmName
@@ -12,7 +13,6 @@ import kotlinx.serialization.json.Json
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
-import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.IvParameterSpec
@@ -23,11 +23,13 @@ private const val HEADER_LINE = "-----BEGIN MEGOLM SESSION DATA-----"
 private const val TRAILER_LINE = "-----END MEGOLM SESSION DATA-----"
 private val importJson = Json { ignoreUnknownKeys = true }
 
-class RoomKeyImporter(private val dispatchers: CoroutineDispatchers) {
+class RoomKeyImporter(
+    private val base64: Base64,
+    private val dispatchers: CoroutineDispatchers,
+) {
 
     suspend fun InputStream.importRoomKeys(password: String, onChunk: suspend (List<SharedRoomKey>) -> Unit): List<RoomId> {
         return dispatchers.withIoContext {
-            val decoder = Base64.getDecoder()
             val decryptCipher = Cipher.getInstance("AES/CTR/NoPadding")
             var jsonSegment = ""
 
@@ -61,7 +63,7 @@ class RoomKeyImporter(private val dispatchers: CoroutineDispatchers) {
                         .withIndex()
                         .map { (index, it) ->
                             val line = it.joinToString(separator = "").replace("\n", "")
-                            val toByteArray = decoder.decode(line)
+                            val toByteArray = base64.decode(line)
                             if (index == 0) {
                                 decryptCipher.initialize(toByteArray, password)
                                 toByteArray.copyOfRange(37, toByteArray.size).decrypt(decryptCipher).also {

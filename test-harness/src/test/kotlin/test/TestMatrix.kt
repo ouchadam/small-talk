@@ -82,7 +82,8 @@ class TestMatrix(
             installAuthService(storeModule.credentialsStore(), AuthConfig(forceHttp = false))
             installEncryptionService(storeModule.knownDevicesStore())
 
-            val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore(), JavaBase64())
+            val base64 = JavaBase64()
+            val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore(), base64)
             val olm = OlmWrapper(
                 olmStore = olmAccountStore,
                 singletonFlows = SingletonFlows(coroutineDispatchers),
@@ -101,6 +102,7 @@ class TestMatrix(
                         services.roomService().joinedMembers(it).map { it.userId }
                     }
                 },
+                base64 = base64,
                 coroutineDispatchers = coroutineDispatchers,
             )
 

@@ -219,7 +219,8 @@ internal class MatrixModules(
                 installAuthService(credentialsStore)
                 installEncryptionService(store.knownDevicesStore())
 
-                val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), AndroidBase64())
+                val base64 = AndroidBase64()
+                val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), base64)
                 val singletonFlows = SingletonFlows(coroutineDispatchers)
                 val olm = OlmWrapper(
                     olmStore = olmAccountStore,
@@ -239,6 +240,7 @@ internal class MatrixModules(
                             services.roomService().joinedMembers(it).map { it.userId }
                         }
                     },
+                    base64 = base64,
                     coroutineDispatchers = coroutineDispatchers,
                 )
                 installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler())) { serviceProvider ->
