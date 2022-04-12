@@ -21,10 +21,12 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -45,6 +47,7 @@ import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit, navigator: Navigator) {
     viewModel.ObserveEvents(onSignOut)
@@ -80,7 +83,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                                     viewModel.fileSelected(it)
                                 }
                             }
-
+                            val keyboardController = LocalSoftwareKeyboardController.current
                             Button(modifier = Modifier.fillMaxWidth(), onClick = { launcher.launch("text/*") }) {
                                 Text(text = "SELECT FILE".uppercase())
                             }
@@ -92,7 +95,10 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
 
                                 var passphrase by rememberSaveable { mutableStateOf("") }
                                 var passwordVisibility by rememberSaveable { mutableStateOf(false) }
-                                val startImportAction = { viewModel.importFromFileKeys(it.selectedFile.uri, passphrase) }
+                                val startImportAction = {
+                                    keyboardController?.hide()
+                                    viewModel.importFromFileKeys(it.selectedFile.uri, passphrase)
+                                }
 
                                 TextField(
                                     modifier = Modifier.fillMaxWidth(),
