@@ -10,6 +10,7 @@ import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.internal.DefaultRoomService
 import app.dapk.st.matrix.room.internal.RoomMembers
+import app.dapk.st.matrix.room.internal.RoomMembersCache
 
 private val SERVICE_KEY = RoomService::class
 
@@ -40,7 +41,7 @@ fun MatrixServiceInstaller.installRoomService(
     roomMessenger: ServiceDepFactory<RoomMessenger>,
 ) {
     this.install { (httpClient, _, services, logger) ->
-        SERVICE_KEY to DefaultRoomService(httpClient, logger, RoomMembers(memberStore), roomMessenger.create(services))
+        SERVICE_KEY to DefaultRoomService(httpClient, logger, RoomMembers(memberStore, RoomMembersCache()), roomMessenger.create(services))
     }
 }
 
