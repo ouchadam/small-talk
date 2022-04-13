@@ -92,7 +92,6 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
                                 if (!deleteCrypto && it.startsWith("dbCrypto")) {
                                     // skip
                                 } else {
-                                    log(AppLogTag.ERROR_NON_FATAL, "Deleting $it")
                                     driver.execute(null, "DELETE FROM $it", 0)
                                 }
                             }
