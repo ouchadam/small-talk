@@ -49,6 +49,10 @@ internal fun wellKnownRequest(baseUrl: String) = httpRequest<String>(
     authenticated = false,
 )
 
+@JvmInline
+@Serializable
+internal value class RawResponse(val value: String)
+
 internal data class Auth(
     val session: String,
     val type: String,

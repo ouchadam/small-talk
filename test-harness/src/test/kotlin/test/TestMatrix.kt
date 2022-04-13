@@ -6,7 +6,7 @@ import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.SingletonFlows
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.matrix.MatrixClient
-import app.dapk.st.matrix.auth.AuthConfig
+import app.dapk.st.matrix.auth.AuthService
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
@@ -79,7 +79,7 @@ class TestMatrix(
         logger
     ).also {
         it.install {
-            installAuthService(storeModule.credentialsStore(), AuthConfig(forceHttp = false))
+            installAuthService(storeModule.credentialsStore())
             installEncryptionService(storeModule.knownDevicesStore())
 
             val base64 = JavaBase64()
@@ -255,7 +255,7 @@ class TestMatrix(
 
     suspend fun newlogin() {
         client.authService()
-            .login(user.roomMember.id.value, user.password)
+            .login(AuthService.LoginRequest(user.roomMember.id.value, user.password, null))
     }
 
     suspend fun restoreLogin() {

@@ -1,3 +1,4 @@
+import app.dapk.st.matrix.auth.AuthService
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.RoomId
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldNotBeEqualTo
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -131,13 +133,17 @@ private suspend fun login(user: TestUser) {
     val result = testMatrix
         .client
         .authService()
-        .login(userName = user.roomMember.id.value, password = user.password)
+        .login(AuthService.LoginRequest(userName = user.roomMember.id.value, password = user.password, serverUrl = null))
 
-    result.accessToken shouldNotBeEqualTo null
-    result.homeServer shouldBeEqualTo HomeServerUrl(HTTPS_TEST_SERVER_URL)
-    result.userId shouldBeEqualTo user.roomMember.id
 
-    testMatrix.saveLogin(result)
+    result shouldBeInstanceOf AuthService.LoginResult.Success::class.java
+    (result as AuthService.LoginResult.Success).userCredentials.let { credentials ->
+        credentials.accessToken shouldNotBeEqualTo null
+        credentials.homeServer shouldBeEqualTo HomeServerUrl(HTTPS_TEST_SERVER_URL)
+        credentials.userId shouldBeEqualTo user.roomMember.id
+
+        testMatrix.saveLogin(credentials)
+    }
 }
 
 object SharedState {

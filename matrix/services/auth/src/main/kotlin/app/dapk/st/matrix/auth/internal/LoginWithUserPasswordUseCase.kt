@@ -1,6 +1,6 @@
 package app.dapk.st.matrix.auth.internal
 
-import app.dapk.st.matrix.auth.AuthConfig
+import app.dapk.st.matrix.auth.AuthService
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.UserCredentials
@@ -10,23 +10,27 @@ import app.dapk.st.matrix.http.ensureTrailingSlash
 
 private const val MATRIX_DOT_ORG_DOMAIN = "matrix.org"
 
-class LoginUseCase(
+class LoginWithUserPasswordUseCase(
     private val httpClient: MatrixHttpClient,
     private val credentialsProvider: CredentialsStore,
     private val fetchWellKnownUseCase: FetchWellKnownUseCase,
-    private val authConfig: AuthConfig
 ) {
 
-    suspend fun login(userName: String, password: String): UserCredentials {
+    suspend fun login(userName: String, password: String): AuthService.LoginResult {
         val (domainUrl, fullUserId) = generateUserAccessInfo(userName)
-        val baseUrl = fetchWellKnownUseCase(domainUrl).homeServer.baseUrl.ensureTrailingSlash()
-        val authResponse = httpClient.execute(loginRequest(fullUserId, password, baseUrl.value))
-        return UserCredentials(
-            authResponse.accessToken,
-            baseUrl,
-            authResponse.userId,
-            authResponse.deviceId,
-        ).also { credentialsProvider.update(it) }
+        return when (val wellKnownResult = fetchWellKnownUseCase(domainUrl)) {
+            is WellKnownResult.Success -> {
+                runCatching {
+                    authenticate(wellKnownResult.wellKnown.homeServer.baseUrl.ensureTrailingSlash(), fullUserId, password)
+                }.fold(
+                    onSuccess = { AuthService.LoginResult.Success(it) },
+                    onFailure = { AuthService.LoginResult.Error(it) }
+                )
+            }
+            WellKnownResult.InvalidWellKnown -> AuthService.LoginResult.MissingWellKnown
+            WellKnownResult.MissingWellKnown -> AuthService.LoginResult.MissingWellKnown
+            is WellKnownResult.Error -> AuthService.LoginResult.Error(wellKnownResult.cause)
+        }
     }
 
     private fun generateUserAccessInfo(userName: String): Pair<String, UserId> {
@@ -37,14 +41,20 @@ class LoginUseCase(
         return Pair(domainUrl, UserId(fullUserId))
     }
 
+    private suspend fun authenticate(baseUrl: HomeServerUrl, fullUserId: UserId, password: String): UserCredentials {
+        val authResponse = httpClient.execute(loginRequest(fullUserId, password, baseUrl.value))
+        return UserCredentials(
+            authResponse.accessToken,
+            baseUrl,
+            authResponse.userId,
+            authResponse.deviceId,
+        ).also { credentialsProvider.update(it) }
+    }
+
     private fun String.findDomain(fallback: String) = this.substringAfter(":", missingDelimiterValue = fallback)
 
     private fun String.asHttpsUrl(): String {
-        val schema = when (authConfig.forceHttp) {
-            true -> "http://"
-            false -> "https://"
-        }
-        return "$schema$this".ensureTrailingSlash()
+        return "https://$this".ensureTrailingSlash()
     }
 }
 

@@ -22,7 +22,7 @@
 
 ### Feature list
 
-- Login with username/password (homeservers must serve `https://${domain}/.well-known/matrix/client`)
+- Login with Matrix ID/Password
 - Combined Room and DM interface
 - End to end encryption
 - Message bubbles, supporting text, replies and edits
