@@ -10,5 +10,6 @@ sealed interface DirectoryScreenState {
 
 sealed interface DirectoryEvent {
     data class OpenDownloadUrl(val url: String) : DirectoryEvent
+    object ScrollToTop : DirectoryEvent
 }
 

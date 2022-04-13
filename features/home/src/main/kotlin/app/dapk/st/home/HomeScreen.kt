@@ -25,6 +25,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 homeViewModel.start()
             }
 
+
             when (val state = homeViewModel.state) {
                 Loading -> CenteredLoading()
                 is SignedIn -> {
@@ -66,7 +67,12 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                     Directory -> BottomNavigationItem(
                         icon = { Icon(page.icon, contentDescription = null) },
                         selected = state.page == page,
-                        onClick = { homeViewModel.changePage(page) },
+                        onClick = {
+                            when {
+                                state.page == page -> homeViewModel.scrollToTopOfMessages()
+                                else -> homeViewModel.changePage(page)
+                            }
+                        },
                     )
                     Profile -> BottomNavigationItem(
                         icon = {

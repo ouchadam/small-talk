@@ -36,5 +36,9 @@ class DirectoryViewModel(
     fun stop() {
         syncJob?.cancel()
     }
+
+    fun scrollToTopOfMessages() {
+        _events.tryEmit(DirectoryEvent.ScrollToTop)
+    }
 }
 

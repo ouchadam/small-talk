@@ -53,15 +53,21 @@ import kotlin.math.roundToInt
 @Composable
 fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     val state = directoryViewModel.state
-    directoryViewModel.ObserveEvents()
-    LifecycleEffect(
-        onStart = { directoryViewModel.start() },
-        onStop = { directoryViewModel.stop() }
+
+    val listState: LazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = 0,
     )
 
     val toolbarHeight = 72.dp
     val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.roundToPx().toFloat() }
     val toolbarOffsetHeightPx = remember { mutableStateOf(0f) }
+
+    directoryViewModel.ObserveEvents(listState, toolbarOffsetHeightPx)
+
+    LifecycleEffect(
+        onStart = { directoryViewModel.start() },
+        onStop = { directoryViewModel.stop() }
+    )
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -80,7 +86,7 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     ) {
         when (state) {
             is Content -> {
-                Content(state)
+                Content(listState, state)
             }
             EmptyLoading -> CenteredLoading()
             is Error -> {
@@ -99,7 +105,7 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
 }
 
 @Composable
-private fun DirectoryViewModel.ObserveEvents() {
+private fun DirectoryViewModel.ObserveEvents(listState: LazyListState, toolbarPosition: MutableState<Float>) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
@@ -107,21 +113,22 @@ private fun DirectoryViewModel.ObserveEvents() {
                 is OpenDownloadUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it.url)))
                 }
+                DirectoryEvent.ScrollToTop -> {
+                    toolbarPosition.value = 0f
+                    listState.scrollToItem(0)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Content(state: Content) {
+private fun Content(listState: LazyListState, state: Content) {
     val context = LocalContext.current
     val navigateToRoom = { roomId: RoomId ->
         context.startActivity(MessengerActivity.newInstance(context, roomId))
     }
     val clock = Clock.systemUTC()
-    val listState: LazyListState = rememberLazyListState(
-        initialFirstVisibleItemIndex = 0,
-    )
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = state.overviewState) {

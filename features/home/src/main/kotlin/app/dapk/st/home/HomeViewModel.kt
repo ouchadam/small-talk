@@ -55,6 +55,10 @@ class HomeViewModel(
         }
     }
 
+    fun scrollToTopOfMessages() {
+        directoryViewModel.scrollToTopOfMessages()
+    }
+
     fun changePage(page: Page) {
         state = when (val current = state) {
             Loading -> current
