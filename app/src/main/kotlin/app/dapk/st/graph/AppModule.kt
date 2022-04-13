@@ -7,7 +7,10 @@ import android.content.Intent
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
 import app.dapk.st.SharedPreferencesDelegate
-import app.dapk.st.core.*
+import app.dapk.st.core.BuildMeta
+import app.dapk.st.core.CoreAndroidModule
+import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.SingletonFlows
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
@@ -17,8 +20,6 @@ import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.matrix.MatrixClient
-import app.dapk.st.matrix.MatrixTaskRunner
-import app.dapk.st.matrix.MatrixTaskRunner.MatrixTask
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
@@ -31,8 +32,10 @@ import app.dapk.st.matrix.device.installEncryptionService
 import app.dapk.st.matrix.device.internal.ApiMessage
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
-import app.dapk.st.matrix.message.*
-import app.dapk.st.matrix.push.PushService
+import app.dapk.st.matrix.message.MessageEncrypter
+import app.dapk.st.matrix.message.MessageService
+import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
@@ -50,12 +53,9 @@ import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushModule
 import app.dapk.st.settings.SettingsModule
 import app.dapk.st.tracking.TrackingModule
-import app.dapk.st.work.TaskRunner
 import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
-import app.dapk.st.work.WorkScheduler
 import com.squareup.sqldelight.android.AndroidSqliteDriver
-import io.ktor.client.plugins.*
 import kotlinx.coroutines.Dispatchers
 import java.time.Clock
 
@@ -79,26 +79,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
             preferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", coroutineDispatchers),
             errorTracker = trackingModule.errorTracker,
             credentialPreferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-credentials-preferences", coroutineDispatchers),
-            databaseDropper = { deleteCrypto ->
-                coroutineDispatchers.withIoContext {
-                    val cursor = driver.executeQuery(
-                        identifier = null,
-                        sql = "SELECT name FROM sqlite_master WHERE type = 'table'",
-                        parameters = 0
-                    )
-                    cursor.use {
-                        while (cursor.next()) {
-                            cursor.getString(0)?.let {
-                                if (!deleteCrypto && it.startsWith("dbCrypto")) {
-                                    // skip
-                                } else {
-                                    driver.execute(null, "DELETE FROM $it", 0)
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+            databaseDropper = DefaultDatabaseDropper(coroutineDispatchers, driver),
             coroutineDispatchers = coroutineDispatchers
         )
     }
@@ -402,64 +383,4 @@ internal class DomainModules(
 
     val pushModule by unsafeLazy { PushModule(matrixModules.push, errorTracker) }
     val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
-}
-
-class BackgroundWorkAdapter(private val workScheduler: WorkScheduler) : BackgroundScheduler {
-    override fun schedule(key: String, task: BackgroundScheduler.Task) {
-        workScheduler.schedule(
-            WorkScheduler.WorkTask(
-                jobId = 1,
-                type = task.type,
-                jsonPayload = task.jsonPayload,
-            )
-        )
-    }
-}
-
-class TaskRunnerAdapter(
-    private val matrixTaskRunner: suspend (MatrixTask) -> MatrixTaskRunner.TaskResult,
-    private val appTaskRunner: AppTaskRunner,
-) : TaskRunner {
-
-    override suspend fun run(tasks: List<TaskRunner.RunnableWorkTask>): List<TaskRunner.TaskResult> {
-        return tasks.map {
-            when {
-                it.task.type.startsWith("matrix") -> {
-                    when (val result = matrixTaskRunner(MatrixTask(it.task.type, it.task.jsonPayload))) {
-                        is MatrixTaskRunner.TaskResult.Failure -> TaskRunner.TaskResult.Failure(it.source, canRetry = result.canRetry)
-                        MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success(it.source)
-                    }
-                }
-                else -> appTaskRunner.run(it)
-            }
-        }
-    }
-}
-
-class AppTaskRunner(
-    private val pushService: PushService,
-) {
-
-    suspend fun run(workTask: TaskRunner.RunnableWorkTask): TaskRunner.TaskResult {
-        return when (val type = workTask.task.type) {
-            "push_token" -> {
-                runCatching {
-                    pushService.registerPush(workTask.task.jsonPayload)
-                }.fold(
-                    onSuccess = { TaskRunner.TaskResult.Success(workTask.source) },
-                    onFailure = {
-                        val canRetry = if (it is ClientRequestException) {
-                            it.response.status.value !in (400 until 500)
-                        } else {
-                            true
-                        }
-                        TaskRunner.TaskResult.Failure(workTask.source, canRetry = canRetry)
-                    }
-                )
-            }
-            else -> throw IllegalArgumentException("Unknown work type: $type")
-        }
-
-    }
-
 }
