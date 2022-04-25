@@ -2,5 +2,5 @@ applyAndroidLibraryModule(project)
 
 dependencies {
     implementation project(":core")
-    implementation "io.coil-kt:coil:1.4.0"
+    implementation Dependencies.mavenCentral.coil
 }

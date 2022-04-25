@@ -2,6 +2,6 @@ applyAndroidLibraryModule(project)
 
 dependencies {
     implementation project(":core")
-    implementation("io.coil-kt:coil-compose:1.4.0")
-    implementation "com.google.accompanist:accompanist-systemuicontroller:0.24.7-alpha"
+    implementation Dependencies.mavenCentral.coil
+    implementation Dependencies.mavenCentral.accompanistSystemuicontroller
 }

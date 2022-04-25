@@ -7,6 +7,6 @@ dependencies {
     implementation Dependencies.mavenCentral.kotlinCoroutinesCore
     testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
     testFixturesImplementation Dependencies.mavenCentral.kluent
-    testFixturesImplementation 'io.mockk:mockk:1.12.3'
-    testFixturesImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1'
+    testFixturesImplementation Dependencies.mavenCentral.mockk
+    testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesTest
 }

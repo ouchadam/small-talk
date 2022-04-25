@@ -89,5 +89,5 @@ dependencies {
     implementation Dependencies.mavenCentral.matrixOlm
 
     implementation Dependencies.mavenCentral.kotlinSerializationJson
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
+    debugImplementation Dependencies.mavenCentral.leakCanary
 }

@@ -10,7 +10,7 @@ dependencies {
     implementation project(":core")
     implementation project(":features:navigator")
     implementation project(":design-library")
-    implementation("io.coil-kt:coil-compose:1.4.0")
+    implementation Dependencies.mavenCentral.coil
 
     kotlinTest(it)
 
