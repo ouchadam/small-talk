@@ -15,10 +15,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillNode
+import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -82,7 +86,9 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
 
                     val focusManager = LocalFocusManager.current
                     TextField(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autofill(listOf(AutofillType.Username), onFill = { userName = it }),
                         value = userName,
                         onValueChange = { userName = it },
                         singleLine = true,
@@ -102,7 +108,9 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                     }
 
                     TextField(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autofill(listOf(AutofillType.Password), onFill = { password = it }),
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
@@ -163,6 +171,28 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                 Spacer(modifier = Modifier.weight(0.1f))
             }
     }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun Modifier.autofill(
+    autofillTypes: List<AutofillType>,
+    onFill: ((String) -> Unit),
+) = composed {
+    val autofill = LocalAutofill.current
+    val autofillNode = AutofillNode(onFill = onFill, autofillTypes = autofillTypes)
+    LocalAutofillTree.current += autofillNode
+
+    this
+        .onGloballyPositioned { autofillNode.boundingBox = it.boundsInWindow() }
+        .onFocusChanged { focusState ->
+            autofill?.run {
+                if (focusState.isFocused) {
+                    requestAutofillForNode(autofillNode)
+                } else {
+                    cancelAutofillForNode(autofillNode)
+                }
+            }
+        }
 }
 
 @Composable
