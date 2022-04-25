@@ -67,6 +67,7 @@ private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: 
 
     when (val state = profile.content) {
         is Lce.Loading -> CenteredLoading()
+        is Lce.Error -> GenericError { viewModel.start() }
         is Lce.Content -> {
             val configuration = LocalConfiguration.current
             val content = state.value

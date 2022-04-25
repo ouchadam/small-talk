@@ -2,6 +2,7 @@ package app.dapk.st.profile
 
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
+import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.room.ProfileService
@@ -16,6 +17,7 @@ class ProfileViewModel(
     private val profileService: ProfileService,
     private val syncService: SyncService,
     private val roomService: RoomService,
+    private val errorTracker: ErrorTracker,
 ) : DapkViewModel<ProfileScreenState, ProfileEvent>(
     ProfileScreenState(SpiderPage(Page.Routes.profile, "Profile", null, Page.Profile(Lce.Loading()), hasToolbar = false))
 ) {
@@ -31,13 +33,20 @@ class ProfileViewModel(
         syncingJob = syncService.startSyncing().launchIn(viewModelScope)
 
         combine(
-            flow { emit(profileService.me(forceRefresh = true)) },
+            flow {
+                val result = runCatching { profileService.me(forceRefresh = true) }
+                    .onFailure { errorTracker.track(it, "Loading profile") }
+                emit(result)
+            },
             syncService.invites(),
             transform = { me, invites -> me to invites }
         )
             .onEach { (me, invites) ->
                 updatePageState<Page.Profile> {
-                    copy(content = Lce.Content(Page.Profile.Content(me, invites.size)))
+                    when (me.isSuccess) {
+                        true -> copy(content = Lce.Content(Page.Profile.Content(me.getOrThrow(), invites.size)))
+                        false -> copy(content = Lce.Error(me.exceptionOrNull()!!))
+                    }
                 }
             }
             .launchPageJob()
