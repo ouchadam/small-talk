@@ -11,6 +11,7 @@ import coil.fetch.SourceResult
 import coil.size.Size
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import okio.Buffer
 import java.security.MessageDigest
 import javax.crypto.Cipher
@@ -28,9 +29,15 @@ class DecryptingFetcher : Fetcher<RoomEvent.Image> {
 
     override suspend fun fetch(pool: BitmapPool, data: RoomEvent.Image, size: Size, options: Options): FetchResult {
         val response = http.newCall(Request.Builder().url(data.imageMeta.url).build()).execute()
-        val outputStream = Buffer()
+        val outputStream = when {
+            data.imageMeta.keys != null -> handleEncrypted(response, data.imageMeta.keys!!)
+            else -> response.body()?.source() ?: throw IllegalArgumentException("No bitmap response found")
+        }
 
-        val keys = data.imageMeta.keys!!
+        return SourceResult(outputStream, null, DataSource.NETWORK)
+    }
+
+    private fun handleEncrypted(response: Response, keys: RoomEvent.Image.ImageMeta.Keys): Buffer {
         val key = Base64.decode(keys.k.replace('-', '+').replace('_', '/'), Base64.DEFAULT)
         val initVectorBytes = Base64.decode(keys.iv, Base64.DEFAULT)
 
@@ -45,6 +52,7 @@ class DecryptingFetcher : Fetcher<RoomEvent.Image> {
         val d = ByteArray(CRYPTO_BUFFER_SIZE)
         var decodedBytes: ByteArray
 
+        val outputStream = Buffer()
         response.body()?.let {
             it.byteStream().use {
                 read = it.read(d)
@@ -56,7 +64,7 @@ class DecryptingFetcher : Fetcher<RoomEvent.Image> {
                 }
             }
         }
-        return SourceResult(outputStream, null, DataSource.NETWORK)
+        return outputStream
     }
 
     override fun key(data: RoomEvent.Image) = data.imageMeta.url

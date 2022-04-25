@@ -1,5 +1,6 @@
 package app.dapk.st.messenger
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,11 +21,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
@@ -212,6 +212,8 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
     }
 }
 
+private val decryptingFetcher = DecryptingFetcher()
+
 @Composable
 private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
@@ -237,14 +239,12 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                     )
                 }
 
-                val width = with(LocalDensity.current) { content.message.imageMeta.width.toDp() }
-                val height = with(LocalDensity.current) { content.message.imageMeta.height.toDp() }
                 Spacer(modifier = Modifier.height(4.dp))
                 Image(
-                    modifier = Modifier.size(width, height),
+                    modifier = Modifier.size(content.message.imageMeta.scaleMeta(LocalDensity.current, LocalConfiguration.current)),
                     painter = rememberImagePainter(
                         data = content.message,
-                        builder = { fetcher(DecryptingFetcher()) }
+                        builder = { fetcher(decryptingFetcher) }
                     ),
                     contentDescription = null,
                 )
@@ -264,8 +264,25 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
             }
         }
     }
+}
+
+private fun RoomEvent.Image.ImageMeta.scaleMeta(density: Density, configuration: Configuration): DpSize {
+    return with(density) {
+        val scaler = minOf(
+            this@scaleMeta.height.scalerFor(configuration.screenHeightDp.dp.toPx() * 0.5f),
+            this@scaleMeta.width.scalerFor(configuration.screenWidthDp.dp.toPx() * 0.6f)
+        )
+
+        DpSize(
+            width = (this@scaleMeta.width * scaler).toDp(),
+            height = (this@scaleMeta.height * scaler).toDp(),
+        )
+    }
+}
 
 
+private fun Int.scalerFor(max: Float): Float {
+    return max / this
 }
 
 private val selfBackgroundShape = RoundedCornerShape(12.dp, 0.dp, 12.dp, 12.dp)
