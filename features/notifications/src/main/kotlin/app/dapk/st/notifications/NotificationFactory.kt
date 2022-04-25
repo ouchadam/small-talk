@@ -101,9 +101,9 @@ class NotificationFactory(
 
         val openRoomIntent = PendingIntent.getActivity(
             context,
-            55,
+            roomOverview.roomId.hashCode(),
             MessengerActivity.newInstance(context, roomOverview.roomId),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         return NotificationDelegate.Room(
