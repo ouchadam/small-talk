@@ -212,6 +212,8 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
     }
 }
 
+private val decryptingFetcher = DecryptingFetcher()
+
 @Composable
 private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
@@ -242,7 +244,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                     modifier = Modifier.size(content.message.imageMeta.scaleMeta(LocalDensity.current, LocalConfiguration.current)),
                     painter = rememberImagePainter(
                         data = content.message,
-                        builder = { fetcher(DecryptingFetcher()) }
+                        builder = { fetcher(decryptingFetcher) }
                     ),
                     contentDescription = null,
                 )
