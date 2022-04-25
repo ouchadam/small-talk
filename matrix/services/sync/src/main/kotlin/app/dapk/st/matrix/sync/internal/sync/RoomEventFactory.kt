@@ -45,8 +45,8 @@ internal class RoomEventFactory(
     private fun ApiTimelineEvent.TimelineMessage.readImageMeta(userCredentials: UserCredentials): RoomEvent.Image.ImageMeta {
         val content = this.content as ApiTimelineEvent.TimelineMessage.Content.Image
         return RoomEvent.Image.ImageMeta(
-            content.info.width,
-            content.info.height,
+            content.info?.width,
+            content.info?.height,
             content.file?.url?.convertMxUrToUrl(userCredentials.homeServer) ?: content.url!!.convertMxUrToUrl(userCredentials.homeServer),
             keys = content.file?.let { RoomEvent.Image.ImageMeta.Keys(it.key.k, it.iv, it.v, it.hashes) }
         )

@@ -35,8 +35,8 @@ internal class RoomEventsDecrypter(
                     val content = model.content as ApiTimelineEvent.TimelineMessage.Content.Image
                     this.copy(
                         imageMeta = RoomEvent.Image.ImageMeta(
-                            width = content.info.width,
-                            height = content.info.height,
+                            width = content.info?.width,
+                            height = content.info?.height,
                             url = content.file?.url?.convertMxUrToUrl(userCredentials.homeServer) ?: content.url!!.convertMxUrToUrl(userCredentials.homeServer),
                             keys = content.file?.let { RoomEvent.Image.ImageMeta.Keys(it.key.k, it.iv, it.v, it.hashes) }
                         ),

@@ -241,7 +241,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
 
                 Spacer(modifier = Modifier.height(4.dp))
                 Image(
-                    modifier = Modifier.size(content.message.imageMeta.scaleMeta(LocalDensity.current, LocalConfiguration.current)),
+                    modifier = Modifier.size(content.message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
                     painter = rememberImagePainter(
                         data = content.message,
                         builder = { fetcher(decryptingFetcher) }
@@ -266,16 +266,18 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
     }
 }
 
-private fun RoomEvent.Image.ImageMeta.scaleMeta(density: Density, configuration: Configuration): DpSize {
+private fun RoomEvent.Image.ImageMeta.scale(density: Density, configuration: Configuration): DpSize {
+    val height = this@scale.height ?: 250
+    val width = this@scale.width ?: 250
     return with(density) {
         val scaler = minOf(
-            this@scaleMeta.height.scalerFor(configuration.screenHeightDp.dp.toPx() * 0.5f),
-            this@scaleMeta.width.scalerFor(configuration.screenWidthDp.dp.toPx() * 0.6f)
+            height.scalerFor(configuration.screenHeightDp.dp.toPx() * 0.5f),
+            width.scalerFor(configuration.screenWidthDp.dp.toPx() * 0.6f)
         )
 
         DpSize(
-            width = (this@scaleMeta.width * scaler).toDp(),
-            height = (this@scaleMeta.height * scaler).toDp(),
+            width = (width * scaler).toDp(),
+            height = (height * scaler).toDp(),
         )
     }
 }
@@ -405,11 +407,9 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             )
                         }
                         is RoomEvent.Image -> {
-                            val width = with(LocalDensity.current) { replyingTo.imageMeta.width.toDp() }
-                            val height = with(LocalDensity.current) { replyingTo.imageMeta.height.toDp() }
                             Spacer(modifier = Modifier.height(4.dp))
                             Image(
-                                modifier = Modifier.size(width, height),
+                                modifier = Modifier.size(replyingTo.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
                                 painter = rememberImagePainter(
                                     data = replyingTo,
                                     builder = { fetcher(DecryptingFetcher()) }
@@ -442,11 +442,9 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         )
                     }
                     is RoomEvent.Image -> {
-                        val width = with(LocalDensity.current) { message.imageMeta.width.toDp() }
-                        val height = with(LocalDensity.current) { message.imageMeta.height.toDp() }
                         Spacer(modifier = Modifier.height(4.dp))
                         Image(
-                            modifier = Modifier.size(width, height),
+                            modifier = Modifier.size(message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
                             painter = rememberImagePainter(
                                 data = content.message,
                                 builder = { fetcher(DecryptingFetcher()) }

@@ -461,7 +461,7 @@ internal sealed class ApiTimelineEvent {
             data class Image(
                 @SerialName("url") val url: MxUrl? = null,
                 @SerialName("file") val file: File? = null,
-                @SerialName("info") val info: Info,
+                @SerialName("info") val info: Info? = null,
                 @SerialName("m.relates_to") override val relation: Relation? = null,
                 @SerialName("msgtype") val messageType: String = "m.image",
             ) : Content {

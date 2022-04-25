@@ -90,8 +90,8 @@ sealed class RoomEvent {
 
         @Serializable
         data class ImageMeta(
-            @SerialName("width") val width: Int,
-            @SerialName("height") val height: Int,
+            @SerialName("width") val width: Int?,
+            @SerialName("height") val height: Int?,
             @SerialName("url") val url: String,
             @SerialName("keys") val keys: Keys?,
         ) {
