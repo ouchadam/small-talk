@@ -29,8 +29,9 @@ class NotificationRenderer(
         notifications.delegates.forEach {
             when (it) {
                 is NotificationDelegate.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
-                is NotificationDelegate.Room ->  {
+                is NotificationDelegate.Room -> {
                     if (!onlyContainsRemovals) {
+                        log(AppLogTag.NOTIFICATION, "notifying ${it.roomId.value}")
                         notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification)
                     }
                 }
@@ -38,7 +39,10 @@ class NotificationRenderer(
         }
 
         notifications.summaryNotification?.let {
-            notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+            if (!onlyContainsRemovals) {
+                log(AppLogTag.NOTIFICATION, "notifying summary")
+                notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+            }
         }
     }
 
