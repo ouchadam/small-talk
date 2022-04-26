@@ -4,8 +4,11 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.app.Person
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
+import app.dapk.st.core.AppLogTag
+import app.dapk.st.core.log
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
@@ -28,7 +31,7 @@ class NotificationFactory(
             }
         }
 
-        val summaryNotification = if (notifications.filterIsInstance<NotificationDelegate.Room>().size > 1) {
+        val summaryNotification = if (notifications.filterIsInstance<NotificationDelegate.Room>().isNotEmpty()) {
             createSummary(notifications)
         } else {
             null
@@ -102,8 +105,9 @@ class NotificationFactory(
         val openRoomIntent = PendingIntent.getActivity(
             context,
             roomOverview.roomId.hashCode(),
-            MessengerActivity.newInstance(context, roomOverview.roomId),
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            MessengerActivity.newInstance(context, roomOverview.roomId)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
         return NotificationDelegate.Room(

@@ -2,7 +2,9 @@ package app.dapk.st.notifications
 
 import android.app.Notification
 import android.app.NotificationManager
+import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.extensions.ifNull
+import app.dapk.st.core.log
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
@@ -20,6 +22,7 @@ class NotificationRenderer(
         val notifications = notificationFactory.createNotifications(result)
 
         notifications.summaryNotification.ifNull {
+            log(AppLogTag.NOTIFICATION, "cancelling summary")
             notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
         }
 
