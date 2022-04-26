@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -33,6 +32,8 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
+import app.dapk.st.design.components.GenericEmpty
+import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Toolbar
 import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
 import app.dapk.st.directory.DirectoryScreenState.Content
@@ -85,20 +86,12 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
             .nestedScroll(nestedScrollConnection)
     ) {
         when (state) {
-            is Content -> {
-                Content(listState, state)
-            }
             EmptyLoading -> CenteredLoading()
-            is Error -> {
-                Box(contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Something went wrong...")
-                        Button(onClick = {}) {
-                            Text("Retry")
-                        }
-                    }
-                }
+            DirectoryScreenState.Empty -> GenericEmpty()
+            is Error -> GenericError {
+                // TODO
             }
+            is Content -> Content(listState, state)
         }
         Toolbar(title = "Messages", offset = { IntOffset(x = 0, y = toolbarOffsetHeightPx.value.roundToInt()) })
     }

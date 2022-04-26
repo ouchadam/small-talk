@@ -1,8 +1,7 @@
 package app.dapk.st.directory
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.directory.DirectoryScreenState.Content
-import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
+import app.dapk.st.directory.DirectoryScreenState.*
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
 import app.dapk.st.viewmodel.defaultStateFactory
@@ -26,8 +25,9 @@ class DirectoryViewModel(
         syncJob = viewModelScope.launch {
             directoryUseCase.state().onEach {
                 shortcutHandler.onDirectoryUpdate(it.map { it.overview })
-                if (it.isNotEmpty()) {
-                    state = Content(it)
+                state = when (it.isEmpty()) {
+                    true -> Empty
+                    false -> Content(it)
                 }
             }.collect()
         }

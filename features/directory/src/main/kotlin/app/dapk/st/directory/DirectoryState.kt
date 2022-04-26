@@ -3,6 +3,7 @@ package app.dapk.st.directory
 sealed interface DirectoryScreenState {
 
     object EmptyLoading : DirectoryScreenState
+    object Empty : DirectoryScreenState
     data class Content(
         val overviewState: DirectoryState,
     ) : DirectoryScreenState
