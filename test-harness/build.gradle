@@ -9,7 +9,7 @@ test {
 
 dependencies {
     kotlinTest(it)
-    testImplementation 'app.cash.turbine:turbine:0.7.0'
+    testImplementation 'app.cash.turbine:turbine:0.8.0'
 
     testImplementation Dependencies.mavenCentral.kotlinSerializationJson
 
