@@ -53,9 +53,19 @@ internal class RoomEventFactory(
     }
 }
 
-private fun String.stripTags() = this.substring(this.indexOf("</mx-reply>") + "</mx-reply>".length)
+
+private fun String.indexOfOrNull(string: String) = this.indexOf(string).takeIf { it != -1 }
+
+fun String.stripTags() = this
+    .run {
+        this.indexOfOrNull("</mx-reply>")?.let {
+            this.substring(it + "</mx-reply>".length)
+        } ?: this
+    }
     .trim()
     .replace("<em>", "")
     .replace("</em>", "")
+    .replace("&quot;", "\"")
+    .replace("&#39;", "'")
 
 private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text

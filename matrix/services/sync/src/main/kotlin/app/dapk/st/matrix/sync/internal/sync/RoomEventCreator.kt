@@ -162,11 +162,6 @@ internal class TimelineEventMapper(
 
 }
 
-private fun String.stripTags() = this.substring(this.indexOf("</mx-reply>") + "</mx-reply>".length)
-    .trim()
-    .replace("<em>", "")
-    .replace("</em>", "")
-
 private fun ApiTimelineEvent.TimelineMessage.isEdit() = this.content.relation?.relationType == "m.replace" && this.content.relation?.eventId != null
 private fun ApiTimelineEvent.TimelineMessage.isReply() = this.content.relation?.inReplyTo != null
 private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text
