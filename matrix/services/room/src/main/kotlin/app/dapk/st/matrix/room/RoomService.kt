@@ -30,7 +30,7 @@ interface RoomService : MatrixService {
 
     data class JoinedMember(
         val userId: UserId,
-        val displayName: String,
+        val displayName: String?,
         val avatarUrl: String?,
     )
 
