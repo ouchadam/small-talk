@@ -4,10 +4,9 @@ import app.dapk.st.core.AppLogTag.NOTIFICATION
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomEvent
+import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.matrix.sync.RoomStore
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 
 class NotificationsUseCase(
     private val roomStore: RoomStore,
@@ -23,7 +22,7 @@ class NotificationsUseCase(
 
     suspend fun listenForNotificationChanges() {
         roomStore.observeUnread()
-            .drop(1)
+            .skipFirst()
             .onEach { result ->
                 log(NOTIFICATION, "unread changed - render notifications")
 
@@ -41,4 +40,6 @@ class NotificationsUseCase(
             }
             .collect()
     }
+
+    private fun <T> Flow<T>.skipFirst() = drop(1)
 }

@@ -8,6 +8,8 @@ import app.dapk.st.core.log
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val SUMMARY_NOTIFICATION_ID = 101
 private const val MESSAGE_NOTIFICATION_ID = 100
@@ -21,27 +23,29 @@ class NotificationRenderer(
         removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
         val notifications = notificationFactory.createNotifications(result)
 
-        notifications.summaryNotification.ifNull {
-            log(AppLogTag.NOTIFICATION, "cancelling summary")
-            notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
-        }
+        withContext(Dispatchers.Main) {
+            notifications.summaryNotification.ifNull {
+                log(AppLogTag.NOTIFICATION, "cancelling summary")
+                notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
+            }
 
-        notifications.delegates.forEach {
-            when (it) {
-                is NotificationDelegate.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
-                is NotificationDelegate.Room -> {
-                    if (!onlyContainsRemovals) {
-                        log(AppLogTag.NOTIFICATION, "notifying ${it.roomId.value}")
-                        notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification)
+            notifications.delegates.forEach {
+                when (it) {
+                    is NotificationDelegate.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
+                    is NotificationDelegate.Room -> {
+                        if (!onlyContainsRemovals) {
+                            log(AppLogTag.NOTIFICATION, "notifying ${it.roomId.value}")
+                            notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification)
+                        }
                     }
                 }
             }
-        }
 
-        notifications.summaryNotification?.let {
-            if (!onlyContainsRemovals) {
-                log(AppLogTag.NOTIFICATION, "notifying summary")
-                notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+            notifications.summaryNotification?.let {
+                if (!onlyContainsRemovals) {
+                    log(AppLogTag.NOTIFICATION, "notifying summary")
+                    notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+                }
             }
         }
     }
