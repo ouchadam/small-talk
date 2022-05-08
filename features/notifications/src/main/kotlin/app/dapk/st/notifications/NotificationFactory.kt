@@ -7,8 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
-import app.dapk.st.core.AppLogTag
-import app.dapk.st.core.log
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
@@ -22,7 +20,7 @@ class NotificationFactory(
     private val context: Context,
 ) {
 
-    suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>): Notifications {
+    suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>, onlyContainsRemovals: Boolean): Notifications {
         val notifications = events.map { (roomOverview, events) ->
             val messageEvents = events.filterIsInstance<RoomEvent.Message>()
             when (messageEvents.isEmpty()) {
@@ -32,14 +30,14 @@ class NotificationFactory(
         }
 
         val summaryNotification = if (notifications.filterIsInstance<NotificationDelegate.Room>().isNotEmpty()) {
-            createSummary(notifications)
+            createSummary(notifications, onlyContainsRemovals)
         } else {
             null
         }
         return Notifications(summaryNotification, notifications)
     }
 
-    private fun createSummary(notifications: List<NotificationDelegate>): Notification {
+    private fun createSummary(notifications: List<NotificationDelegate>, onlyContainsRemovals: Boolean): Notification {
         val summaryInboxStyle = Notification.InboxStyle().also { style ->
             notifications.forEach {
                 when (it) {
@@ -51,13 +49,25 @@ class NotificationFactory(
             }
         }
 
+        if (notifications.size > 1) {
+            summaryInboxStyle.setSummaryText("${notifications.countMessages()} messages from ${notifications.size} chats")
+        }
+
         return builder()
             .setStyle(summaryInboxStyle)
+            .setOnlyAlertOnce(onlyContainsRemovals)
             .setSmallIcon(R.drawable.ic_notification_small_icon)
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setGroupSummary(true)
             .setGroup(GROUP_ID)
             .build()
+    }
+
+    private fun List<NotificationDelegate>.countMessages() = this.sumOf {
+        when (it) {
+            is NotificationDelegate.DismissRoom -> 0
+            is NotificationDelegate.Room -> it.messageCount
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
@@ -131,7 +141,8 @@ class NotificationFactory(
                 .setAutoCancel(true)
                 .build(),
             roomId = roomOverview.roomId,
-            summary = events.last().content
+            summary = events.last().content,
+            messageCount = events.size,
         )
 
     }

@@ -21,7 +21,7 @@ class NotificationRenderer(
 
     suspend fun render(result: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, onlyContainsRemovals: Boolean) {
         removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
-        val notifications = notificationFactory.createNotifications(result)
+        val notifications = notificationFactory.createNotifications(result, onlyContainsRemovals)
 
         withContext(Dispatchers.Main) {
             notifications.summaryNotification.ifNull {
@@ -42,10 +42,8 @@ class NotificationRenderer(
             }
 
             notifications.summaryNotification?.let {
-                if (!onlyContainsRemovals) {
-                    log(AppLogTag.NOTIFICATION, "notifying summary")
-                    notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
-                }
+                log(AppLogTag.NOTIFICATION, "notifying summary")
+                notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
             }
         }
     }
@@ -53,6 +51,6 @@ class NotificationRenderer(
 }
 
 sealed interface NotificationDelegate {
-    data class Room(val notification: Notification, val roomId: RoomId, val summary: String) : NotificationDelegate
+    data class Room(val notification: Notification, val roomId: RoomId, val summary: String, val messageCount: Int) : NotificationDelegate
     data class DismissRoom(val roomId: RoomId) : NotificationDelegate
 }
