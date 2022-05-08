@@ -8,6 +8,7 @@ import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.push.PushService
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.navigator.IntentFactory
 import app.dapk.st.push.RegisterFirebasePushTokenUseCase
 import app.dapk.st.work.WorkScheduler
 
@@ -20,6 +21,7 @@ class NotificationsModule(
     private val roomStore: RoomStore,
     private val context: Context,
     private val workScheduler: WorkScheduler,
+    private val intentFactory: IntentFactory,
 ) : ProvidableModule {
 
     fun pushUseCase() = pushService
@@ -28,7 +30,7 @@ class NotificationsModule(
     fun firebasePushTokenUseCase() = firebasePushTokenUseCase
     fun notificationsUseCase() = NotificationsUseCase(
         roomStore,
-        NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context)),
+        NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context, intentFactory)),
         NotificationChannels(notificationManager()),
     )
 

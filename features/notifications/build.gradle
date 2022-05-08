@@ -10,6 +10,7 @@ dependencies {
     implementation project(":core")
     implementation project(":domains:android:imageloader")
     implementation project(":features:messenger")
+    implementation project(":features:navigator")
 
     implementation platform('com.google.firebase:firebase-bom:29.0.3')
     implementation 'com.google.firebase:firebase-messaging'

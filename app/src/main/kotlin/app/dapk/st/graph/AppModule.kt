@@ -1,6 +1,5 @@
 package app.dapk.st.graph
 
-import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -90,9 +89,9 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker)
 
     val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
-        override fun home(activity: Activity) = Intent(activity, MainActivity::class.java)
-        override fun messenger(activity: Activity, roomId: RoomId) = MessengerActivity.newInstance(activity, roomId)
-        override fun messengerShortcut(activity: Activity, roomId: RoomId) = MessengerActivity.newShortcutInstance(activity, roomId)
+        override fun home(context: Context) = Intent(context, MainActivity::class.java)
+        override fun messenger(context: Context, roomId: RoomId) = MessengerActivity.newInstance(context, roomId)
+        override fun messengerShortcut(context: Context, roomId: RoomId) = MessengerActivity.newShortcutInstance(context, roomId)
     })
 
     val featureModules = FeatureModules(
@@ -101,6 +100,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         domainModules,
         trackingModule,
         workModule,
+        coreAndroidModule,
         imageLoaderModule,
         context,
         buildMeta,
@@ -115,6 +115,7 @@ internal class FeatureModules internal constructor(
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
     private val workModule: WorkModule,
+    private val coreAndroidModule: CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
@@ -172,6 +173,7 @@ internal class FeatureModules internal constructor(
             storeModule.value.roomStore(),
             context,
             workModule.workScheduler(),
+            intentFactory = coreAndroidModule.intentFactory(),
         )
     }
 

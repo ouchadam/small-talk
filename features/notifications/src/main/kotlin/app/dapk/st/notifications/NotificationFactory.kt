@@ -11,6 +11,7 @@ import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.messenger.MessengerActivity
+import app.dapk.st.navigator.IntentFactory
 
 private const val GROUP_ID = "st"
 private const val channelId = "message"
@@ -18,6 +19,7 @@ private const val channelId = "message"
 class NotificationFactory(
     private val iconLoader: IconLoader,
     private val context: Context,
+    private val intentFactory: IntentFactory,
 ) {
 
     suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>, onlyContainsRemovals: Boolean): Notifications {
@@ -53,6 +55,14 @@ class NotificationFactory(
             summaryInboxStyle.setSummaryText("${notifications.countMessages()} messages from ${notifications.size} chats")
         }
 
+        val openAppIntent = PendingIntent.getActivity(
+            context,
+            1000,
+            intentFactory.home(context)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         return builder()
             .setStyle(summaryInboxStyle)
             .setOnlyAlertOnce(onlyContainsRemovals)
@@ -60,6 +70,7 @@ class NotificationFactory(
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setGroupSummary(true)
             .setGroup(GROUP_ID)
+            .setContentIntent(openAppIntent)
             .build()
     }
 

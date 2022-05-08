@@ -1,6 +1,7 @@
 package app.dapk.st.navigator
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import app.dapk.st.matrix.common.RoomId
 import kotlin.properties.ReadOnlyProperty
@@ -39,10 +40,9 @@ interface Navigator {
 
 interface IntentFactory {
 
-    fun home(activity: Activity): Intent
-    fun messenger(activity: Activity, roomId: RoomId): Intent
-    fun messengerShortcut(activity: Activity, roomId: RoomId): Intent
-
+    fun home(context: Context): Intent
+    fun messenger(context: Context, roomId: RoomId): Intent
+    fun messengerShortcut(context: Context, roomId: RoomId): Intent
 
 }
 
