@@ -1,5 +1,7 @@
 package app.dapk.st.matrix.room.internal
 
+import app.dapk.st.core.LRUCache
+import app.dapk.st.core.isNullOrEmpty
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
@@ -18,7 +20,7 @@ class RoomMembers(private val memberStore: MemberStore, private val membersCache
             memberStore.query(roomId, userIds).also { membersCache.insert(roomId, it) }
         } else {
             val (cachedMembers, missingIds) = userIds.fold(mutableListOf<RoomMember>() to mutableListOf<UserId>()) { acc, current ->
-                when (val member = roomCache[current]) {
+                when (val member = roomCache?.get(current)) {
                     null -> acc.second.add(current)
                     else -> acc.first.add(member)
                 }
@@ -42,12 +44,12 @@ class RoomMembers(private val memberStore: MemberStore, private val membersCache
 
 class RoomMembersCache {
 
-    private val cache = mutableMapOf<RoomId, MutableMap<UserId, RoomMember>>()
+    private val cache = LRUCache<RoomId, LRUCache<UserId, RoomMember>>(maxSize = 12)
 
-    fun room(roomId: RoomId) = cache[roomId]
+    fun room(roomId: RoomId) = cache.get(roomId)
 
     fun insert(roomId: RoomId, members: List<RoomMember>) {
-        val map = cache.getOrPut(roomId) { mutableMapOf() }
-        members.forEach { map[it.id] = it }
+        val map = cache.getOrPut(roomId) { LRUCache(maxSize = 25) }
+        members.forEach { map.put(it.id, it) }
     }
 }
