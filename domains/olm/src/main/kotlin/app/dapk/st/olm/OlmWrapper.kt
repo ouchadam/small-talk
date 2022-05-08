@@ -254,7 +254,7 @@ class OlmWrapper(
 
         return readSession.firstNotNullOfOrNull { (_, session) ->
             kotlin.runCatching {
-                when (type.toInt()) {
+                when (type) {
                     OlmMessage.MESSAGE_TYPE_PRE_KEY -> {
                         if (session.matchesInboundSession(body.value)) {
                             logger.matrixLog(CRYPTO, "matched inbound session, attempting decrypt")
@@ -270,6 +270,8 @@ class OlmWrapper(
                             session.decryptMessage(olmMessage)?.let { JsonString(it) }?.also {
                                 logger.crypto("alt flow identity: $senderKey : ${session.sessionIdentifier()}")
                                 olmStore.persistSession(senderKey, SessionId(session.sessionIdentifier()), session)
+                            }.also {
+                                session.releaseSession()
                             }
                         }
                     }
@@ -287,6 +289,8 @@ class OlmWrapper(
         }.ifNull {
             logger.matrixLog(CRYPTO, "failed to decrypt olm session")
             DecryptionResult.Failed(errors.joinToString { it.message ?: "N/A" })
+        }.also {
+            readSession.forEach { it.second.releaseSession() }
         }
     }
 
@@ -310,7 +314,9 @@ class OlmWrapper(
                         errorTracker.track(it)
                         DecryptionResult.Failed(it.message ?: "Unknown")
                     }
-                )
+                ).also {
+                    megolmSession.releaseSession()
+                }
             }
         }
     }
