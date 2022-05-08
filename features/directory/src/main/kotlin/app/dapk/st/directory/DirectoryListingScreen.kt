@@ -115,13 +115,15 @@ private fun DirectoryViewModel.ObserveEvents(listState: LazyListState, toolbarPo
     }
 }
 
+
+val clock = Clock.systemUTC()
+
 @Composable
 private fun Content(listState: LazyListState, state: Content) {
     val context = LocalContext.current
     val navigateToRoom = { roomId: RoomId ->
         context.startActivity(MessengerActivity.newInstance(context, roomId))
     }
-    val clock = Clock.systemUTC()
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = state.overviewState) {
