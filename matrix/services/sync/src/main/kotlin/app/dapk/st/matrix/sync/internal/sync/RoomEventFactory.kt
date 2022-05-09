@@ -63,9 +63,19 @@ fun String.stripTags() = this
         } ?: this
     }
     .trim()
+    .replaceLinks()
     .replace("<em>", "")
     .replace("</em>", "")
     .replace("&quot;", "\"")
     .replace("&#39;", "'")
+
+private fun String.replaceLinks(): String {
+    return this.indexOfOrNull("<a href=")?.let { start ->
+        val openTagClose = indexOfOrNull("\">")!!
+        val end = indexOfOrNull("</a>")!!
+        val content = this.substring(openTagClose + "\">".length, end)
+        this.replaceRange(start, end + "</a>".length, content)
+    } ?: this
+}
 
 private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text
