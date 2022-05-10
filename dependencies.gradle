@@ -133,7 +133,7 @@ ext.Dependencies.with {
         kluent = "org.amshove.kluent:kluent:1.68"
         mockk = 'io.mockk:mockk:1.12.3'
 
-        matrixOlm = "org.matrix.android:olm-sdk:3.2.10"
+        matrixOlm = "org.matrix.android:olm-sdk:3.2.11"
     }
 }
 
