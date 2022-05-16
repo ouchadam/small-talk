@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.messenger.MessengerActivity
@@ -23,9 +24,21 @@ class NotificationFactory(
     private val intentFactory: IntentFactory,
 ) {
 
+    private fun RoomEvent.toNotifiableContent(): String = when (this) {
+        is RoomEvent.Image -> "\uD83D\uDCF7"
+        is RoomEvent.Message -> this.content
+        is RoomEvent.Reply -> this.message.toNotifiableContent()
+    }
+
     suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>, onlyContainsRemovals: Boolean, roomsWithNewEvents: Set<RoomId>): Notifications {
         val notifications = events.map { (roomOverview, events) ->
-            val messageEvents = events.filterIsInstance<RoomEvent.Message>()
+            val messageEvents = events.map {
+                when (it) {
+                    is RoomEvent.Image -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
+                    is RoomEvent.Message -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
+                    is RoomEvent.Reply -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
+                }
+            }
             when (messageEvents.isEmpty()) {
                 true -> NotificationDelegate.DismissRoom(roomOverview.roomId)
                 false -> createNotification(messageEvents, roomOverview, roomsWithNewEvents)
@@ -83,7 +96,7 @@ class NotificationFactory(
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private suspend fun createMessageStyle(events: List<RoomEvent.Message>, roomOverview: RoomOverview): Notification.MessagingStyle {
+    private suspend fun createMessageStyle(events: List<Notifiable>, roomOverview: RoomOverview): Notification.MessagingStyle {
         val messageStyle = Notification.MessagingStyle(
             Person.Builder()
                 .setName("me")
@@ -111,7 +124,7 @@ class NotificationFactory(
         return messageStyle
     }
 
-    private suspend fun createNotification(events: List<RoomEvent.Message>, roomOverview: RoomOverview, roomsWithNewEvents: Set<RoomId>): NotificationDelegate {
+    private suspend fun createNotification(events: List<Notifiable>, roomOverview: RoomOverview, roomsWithNewEvents: Set<RoomId>): NotificationDelegate {
         val sortedEvents = events.sortedBy { it.utcTimestamp }
 
         val messageStyle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -168,3 +181,5 @@ class NotificationFactory(
 }
 
 data class Notifications(val summaryNotification: Notification?, val delegates: List<NotificationDelegate>)
+
+data class Notifiable(val content: String, val utcTimestamp: Long, val author: RoomMember)
