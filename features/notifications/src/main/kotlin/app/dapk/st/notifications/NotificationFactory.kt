@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import app.dapk.st.imageloader.IconLoader
+import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.messenger.MessengerActivity
@@ -22,12 +23,12 @@ class NotificationFactory(
     private val intentFactory: IntentFactory,
 ) {
 
-    suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>, onlyContainsRemovals: Boolean): Notifications {
+    suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>, onlyContainsRemovals: Boolean, roomsWithNewEvents: Set<RoomId>): Notifications {
         val notifications = events.map { (roomOverview, events) ->
             val messageEvents = events.filterIsInstance<RoomEvent.Message>()
             when (messageEvents.isEmpty()) {
                 true -> NotificationDelegate.DismissRoom(roomOverview.roomId)
-                false -> createNotification(messageEvents, roomOverview)
+                false -> createNotification(messageEvents, roomOverview, roomsWithNewEvents)
             }
         }
 
@@ -110,7 +111,7 @@ class NotificationFactory(
         return messageStyle
     }
 
-    private suspend fun createNotification(events: List<RoomEvent.Message>, roomOverview: RoomOverview): NotificationDelegate {
+    private suspend fun createNotification(events: List<RoomEvent.Message>, roomOverview: RoomOverview, roomsWithNewEvents: Set<RoomId>): NotificationDelegate {
         val sortedEvents = events.sortedBy { it.utcTimestamp }
 
         val messageStyle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -136,7 +137,7 @@ class NotificationFactory(
                 .setWhen(sortedEvents.last().utcTimestamp)
                 .setShowWhen(true)
                 .setGroup(GROUP_ID)
-                .setOnlyAlertOnce(roomOverview.isGroup)
+                .setOnlyAlertOnce(roomOverview.isGroup || !roomsWithNewEvents.contains(roomOverview.roomId))
                 .setContentIntent(openRoomIntent)
                 .setStyle(messageStyle)
                 .setCategory(Notification.CATEGORY_MESSAGE)
