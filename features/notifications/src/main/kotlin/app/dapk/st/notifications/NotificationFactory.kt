@@ -24,14 +24,16 @@ class NotificationFactory(
     private val intentFactory: IntentFactory,
 ) {
 
+    private val shouldAlwaysAlertDms = true
+
     private fun RoomEvent.toNotifiableContent(): String = when (this) {
         is RoomEvent.Image -> "\uD83D\uDCF7"
         is RoomEvent.Message -> this.content
         is RoomEvent.Reply -> this.message.toNotifiableContent()
     }
 
-    suspend fun createNotifications(events: Map<RoomOverview, List<RoomEvent>>, onlyContainsRemovals: Boolean, roomsWithNewEvents: Set<RoomId>): Notifications {
-        val notifications = events.map { (roomOverview, events) ->
+    suspend fun createNotifications(allUnread: Map<RoomOverview, List<RoomEvent>>, roomsWithNewEvents: Set<RoomId>): Notifications {
+        val notifications = allUnread.map { (roomOverview, events) ->
             val messageEvents = events.map {
                 when (it) {
                     is RoomEvent.Image -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
@@ -46,14 +48,15 @@ class NotificationFactory(
         }
 
         val summaryNotification = if (notifications.filterIsInstance<NotificationDelegate.Room>().isNotEmpty()) {
-            createSummary(notifications, onlyContainsRemovals)
+            val isAlerting = notifications.any { it is NotificationDelegate.Room && it.isAlerting }
+            createSummary(notifications, isAlerting = isAlerting)
         } else {
             null
         }
         return Notifications(summaryNotification, notifications)
     }
 
-    private fun createSummary(notifications: List<NotificationDelegate>, onlyContainsRemovals: Boolean): Notification {
+    private fun createSummary(notifications: List<NotificationDelegate>, isAlerting: Boolean): Notification {
         val summaryInboxStyle = Notification.InboxStyle().also { style ->
             notifications.forEach {
                 when (it) {
@@ -79,7 +82,7 @@ class NotificationFactory(
 
         return builder()
             .setStyle(summaryInboxStyle)
-            .setOnlyAlertOnce(onlyContainsRemovals)
+            .setOnlyAlertOnce(!isAlerting)
             .setSmallIcon(R.drawable.ic_notification_small_icon)
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setGroupSummary(true)
@@ -145,12 +148,17 @@ class NotificationFactory(
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val shouldAlertMoreThanOnce = when {
+            roomOverview.isDm() -> roomsWithNewEvents.contains(roomOverview.roomId) && shouldAlwaysAlertDms
+            else -> false
+        }
+
         return NotificationDelegate.Room(
             builder()
                 .setWhen(sortedEvents.last().utcTimestamp)
                 .setShowWhen(true)
                 .setGroup(GROUP_ID)
-                .setOnlyAlertOnce(roomOverview.isGroup || !roomsWithNewEvents.contains(roomOverview.roomId))
+                .setOnlyAlertOnce(!shouldAlertMoreThanOnce)
                 .setContentIntent(openRoomIntent)
                 .setStyle(messageStyle)
                 .setCategory(Notification.CATEGORY_MESSAGE)
@@ -168,8 +176,8 @@ class NotificationFactory(
             roomId = roomOverview.roomId,
             summary = events.last().content,
             messageCount = events.size,
+            isAlerting = shouldAlertMoreThanOnce
         )
-
     }
 
     private fun builder() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -179,6 +187,8 @@ class NotificationFactory(
     }
 
 }
+
+private fun RoomOverview.isDm() = !this.isGroup
 
 data class Notifications(val summaryNotification: Notification?, val delegates: List<NotificationDelegate>)
 

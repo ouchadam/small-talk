@@ -19,9 +19,9 @@ class NotificationRenderer(
     private val notificationFactory: NotificationFactory,
 ) {
 
-    suspend fun render(result: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, onlyContainsRemovals: Boolean, roomsWithNewEvents: Set<RoomId>) {
+    suspend fun render(allUnread: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, roomsWithNewEvents: Set<RoomId>) {
         removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
-        val notifications = notificationFactory.createNotifications(result, onlyContainsRemovals, roomsWithNewEvents)
+        val notifications = notificationFactory.createNotifications(allUnread, roomsWithNewEvents)
 
         withContext(Dispatchers.Main) {
             notifications.summaryNotification.ifNull {
@@ -29,6 +29,7 @@ class NotificationRenderer(
                 notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
             }
 
+            val onlyContainsRemovals = removedRooms.isNotEmpty() && roomsWithNewEvents.isEmpty()
             notifications.delegates.forEach {
                 when (it) {
                     is NotificationDelegate.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
@@ -42,8 +43,10 @@ class NotificationRenderer(
             }
 
             notifications.summaryNotification?.let {
-                log(AppLogTag.NOTIFICATION, "notifying summary")
-                notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+                if (notifications.delegates.filterIsInstance<NotificationDelegate.Room>().isNotEmpty()) {
+                    log(AppLogTag.NOTIFICATION, "notifying summary")
+                    notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+                }
             }
         }
     }
@@ -51,6 +54,6 @@ class NotificationRenderer(
 }
 
 sealed interface NotificationDelegate {
-    data class Room(val notification: Notification, val roomId: RoomId, val summary: String, val messageCount: Int) : NotificationDelegate
+    data class Room(val notification: Notification, val roomId: RoomId, val summary: String, val messageCount: Int, val isAlerting: Boolean) : NotificationDelegate
     data class DismissRoom(val roomId: RoomId) : NotificationDelegate
 }
