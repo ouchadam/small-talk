@@ -154,11 +154,10 @@ private fun RoomInvite.inviterName() = this.from.displayName?.let { "$it (${this
 
 @Composable
 private fun ProfileViewModel.ObserveEvents() {
-    val context = LocalContext.current
-    StartObserving {
-        this@ObserveEvents.events.launch {
-            when (it) {
-            }
-        }
-    }
+//    StartObserving {
+//        this@ObserveEvents.events.launch {
+//            when (it) {
+//            }
+//        }
+//    }
 }

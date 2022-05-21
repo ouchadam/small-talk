@@ -126,7 +126,7 @@ ext.Dependencies.with {
         ktorLogging = "io.ktor:ktor-client-logging-jvm:${ktorVer}"
         ktorJava = "io.ktor:ktor-client-java:${ktorVer}"
 
-        coil = "io.coil-kt:coil-compose:1.4.0"
+        coil = "io.coil-kt:coil-compose:2.1.0"
         accompanistSystemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.24.7-alpha"
 
         junit = "junit:junit:4.13.2"
