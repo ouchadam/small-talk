@@ -28,6 +28,7 @@ class NotificationsModule(
     fun syncService() = syncService
     fun credentialProvider() = credentialsStore
     fun firebasePushTokenUseCase() = firebasePushTokenUseCase
+    fun roomStore() = roomStore
     fun notificationsUseCase() = NotificationsUseCase(
         roomStore,
         NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context, intentFactory)),

@@ -56,11 +56,8 @@ class PushAndroidService : FirebaseMessagingService() {
     private suspend fun doSync(roomId: RoomId?, eventId: EventId?) {
         when (roomId) {
             null -> {
-                log(PUSH, "empty push payload - triggering a sync if not running")
-                withTimeoutOrNull(60_000) {
-                    log(PUSH, "got empty event, forcing a sync")
-                    module.syncService().startSyncing().first()
-                } ?: log(PUSH, "timed out waiting for sync")
+                log(PUSH, "empty push payload - keeping sync alive until unread changes")
+                waitForUnreadChange(60_000) ?: log(PUSH, "timed out waiting for sync")
             }
             else -> {
                 log(PUSH, "push with eventId payload - keeping sync alive until the event shows up in the sync response")
@@ -79,6 +76,14 @@ class PushAndroidService : FirebaseMessagingService() {
                 .firstOrNull {
                     it == eventId
                 }
+        }
+    }
+
+    private suspend fun waitForUnreadChange(timeout: Long): String? {
+        return withTimeoutOrNull(timeout) {
+            combine(module.syncService().startSyncing(), module.roomStore().observeUnread()) { _, unread -> unread }
+                .first()
+            "ignored"
         }
     }
 
