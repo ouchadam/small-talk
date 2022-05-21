@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
@@ -37,7 +38,8 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomEvent.Message
 import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.navigator.Navigator
-import coil.compose.rememberImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -212,8 +214,6 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
     }
 }
 
-private val decryptingFetcher = DecryptingFetcher()
-
 @Composable
 private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
@@ -242,9 +242,11 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Image(
                     modifier = Modifier.size(content.message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                    painter = rememberImagePainter(
-                        data = content.message,
-                        builder = { fetcher(decryptingFetcher) }
+                    painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .fetcherFactory(DecryptingFetcherFactory(LocalContext.current))
+                            .data(content.message)
+                            .build()
                     ),
                     contentDescription = null,
                 )
@@ -410,9 +412,11 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Image(
                                 modifier = Modifier.size(replyingTo.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                                painter = rememberImagePainter(
-                                    data = replyingTo,
-                                    builder = { fetcher(DecryptingFetcher()) }
+                                painter = rememberAsyncImagePainter(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .fetcherFactory(DecryptingFetcherFactory(LocalContext.current))
+                                        .data(replyingTo)
+                                        .build()
                                 ),
                                 contentDescription = null,
                             )
@@ -445,9 +449,11 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Image(
                             modifier = Modifier.size(message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                            painter = rememberImagePainter(
-                                data = content.message,
-                                builder = { fetcher(DecryptingFetcher()) }
+                            painter = rememberAsyncImagePainter(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(content.message)
+                                    .fetcherFactory(DecryptingFetcherFactory(LocalContext.current))
+                                    .build()
                             ),
                             contentDescription = null,
                         )
