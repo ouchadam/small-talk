@@ -13,7 +13,7 @@ internal class RoomProcessor(
     private val roomDataSource: RoomDataSource,
     private val timelineEventsProcessor: TimelineEventsProcessor,
     private val roomOverviewProcessor: RoomOverviewProcessor,
-    private val unreadEventsUseCase: UnreadEventsUseCase,
+    private val unreadEventsProcessor: UnreadEventsProcessor,
     private val ephemeralEventsUseCase: EphemeralEventsUseCase,
 ) {
 
@@ -29,7 +29,7 @@ internal class RoomProcessor(
         )
 
         val overview = createRoomOverview(distinctEvents, roomToProcess, previousState)
-        unreadEventsUseCase.processUnreadState(overview, previousState?.roomOverview, newEvents, roomToProcess.userCredentials.userId, isInitialSync)
+        unreadEventsProcessor.processUnreadState(overview, previousState?.roomOverview, newEvents, roomToProcess.userCredentials.userId, isInitialSync)
 
         return RoomState(overview, distinctEvents).also {
             roomDataSource.persist(roomToProcess.roomId, previousState, it)

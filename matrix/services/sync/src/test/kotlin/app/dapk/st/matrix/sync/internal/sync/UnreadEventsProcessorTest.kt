@@ -14,18 +14,18 @@ private val A_ROOM_MESSAGE_FROM_OTHER = aRoomMessageEvent(
     author = aRoomMember(id = aUserId("a-different-user"))
 )
 
-internal class UnreadEventsUseCaseTest {
+internal class UnreadEventsProcessorTest {
 
     private val fakeRoomStore = FakeRoomStore()
 
-    private val unreadEventsUseCase = UnreadEventsUseCase(
+    private val unreadEventsProcessor = UnreadEventsProcessor(
         fakeRoomStore,
         FakeMatrixLogger()
     )
 
     @Test
     fun `given initial sync when processing unread then does mark any events as unread`() = runTest {
-        unreadEventsUseCase.processUnreadState(
+        unreadEventsProcessor.processUnreadState(
             isInitialSync = true,
             overview = aRoomOverview(),
             previousState = null,
@@ -40,7 +40,7 @@ internal class UnreadEventsUseCaseTest {
     fun `given read marker has changed when processing unread then marks room read`() = runTest {
         fakeRoomStore.expect { it.markRead(RoomId(any())) }
 
-        unreadEventsUseCase.processUnreadState(
+        unreadEventsProcessor.processUnreadState(
             isInitialSync = false,
             overview = A_ROOM_OVERVIEW.copy(readMarker = anEventId("an-updated-marker")),
             previousState = A_ROOM_OVERVIEW,
@@ -55,7 +55,7 @@ internal class UnreadEventsUseCaseTest {
     fun `given new events from other users when processing unread then inserts events as unread`() = runTest {
         fakeRoomStore.expect { it.insertUnread(RoomId(any()), any()) }
 
-        unreadEventsUseCase.processUnreadState(
+        unreadEventsProcessor.processUnreadState(
             isInitialSync = false,
             overview = A_ROOM_OVERVIEW,
             previousState = null,

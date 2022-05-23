@@ -63,7 +63,7 @@ internal class DefaultSyncService(
                     EventLookupUseCase(roomStore)
                 ),
                 RoomOverviewProcessor(roomMembersService),
-                UnreadEventsUseCase(roomStore, logger),
+                UnreadEventsProcessor(roomStore, logger),
                 EphemeralEventsUseCase(roomMembersService, syncEventsFlow),
             ),
             roomRefresher,

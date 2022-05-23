@@ -8,7 +8,7 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.matrix.sync.RoomStore
 
-internal class UnreadEventsUseCase(
+internal class UnreadEventsProcessor(
     private val roomStore: RoomStore,
     private val logger: MatrixLogger,
 ) {

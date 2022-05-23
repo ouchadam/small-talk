@@ -14,4 +14,10 @@ dependencies {
 
     implementation platform('com.google.firebase:firebase-bom:29.0.3')
     implementation 'com.google.firebase:firebase-messaging'
+
+    kotlinTest(it)
+
+    androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":matrix:common"))
+    androidImportFixturesWorkaround(project, project(":matrix:services:sync"))
 }
