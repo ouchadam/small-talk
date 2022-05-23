@@ -28,7 +28,8 @@ class NotificationsUseCase(
         notificationRenderer.render(
             allUnread = allUnread,
             removedRooms = diff.removed.keys,
-            roomsWithNewEvents = diff.changedOrNew.keys
+            roomsWithNewEvents = diff.changedOrNew.keys,
+            newRooms = diff.newRooms,
         )
     }
 }

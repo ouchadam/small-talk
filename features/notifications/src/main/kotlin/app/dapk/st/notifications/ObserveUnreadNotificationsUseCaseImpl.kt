@@ -2,6 +2,7 @@ package app.dapk.st.notifications
 
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.extensions.clearAndPutAll
+import app.dapk.st.core.extensions.containsKey
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
@@ -54,10 +55,11 @@ private fun Flow<Map<RoomOverview, List<RoomEvent>>>.mapWithDiff(): Flow<Pair<Ma
 }
 
 private fun calculateDiff(allUnread: Map<RoomId, List<EventId>>, previousUnread: Map<RoomId, List<EventId>>?): NotificationDiff {
+    val newRooms = allUnread.filter { !previousUnread.containsKey(it.key) }.keys
     val unchanged = previousUnread?.filter { allUnread.containsKey(it.key) && it.value == allUnread[it.key] } ?: emptyMap()
     val changedOrNew = allUnread.filterNot { unchanged.containsKey(it.key) }
     val removed = previousUnread?.filter { !allUnread.containsKey(it.key) } ?: emptyMap()
-    return NotificationDiff(unchanged, changedOrNew, removed)
+    return NotificationDiff(unchanged, changedOrNew, removed, newRooms)
 }
 
 private fun List<RoomEvent>.toEventIds() = this.map { it.eventId }
@@ -71,5 +73,6 @@ private fun <T> Flow<T>.avoidShowingPreviousNotificationsOnLaunch() = drop(1)
 data class NotificationDiff(
     val unchanged: Map<RoomId, List<EventId>>,
     val changedOrNew: Map<RoomId, List<EventId>>,
-    val removed: Map<RoomId, List<EventId>>
+    val removed: Map<RoomId, List<EventId>>,
+    val newRooms: Set<RoomId>
 )

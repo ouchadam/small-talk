@@ -32,7 +32,7 @@ class NotificationFactory(
         is RoomEvent.Reply -> this.message.toNotifiableContent()
     }
 
-    suspend fun createNotifications(allUnread: Map<RoomOverview, List<RoomEvent>>, roomsWithNewEvents: Set<RoomId>): Notifications {
+    suspend fun createNotifications(allUnread: Map<RoomOverview, List<RoomEvent>>, roomsWithNewEvents: Set<RoomId>, newRooms: Set<RoomId>): Notifications {
         val notifications = allUnread.map { (roomOverview, events) ->
             val messageEvents = events.map {
                 when (it) {
@@ -43,7 +43,7 @@ class NotificationFactory(
             }
             when (messageEvents.isEmpty()) {
                 true -> NotificationDelegate.DismissRoom(roomOverview.roomId)
-                false -> createNotification(messageEvents, roomOverview, roomsWithNewEvents)
+                false -> createMessageNotification(messageEvents, roomOverview, roomsWithNewEvents, newRooms)
             }
         }
 
@@ -58,15 +58,23 @@ class NotificationFactory(
 
     private fun createSummary(notifications: List<NotificationDelegate>, isAlerting: Boolean): Notification {
         val summaryInboxStyle = Notification.InboxStyle().also { style ->
-            notifications.forEach {
+            notifications.sortedBy {
+                when (it) {
+                    is NotificationDelegate.DismissRoom -> -1
+                    is NotificationDelegate.Room -> it.notification.`when`
+                }
+            }.forEach {
                 when (it) {
                     is NotificationDelegate.DismissRoom -> {
                         // do nothing
                     }
-                    is NotificationDelegate.Room -> style.addLine(it.summary)
+                    is NotificationDelegate.Room -> {
+                        style.addLine(it.summary)
+                    }
                 }
             }
         }
+
 
         if (notifications.size > 1) {
             summaryInboxStyle.setSummaryText("${notifications.countMessages()} messages from ${notifications.size} chats")
@@ -84,7 +92,6 @@ class NotificationFactory(
             .setStyle(summaryInboxStyle)
             .setOnlyAlertOnce(!isAlerting)
             .setSmallIcon(R.drawable.ic_notification_small_icon)
-            .setCategory(Notification.CATEGORY_MESSAGE)
             .setGroupSummary(true)
             .setGroup(GROUP_ID)
             .setContentIntent(openAppIntent)
@@ -116,6 +123,7 @@ class NotificationFactory(
                 .setIcon(message.author.avatarUrl?.let { iconLoader.load(it.value) })
                 .setKey(message.author.id.value)
                 .build()
+
             messageStyle.addMessage(
                 Notification.MessagingStyle.Message(
                     message.content,
@@ -127,14 +135,19 @@ class NotificationFactory(
         return messageStyle
     }
 
-    private suspend fun createNotification(events: List<Notifiable>, roomOverview: RoomOverview, roomsWithNewEvents: Set<RoomId>): NotificationDelegate {
+    private suspend fun createMessageNotification(
+        events: List<Notifiable>,
+        roomOverview: RoomOverview,
+        roomsWithNewEvents: Set<RoomId>,
+        newRooms: Set<RoomId>
+    ): NotificationDelegate {
         val sortedEvents = events.sortedBy { it.utcTimestamp }
 
         val messageStyle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             createMessageStyle(sortedEvents, roomOverview)
         } else {
             val inboxStyle = Notification.InboxStyle()
-            events.forEach {
+            sortedEvents.forEach {
                 inboxStyle.addLine("${it.author.displayName ?: it.author.id.value}: ${it.content}")
             }
             inboxStyle
@@ -150,7 +163,7 @@ class NotificationFactory(
 
         val shouldAlertMoreThanOnce = when {
             roomOverview.isDm() -> roomsWithNewEvents.contains(roomOverview.roomId) && shouldAlwaysAlertDms
-            else -> false
+            else -> newRooms.contains(roomOverview.roomId)
         }
 
         return NotificationDelegate.Room(
@@ -158,6 +171,13 @@ class NotificationFactory(
                 .setWhen(sortedEvents.last().utcTimestamp)
                 .setShowWhen(true)
                 .setGroup(GROUP_ID)
+                .run {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        this.setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                    } else {
+                        this
+                    }
+                }
                 .setOnlyAlertOnce(!shouldAlertMoreThanOnce)
                 .setContentIntent(openRoomIntent)
                 .setStyle(messageStyle)
@@ -174,14 +194,14 @@ class NotificationFactory(
                 .setAutoCancel(true)
                 .build(),
             roomId = roomOverview.roomId,
-            summary = events.last().content,
-            messageCount = events.size,
+            summary = sortedEvents.last().content,
+            messageCount = sortedEvents.size,
             isAlerting = shouldAlertMoreThanOnce
         )
     }
 
-    private fun builder() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Notification.Builder(context, channelId)
+    private fun builder(channel: String = channelId) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Notification.Builder(context, channel)
     } else {
         Notification.Builder(context)
     }

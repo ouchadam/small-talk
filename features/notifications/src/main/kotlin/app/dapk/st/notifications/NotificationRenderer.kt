@@ -19,9 +19,9 @@ class NotificationRenderer(
     private val notificationFactory: NotificationFactory,
 ) {
 
-    suspend fun render(allUnread: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, roomsWithNewEvents: Set<RoomId>) {
+    suspend fun render(allUnread: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, roomsWithNewEvents: Set<RoomId>, newRooms: Set<RoomId>) {
         removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
-        val notifications = notificationFactory.createNotifications(allUnread, roomsWithNewEvents)
+        val notifications = notificationFactory.createNotifications(allUnread, roomsWithNewEvents, newRooms)
 
         withContext(Dispatchers.Main) {
             notifications.summaryNotification.ifNull {

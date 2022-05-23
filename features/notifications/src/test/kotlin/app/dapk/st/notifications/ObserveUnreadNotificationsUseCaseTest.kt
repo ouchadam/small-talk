@@ -34,7 +34,10 @@ class ObserveUnreadNotificationsUseCaseTest {
         val result = useCase.invoke().toList()
 
         result shouldBeEqualTo listOf(
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE))
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(
+                changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE),
+                newRooms = setOf(A_ROOM_OVERVIEW.roomId)
+            )
         )
     }
 
@@ -45,7 +48,10 @@ class ObserveUnreadNotificationsUseCaseTest {
         val result = useCase.invoke().toList()
 
         result shouldBeEqualTo listOf(
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE)),
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(
+                changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE),
+                newRooms = setOf(A_ROOM_OVERVIEW.roomId)
+            ),
             A_ROOM_OVERVIEW.withUnreads(A_MESSAGE, A_MESSAGE_2) to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE, A_MESSAGE_2))
         )
     }
@@ -85,18 +91,15 @@ class ObserveUnreadNotificationsUseCaseTest {
         result shouldBeEqualTo emptyList()
     }
 
-    private fun givenNoInitialUnreads(vararg unreads: Map<RoomOverview, List<RoomEvent>>) {
-        fakeRoomStore.givenUnreadEvents(
-            flowOf(NO_UNREADS, *unreads)
-        )
-    }
+    private fun givenNoInitialUnreads(vararg unreads: Map<RoomOverview, List<RoomEvent>>) = fakeRoomStore.givenUnreadEvents(flowOf(NO_UNREADS, *unreads))
 }
 
 private fun aNotificationDiff(
     unchanged: Map<RoomId, List<EventId>> = emptyMap(),
     changedOrNew: Map<RoomId, List<EventId>> = emptyMap(),
-    removed: Map<RoomId, List<EventId>> = emptyMap()
-) = NotificationDiff(unchanged, changedOrNew, removed)
+    removed: Map<RoomId, List<EventId>> = emptyMap(),
+    newRooms: Set<RoomId> = emptySet(),
+) = NotificationDiff(unchanged, changedOrNew, removed, newRooms)
 
 private fun RoomOverview.withUnreads(vararg events: RoomEvent) = mapOf(this to events.toList())
 private fun RoomOverview.toDiff(vararg events: RoomEvent) = mapOf(this.roomId to events.map { it.eventId })
