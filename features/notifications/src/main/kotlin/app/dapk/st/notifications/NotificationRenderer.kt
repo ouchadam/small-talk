@@ -43,7 +43,7 @@ class NotificationRenderer(
             }
 
             notifications.summaryNotification?.let {
-                if (notifications.delegates.filterIsInstance<NotificationDelegate.Room>().isNotEmpty()) {
+                if (notifications.delegates.filterIsInstance<NotificationDelegate.Room>().isNotEmpty() && !onlyContainsRemovals) {
                     log(AppLogTag.NOTIFICATION, "notifying summary")
                     notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
                 }
