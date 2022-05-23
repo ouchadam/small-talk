@@ -109,7 +109,7 @@ ext.Dependencies.with {
     mavenCentral.with {
         kotlinGradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVer}"
         kotlinSerializationGradlePlugin = "org.jetbrains.kotlin:kotlin-serialization:${kotlinVer}"
-        kotlinSerializationJson = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2"
+        kotlinSerializationJson = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3"
         kotlinCoroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1"
         kotlinCoroutinesTest = 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1'
         kotlinTest = "org.jetbrains.kotlin:kotlin-test-junit:${kotlinVer}"
@@ -131,7 +131,7 @@ ext.Dependencies.with {
 
         junit = "junit:junit:4.13.2"
         kluent = "org.amshove.kluent:kluent:1.68"
-        mockk = 'io.mockk:mockk:1.12.3'
+        mockk = 'io.mockk:mockk:1.12.4'
 
         matrixOlm = "org.matrix.android:olm-sdk:3.2.11"
     }
