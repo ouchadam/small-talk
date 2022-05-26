@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -24,6 +25,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import app.dapk.st.core.Lce
@@ -542,7 +544,8 @@ private fun Composer(message: String, onTextChange: (String) -> Unit, onSend: ()
                     value = message,
                     onValueChange = { onTextChange(it) },
                     cursorBrush = SolidColor(MaterialTheme.colors.primary),
-                    textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(LocalContentAlpha.current))
+                    textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(LocalContentAlpha.current)),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true)
                 )
             }
         }
