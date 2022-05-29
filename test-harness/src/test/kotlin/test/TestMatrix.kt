@@ -58,7 +58,11 @@ class TestMatrix(
 
     private val preferences = InMemoryPreferences()
     private val database = InMemoryDatabase.realInstance(user.roomMember.id.value)
-    private val coroutineDispatchers = CoroutineDispatchers(Dispatchers.Unconfined, CoroutineScope(Dispatchers.Unconfined))
+    private val coroutineDispatchers = CoroutineDispatchers(
+        Dispatchers.Unconfined,
+        main = Dispatchers.Unconfined,
+        global = CoroutineScope(Dispatchers.Unconfined)
+    )
 
     private val storeModule = StoreModule(
         database = database,

@@ -20,4 +20,5 @@ dependencies {
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":matrix:services:sync"))
+    androidImportFixturesWorkaround(project, project(":domains:android:stub"))
 }

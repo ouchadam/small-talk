@@ -2,7 +2,11 @@ package app.dapk.st.core
 
 import kotlinx.coroutines.*
 
-data class CoroutineDispatchers(val io: CoroutineDispatcher = Dispatchers.IO, val global: CoroutineScope = GlobalScope)
+data class CoroutineDispatchers(
+    val io: CoroutineDispatcher = Dispatchers.IO,
+    val main: CoroutineDispatcher = Dispatchers.Main,
+    val global: CoroutineScope = GlobalScope,
+)
 
 suspend fun <T> CoroutineDispatchers.withIoContext(
     block: suspend CoroutineScope.() -> T

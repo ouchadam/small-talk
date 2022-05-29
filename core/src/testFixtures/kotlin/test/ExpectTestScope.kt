@@ -12,7 +12,6 @@ fun runExpectTest(testBody: suspend ExpectTestScope.() -> Unit) {
     runTest { testBody(ExpectTest(coroutineContext)) }
 }
 
-
 class ExpectTest(override val coroutineContext: CoroutineContext) : ExpectTestScope {
 
     private val expects = mutableListOf<Pair<Int, suspend MockKVerificationScope.() -> Unit>>()

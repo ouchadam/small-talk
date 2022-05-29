@@ -3,6 +3,7 @@ package app.dapk.st.notifications
 import android.app.Notification
 import android.app.NotificationManager
 import app.dapk.st.core.AppLogTag
+import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.extensions.ifNull
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.RoomId
@@ -17,13 +18,14 @@ private const val MESSAGE_NOTIFICATION_ID = 100
 class NotificationRenderer(
     private val notificationManager: NotificationManager,
     private val notificationFactory: NotificationFactory,
+    private val dispatchers: CoroutineDispatchers,
 ) {
 
     suspend fun render(allUnread: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, roomsWithNewEvents: Set<RoomId>, newRooms: Set<RoomId>) {
         removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
         val notifications = notificationFactory.createNotifications(allUnread, roomsWithNewEvents, newRooms)
 
-        withContext(Dispatchers.Main) {
+        withContext(dispatchers.main) {
             notifications.summaryNotification.ifNull {
                 log(AppLogTag.NOTIFICATION, "cancelling summary")
                 notificationManager.cancel(SUMMARY_NOTIFICATION_ID)

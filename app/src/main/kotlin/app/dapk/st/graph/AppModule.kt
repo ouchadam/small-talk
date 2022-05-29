@@ -174,6 +174,7 @@ internal class FeatureModules internal constructor(
             context,
             workModule.workScheduler(),
             intentFactory = coreAndroidModule.intentFactory(),
+            dispatchers = coroutineDispatchers,
         )
     }
 

@@ -2,6 +2,7 @@ package app.dapk.st.notifications
 
 import android.app.NotificationManager
 import android.content.Context
+import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.common.CredentialsStore
@@ -22,6 +23,7 @@ class NotificationsModule(
     private val context: Context,
     private val workScheduler: WorkScheduler,
     private val intentFactory: IntentFactory,
+    private val dispatchers: CoroutineDispatchers,
 ) : ProvidableModule {
 
     fun pushUseCase() = pushService
@@ -30,7 +32,7 @@ class NotificationsModule(
     fun firebasePushTokenUseCase() = firebasePushTokenUseCase
     fun roomStore() = roomStore
     fun notificationsUseCase() = NotificationsUseCase(
-        NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context, intentFactory)),
+        NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context, intentFactory), dispatchers),
         ObserveUnreadNotificationsUseCaseImpl(roomStore),
         NotificationChannels(notificationManager()),
     )
