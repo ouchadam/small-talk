@@ -2,6 +2,7 @@ package app.dapk.st.directory
 
 import android.content.Context
 import android.content.pm.ShortcutInfo
+import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import app.dapk.st.matrix.common.RoomId
@@ -14,21 +15,26 @@ class ShortcutHandler(private val context: Context) {
 
     fun onDirectoryUpdate(overviews: List<RoomOverview>) {
         val update = overviews.map { it.roomId }
-
         if (cachedRoomIds != update) {
             cachedRoomIds.clear()
             cachedRoomIds.addAll(update)
 
-            val currentShortcuts = ShortcutManagerCompat.getShortcuts(context, ShortcutManagerCompat.FLAG_MATCH_DYNAMIC)
             val maxShortcutCountPerActivity = ShortcutManagerCompat.getMaxShortcutCountPerActivity(context)
-
             overviews
                 .take(maxShortcutCountPerActivity)
-                .filterNot { roomUpdate -> currentShortcuts.any { it.id == roomUpdate.roomId.value } }
                 .forEachIndexed { index, room ->
                     val build = ShortcutInfoCompat.Builder(context, room.roomId.value)
                         .setShortLabel(room.roomName ?: "N/A")
+                        .setLongLabel(room.roomName ?: "N/A")
                         .setRank(index)
+                        .run {
+                            this.setPerson(
+                                Person.Builder()
+                                    .setName(room.roomName ?: "N/A")
+                                    .setKey(room.roomId.value)
+                                    .build()
+                            )
+                        }
                         .setIntent(MessengerActivity.newShortcutInstance(context, room.roomId))
                         .setLongLived(true)
                         .setCategories(setOf(ShortcutInfo.SHORTCUT_CATEGORY_CONVERSATION))

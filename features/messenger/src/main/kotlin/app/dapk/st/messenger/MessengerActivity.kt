@@ -54,4 +54,6 @@ data class MessagerActivityPayload(
     val roomId: String
 ) : Parcelable
 
-fun <T : Parcelable> Activity.readPayload(): T = intent.getParcelableExtra("key")!!
+fun <T : Parcelable> Activity.readPayload(): T = intent.getParcelableExtra("key") ?: intent.getStringExtra("shortcut_key")!!.let {
+    MessagerActivityPayload(it) as T
+}

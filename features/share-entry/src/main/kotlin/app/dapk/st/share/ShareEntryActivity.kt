@@ -11,22 +11,7 @@ class ShareEntryActivity : DapkActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val urisToShare = intent.readSendUrisOrNull() ?: throw IllegalArgumentException("")
-
-        // display list of rooms/converations
-
-//        homeViewModel.events.onEach {
-//            when (it) {
-//                HomeEvent.Relaunch -> recreate()
-//            }
-//        }.launchIn(lifecycleScope)
-//
-//        setContent {
-//            if (homeViewModel.hasVersionChanged()) {
-//                BetaUpgradeDialog()
-//            } else {
-//                HomeScreen(homeViewModel)
-//            }
-//        }
+        
     }
 }
 
