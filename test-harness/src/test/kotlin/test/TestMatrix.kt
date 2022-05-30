@@ -246,6 +246,7 @@ class TestMatrix(
                     val roomService = services.roomService()
                     object : RoomMembersService {
                         override suspend fun find(roomId: RoomId, userIds: List<UserId>) = roomService.findMembers(roomId, userIds)
+                        override suspend fun findSummary(roomId: RoomId) = roomService.findMembersSummary(roomId)
                         override suspend fun insert(roomId: RoomId, members: List<RoomMember>) = roomService.insertMembers(roomId, members)
                     }
                 },

@@ -128,6 +128,7 @@ internal object NoOpKeySharer : KeySharer {
 
 interface RoomMembersService {
     suspend fun find(roomId: RoomId, userIds: List<UserId>): List<RoomMember>
+    suspend fun findSummary(roomId: RoomId): List<RoomMember>
     suspend fun insert(roomId: RoomId, members: List<RoomMember>)
 }
 

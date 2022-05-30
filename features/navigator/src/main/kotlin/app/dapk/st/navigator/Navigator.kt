@@ -29,6 +29,10 @@ interface Navigator {
             activity.navigateUpTo(intentFactory.home(activity))
         }
 
+        fun toMessenger(roomId: RoomId) {
+            intentFactory.messenger(activity, roomId)
+        }
+
         fun toFilePicker(requestCode: Int) {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)

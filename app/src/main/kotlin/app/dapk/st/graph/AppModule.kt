@@ -51,6 +51,7 @@ import app.dapk.st.olm.OlmWrapper
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushModule
 import app.dapk.st.settings.SettingsModule
+import app.dapk.st.share.ShareEntryModule
 import app.dapk.st.tracking.TrackingModule
 import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
@@ -176,6 +177,10 @@ internal class FeatureModules internal constructor(
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,
         )
+    }
+
+    val shareEntryModule by unsafeLazy {
+        ShareEntryModule(matrixModules.sync, matrixModules.room)
     }
 
 }
@@ -358,6 +363,7 @@ internal class MatrixModules(
                         val roomService = services.roomService()
                         object : RoomMembersService {
                             override suspend fun find(roomId: RoomId, userIds: List<UserId>) = roomService.findMembers(roomId, userIds)
+                            override suspend fun findSummary(roomId: RoomId) = roomService.findMembersSummary(roomId)
                             override suspend fun insert(roomId: RoomId, members: List<RoomMember>) = roomService.insertMembers(roomId, members)
                         }
                     },
