@@ -127,7 +127,7 @@ ext.kotlinTest = { dependencies ->
     dependencies.testImplementation Dependencies.mavenCentral.kotlinTest
     dependencies.testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.6.10"
     dependencies.testImplementation 'io.mockk:mockk:1.12.4'
-    dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1'
+    dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.2'
 
     dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     dependencies.testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
