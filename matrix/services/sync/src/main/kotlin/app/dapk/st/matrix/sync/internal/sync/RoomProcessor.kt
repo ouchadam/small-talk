@@ -1,8 +1,8 @@
 package app.dapk.st.matrix.sync.internal.sync
 
-import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.common.AvatarUrl
 import app.dapk.st.matrix.common.RoomMember
+import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.common.convertMxUrToUrl
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.internal.request.ApiSyncRoom
@@ -61,13 +61,18 @@ private fun ApiSyncRoom.collectMembers(userCredentials: UserCredentials): List<R
         }
 }
 
-
 internal fun List<RoomEvent>.findLastMessage(): LastMessage? {
-    return this.filterIsInstance<RoomEvent.Message>().firstOrNull()?.let {
+    return this.firstOrNull()?.let {
         LastMessage(
-            content = it.content,
+            content = it.toTextContent(),
             utcTimestamp = it.utcTimestamp,
             author = it.author,
         )
     }
+}
+
+private fun RoomEvent.toTextContent(): String = when (this) {
+    is RoomEvent.Image -> "\uD83D\uDCF7"
+    is RoomEvent.Message -> this.content
+    is RoomEvent.Reply -> this.message.toTextContent()
 }
