@@ -65,17 +65,13 @@ internal class TimelineEventMapper(
 
     private suspend fun ApiTimelineEvent.TimelineMessage.handleReply(replyToId: EventId, lookup: Lookup): RoomEvent {
         val relationEvent = lookup(replyToId).fold(
-            onApiTimelineEvent = { it.toTextMessage() },
+            onApiTimelineEvent = { it.toMessage() },
             onRoomEvent = { it },
             onEmpty = { null }
         )
 
         return when (relationEvent) {
-            null -> when (this.content) {
-                is ApiTimelineEvent.TimelineMessage.Content.Image -> this.toImageMessage()
-                is ApiTimelineEvent.TimelineMessage.Content.Text -> this.toFallbackTextMessage()
-                ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
-            }
+            null -> this.toMessage()
             else -> {
                 RoomEvent.Reply(
                     message = roomEventFactory.mapToRoomEvent(this),
@@ -87,6 +83,12 @@ internal class TimelineEventMapper(
                 )
             }
         }
+    }
+
+    private suspend fun ApiTimelineEvent.TimelineMessage.toMessage() = when (this.content) {
+        is ApiTimelineEvent.TimelineMessage.Content.Image -> this.toImageMessage()
+        is ApiTimelineEvent.TimelineMessage.Content.Text -> this.toFallbackTextMessage()
+        ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
     }
 
     private suspend fun ApiTimelineEvent.TimelineMessage.toFallbackTextMessage() = this.toTextMessage(content = this.asTextContent().body ?: "redacted")
