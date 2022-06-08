@@ -20,7 +20,7 @@ internal class MergeWithLocalEchosUseCaseImpl(
         val existingWithEcho = updateExistingEventsWithLocalEchoMeta(roomState, echosByEventId)
 
         val sortedEvents = (existingWithEcho + uniqueEchos)
-            .sortedByDescending { if (it is RoomEvent.Message) it.utcTimestamp else null }
+            .sortedByDescending { it.utcTimestamp }
             .distinctBy { it.eventId }
         return roomState.copy(events = sortedEvents)
     }

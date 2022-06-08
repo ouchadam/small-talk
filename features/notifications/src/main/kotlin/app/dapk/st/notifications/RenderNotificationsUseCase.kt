@@ -7,7 +7,7 @@ import app.dapk.st.matrix.sync.RoomOverview
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 
-class NotificationsUseCase(
+class RenderNotificationsUseCase(
     private val notificationRenderer: NotificationRenderer,
     private val observeRenderableUnreadEventsUseCase: ObserveUnreadNotificationsUseCase,
     notificationChannels: NotificationChannels,

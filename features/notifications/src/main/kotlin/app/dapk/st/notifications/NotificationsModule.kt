@@ -31,7 +31,7 @@ class NotificationsModule(
     fun credentialProvider() = credentialsStore
     fun firebasePushTokenUseCase() = firebasePushTokenUseCase
     fun roomStore() = roomStore
-    fun notificationsUseCase() = NotificationsUseCase(
+    fun notificationsUseCase() = RenderNotificationsUseCase(
         NotificationRenderer(notificationManager(), NotificationFactory(iconLoader, context, intentFactory), dispatchers),
         ObserveUnreadNotificationsUseCaseImpl(roomStore),
         NotificationChannels(notificationManager()),
