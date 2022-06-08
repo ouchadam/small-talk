@@ -16,6 +16,7 @@ internal fun sendRequest(roomId: RoomId, eventType: EventType, txId: String, con
     method = MatrixHttpClient.Method.PUT,
     body = when (content) {
         is Message.Content.TextContent -> jsonBody(Message.Content.TextContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
+        is Message.Content.ImageContent -> jsonBody(Message.Content.ImageContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
     }
 )
 

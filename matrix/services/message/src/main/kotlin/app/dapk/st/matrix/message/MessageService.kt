@@ -47,11 +47,27 @@ interface MessageService : MatrixService {
         ) : Message()
 
         @Serializable
+        @SerialName("image_message")
+        data class ImageMessage(
+            @SerialName("content") val content: Content.ImageContent,
+            @SerialName("send_encrypted") val sendEncrypted: Boolean,
+            @SerialName("room_id") val roomId: RoomId,
+            @SerialName("local_id") val localId: String,
+            @SerialName("timestamp") val timestampUtc: Long,
+        ) : Message()
+
+        @Serializable
         sealed class Content {
             @Serializable
             data class TextContent(
                 @SerialName("body") val body: String,
                 @SerialName("msgtype") val type: String = MessageType.TEXT.value,
+            ) : Content()
+
+            @Serializable
+            data class ImageContent(
+                @SerialName("uri") val uri: String,
+                @SerialName("msgtype") val type: String = MessageType.IMAGE.value,
             ) : Content()
         }
     }
@@ -66,16 +82,19 @@ interface MessageService : MatrixService {
         @Transient
         val timestampUtc = when (message) {
             is Message.TextMessage -> message.timestampUtc
+            is Message.ImageMessage -> message.timestampUtc
         }
 
         @Transient
         val roomId = when (message) {
             is Message.TextMessage -> message.roomId
+            is Message.ImageMessage -> message.roomId
         }
 
         @Transient
         val localId = when (message) {
             is Message.TextMessage -> message.localId
+            is Message.ImageMessage -> message.localId
         }
 
         @Serializable

@@ -75,6 +75,7 @@ class DirectoryUseCase(
                 lastMessage = LastMessage(
                     content = when (val message = latestEcho.message) {
                         is MessageService.Message.TextMessage -> message.content.body
+                        is MessageService.Message.ImageMessage -> "\uD83D\uDCF7"
                     },
                     utcTimestamp = latestEcho.timestampUtc,
                     author = member,

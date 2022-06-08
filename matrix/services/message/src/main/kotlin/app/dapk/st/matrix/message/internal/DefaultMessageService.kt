@@ -13,6 +13,7 @@ import java.net.SocketException
 import java.net.UnknownHostException
 
 private const val MATRIX_MESSAGE_TASK_TYPE = "matrix-text-message"
+private const val MATRIX_IMAGE_MESSAGE_TASK_TYPE = "matrix-image-message"
 
 internal class DefaultMessageService(
     httpClient: MatrixHttpClient,
@@ -50,6 +51,7 @@ internal class DefaultMessageService(
         localEchoStore.markSending(message)
         val localId = when (message) {
             is MessageService.Message.TextMessage -> message.localId
+            is MessageService.Message.ImageMessage -> message.localId
         }
         backgroundScheduler.schedule(key = localId, message.toTask())
     }
@@ -68,6 +70,10 @@ internal class DefaultMessageService(
                     Json.encodeToString(MessageService.Message.TextMessage.serializer(), this)
                 )
             }
+            is MessageService.Message.ImageMessage -> BackgroundScheduler.Task(
+                type = MATRIX_IMAGE_MESSAGE_TASK_TYPE,
+                Json.encodeToString(MessageService.Message.ImageMessage.serializer(), this)
+            )
         }
     }
 

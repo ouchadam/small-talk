@@ -11,6 +11,7 @@ import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
+import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
 import app.dapk.st.viewmodel.defaultStateFactory
@@ -46,18 +47,19 @@ internal class MessengerViewModel(
             MessengerAction.OnMessengerGone -> syncJob?.cancel()
             is MessengerAction.ComposerTextUpdate -> updateState { copy(composerState = ComposerState.Text(action.newValue)) }
             MessengerAction.ComposerSendText -> sendMessage()
+            MessengerAction.ComposerClear -> updateState { copy(composerState = ComposerState.Text("")) }
         }
     }
 
     private fun start(action: MessengerAction.OnMessengerVisible) {
-        updateState { copy(roomId = action.roomId) }
+        updateState { copy(roomId = action.roomId, composerState = action.attachments?.let { ComposerState.Attachments(it) } ?: composerState) }
         syncJob = viewModelScope.launch {
             roomStore.markRead(action.roomId)
 
             val credentials = credentialsStore.credentials()!!
             var lastKnownReadEvent: EventId? = null
             observeTimeline.invoke(action.roomId, credentials.userId).distinctUntilChanged().onEach { state ->
-                state.lastestMessageEventFromOthers(self = credentials.userId)?.let {
+                state.latestMessageEventFromOthers(self = credentials.userId)?.let {
                     if (lastKnownReadEvent != it) {
                         updateRoomReadStateAsync(latestReadEvent = it, state)
                         lastKnownReadEvent = it
@@ -98,12 +100,32 @@ internal class MessengerViewModel(
                     }
                 }
             }
+            is ComposerState.Attachments -> {
+                val copy = composerState.copy()
+                updateState { copy(composerState = ComposerState.Text("")) }
+
+                state.roomState.takeIfContent()?.let { content ->
+                    val roomState = content.roomState
+                    viewModelScope.launch {
+                        messageService.scheduleMessage(
+                            MessageService.Message.ImageMessage(
+                                MessageService.Message.Content.ImageContent(uri = copy.values.first().uri.value),
+                                roomId = roomState.roomOverview.roomId,
+                                sendEncrypted = roomState.roomOverview.isEncrypted,
+                                localId = localIdFactory.create(),
+                                timestampUtc = clock.millis(),
+                            )
+                        )
+                    }
+                }
+
+            }
         }
     }
 
 }
 
-private fun MessengerState.lastestMessageEventFromOthers(self: UserId) = this.roomState.events
+private fun MessengerState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
     .filterIsInstance<RoomEvent.Message>()
     .filterNot { it.author.id == self }
     .firstOrNull()
@@ -112,6 +134,7 @@ private fun MessengerState.lastestMessageEventFromOthers(self: UserId) = this.ro
 sealed interface MessengerAction {
     data class ComposerTextUpdate(val newValue: String) : MessengerAction
     object ComposerSendText : MessengerAction
-    data class OnMessengerVisible(val roomId: RoomId) : MessengerAction
+    object ComposerClear : MessengerAction
+    data class OnMessengerVisible(val roomId: RoomId, val attachments: List<MessageAttachment>?) : MessengerAction
     object OnMessengerGone : MessengerAction
 }

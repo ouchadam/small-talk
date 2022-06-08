@@ -19,6 +19,7 @@ internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
                     meta = metaMapper.toMeta(this)
                 )
             }
+            is MessageService.Message.ImageMessage -> TODO()
         }
     }
 

@@ -14,5 +14,6 @@ enum class EventType(val value: String) {
 }
 
 enum class MessageType(val value: String) {
-    TEXT("m.text")
+    TEXT("m.text"),
+    IMAGE("m.image"),
 }

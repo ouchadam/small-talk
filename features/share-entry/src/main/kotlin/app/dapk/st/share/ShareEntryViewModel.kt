@@ -3,15 +3,10 @@ package app.dapk.st.share
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.AndroidUri
-import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
 import app.dapk.st.viewmodel.defaultStateFactory
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ShareEntryViewModel(
@@ -22,6 +17,7 @@ class ShareEntryViewModel(
     factory,
 ) {
 
+    private var urisToShare: List<AndroidUri>? = null
     private var syncJob: Job? = null
 
     fun start() {
@@ -34,31 +30,14 @@ class ShareEntryViewModel(
         syncJob?.cancel()
     }
 
-
-    fun sendAttachment() {
-
-    }
-
     fun withUris(urisToShare: List<Uri>) {
-//        TODO("Not yet implemented")
+        this.urisToShare = urisToShare.map { AndroidUri(it.toString()) }
     }
 
-}
-
-class FetchRoomsUseCase(
-    private val syncSyncService: SyncService,
-    private val roomService: RoomService,
-) {
-
-    suspend fun bar(): List<Item> {
-        return syncSyncService.overview().first().map {
-            Item(
-                it.roomId,
-                it.roomAvatarUrl,
-                it.roomName ?: "",
-                roomService.findMembersSummary(it.roomId).map { it.displayName ?: it.id.value }
-            )
+    fun onRoomSelected(item: Item) {
+        viewModelScope.launch {
+            _events.emit(DirectoryEvent.SelectRoom(item, uris = urisToShare ?: throw IllegalArgumentException("Not uris set")))
         }
     }
-}
 
+}

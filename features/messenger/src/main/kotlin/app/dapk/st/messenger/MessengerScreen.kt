@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
+import androidx.core.net.toUri
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
@@ -39,18 +40,19 @@ import app.dapk.st.matrix.sync.MessageMeta
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomEvent.Message
 import app.dapk.st.matrix.sync.RoomState
+import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun MessengerScreen(roomId: RoomId, viewModel: MessengerViewModel, navigator: Navigator) {
+internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment>?, viewModel: MessengerViewModel, navigator: Navigator) {
     val state = viewModel.state
 
     viewModel.ObserveEvents()
     LifecycleEffect(
-        onStart = { viewModel.post(MessengerAction.OnMessengerVisible(roomId)) },
+        onStart = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) },
         onStop = { viewModel.post(MessengerAction.OnMessengerGone) }
     )
 
@@ -70,10 +72,17 @@ internal fun MessengerScreen(roomId: RoomId, viewModel: MessengerViewModel, navi
         Room(state.roomState)
         when (state.composerState) {
             is ComposerState.Text -> {
-                Composer(
-                    state.composerState.value,
+                TextComposer(
+                    state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
+                )
+            }
+            is ComposerState.Attachments -> {
+                AttachmentComposer(
+                    state.composerState,
+                    onSend = { viewModel.post(MessengerAction.ComposerSendText) },
+                    onCancel = { viewModel.post(MessengerAction.ComposerClear) }
                 )
             }
         }
@@ -524,7 +533,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
 }
 
 @Composable
-private fun Composer(message: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -541,12 +550,12 @@ private fun Composer(message: String, onTextChange: (String) -> Unit, onSend: ()
             contentAlignment = Alignment.TopStart,
         ) {
             Box(Modifier.padding(14.dp)) {
-                if (message.isEmpty()) {
+                if (state.value.isEmpty()) {
                     Text("Message")
                 }
                 BasicTextField(
                     modifier = Modifier.fillMaxWidth(),
-                    value = message,
+                    value = state.value,
                     onValueChange = { onTextChange(it) },
                     cursorBrush = SolidColor(MaterialTheme.colors.primary),
                     textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(LocalContentAlpha.current)),
@@ -557,10 +566,10 @@ private fun Composer(message: String, onTextChange: (String) -> Unit, onSend: ()
         Spacer(modifier = Modifier.width(6.dp))
         var size by remember { mutableStateOf(IntSize(0, 0)) }
         IconButton(
-            enabled = message.isNotEmpty(),
+            enabled = state.value.isNotEmpty(),
             modifier = Modifier
                 .clip(CircleShape)
-                .background(if (message.isEmpty()) Color.DarkGray else MaterialTheme.colors.primary)
+                .background(if (state.value.isEmpty()) Color.DarkGray else MaterialTheme.colors.primary)
                 .run {
                     if (size.height == 0 || size.width == 0) {
                         this
@@ -584,3 +593,65 @@ private fun Composer(message: String, onTextChange: (String) -> Unit, onSend: ()
         }
     }
 }
+
+@Composable
+private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> Unit, onCancel: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Bottom)
+                .weight(1f)
+                .fillMaxHeight()
+                .background(MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.BackgroundOpacity), RoundedCornerShape(24.dp)),
+            contentAlignment = Alignment.TopStart,
+        ) {
+            Box(Modifier.padding(14.dp)) {
+                val context = LocalContext.current
+                Image(
+                    modifier = Modifier.size(50.dp, 50.dp),
+                    painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(context)
+                            .data(state.values.first().uri.value.toUri())
+                            .build()
+                    ),
+                    contentDescription = null,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(6.dp))
+        var size by remember { mutableStateOf(IntSize(0, 0)) }
+        IconButton(
+            enabled = true,
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colors.primary)
+                .run {
+                    if (size.height == 0 || size.width == 0) {
+                        this
+                            .onSizeChanged {
+                                size = it
+                            }
+                            .fillMaxHeight()
+                    } else {
+                        with(LocalDensity.current) {
+                            size(size.width.toDp(), size.height.toDp())
+                        }
+                    }
+                },
+            onClick = onSend,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Send,
+                contentDescription = "",
+                tint = MaterialTheme.colors.onPrimary,
+            )
+        }
+    }
+}
+

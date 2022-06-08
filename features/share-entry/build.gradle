@@ -9,4 +9,5 @@ dependencies {
     implementation project(':matrix:services:message')
     implementation project(":core")
     implementation project(":design-library")
+    implementation project(":features:navigator")
 }

@@ -1,4 +1,5 @@
 applyAndroidLibraryModule(project)
+apply plugin: 'kotlin-parcelize'
 
 dependencies {
     implementation project(":core")

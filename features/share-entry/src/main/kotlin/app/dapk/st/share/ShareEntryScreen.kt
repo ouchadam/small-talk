@@ -11,37 +11,36 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.dapk.st.core.LifecycleEffect
+import app.dapk.st.core.MimeType
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.design.components.GenericEmpty
 import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Toolbar
-import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.navigator.MessageAttachment
+import app.dapk.st.navigator.Navigator
 import app.dapk.st.share.DirectoryScreenState.*
 
 @Composable
-fun ShareEntryScreen(viewModel: ShareEntryViewModel) {
+fun ShareEntryScreen(navigator: Navigator, viewModel: ShareEntryViewModel) {
     val state = viewModel.state
-
-    val listState: LazyListState = rememberLazyListState(
-        initialFirstVisibleItemIndex = 0,
-    )
-
-    viewModel.ObserveEvents(listState)
+    viewModel.ObserveEvents(navigator)
 
     LifecycleEffect(
         onStart = { viewModel.start() },
         onStop = { viewModel.stop() }
     )
 
+    val listState: LazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = 0,
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         Toolbar(title = "Send to...")
         when (state) {
@@ -50,18 +49,21 @@ fun ShareEntryScreen(viewModel: ShareEntryViewModel) {
             is Error -> GenericError {
                 // TODO
             }
-            is Content -> Content(listState, state)
+            is Content -> Content(listState, state) {
+                viewModel.onRoomSelected(it)
+            }
         }
     }
 }
 
 @Composable
-private fun ShareEntryViewModel.ObserveEvents(listState: LazyListState) {
-    val context = LocalContext.current
+private fun ShareEntryViewModel.ObserveEvents(navigator: Navigator) {
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
-                is DirectoryEvent.SelectRoom -> TODO()
+                is DirectoryEvent.SelectRoom -> {
+                    navigator.navigate.toMessenger(it.item.id, it.uris.map { MessageAttachment(it, MimeType.Image) })
+                }
             }
         }
     }
@@ -69,33 +71,27 @@ private fun ShareEntryViewModel.ObserveEvents(listState: LazyListState) {
 
 
 @Composable
-private fun Content(listState: LazyListState, state: Content) {
-    val context = LocalContext.current
-    val navigateToRoom = { roomId: RoomId ->
-        // todo
-//        context.startActivity(MessengerActivity.newInstance(context, roomId))
-    }
+private fun Content(listState: LazyListState, state: Content, onClick: (Item) -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(top = 72.dp)) {
         items(
             items = state.items,
             key = { it.id.value },
         ) {
-            DirectoryItem(it, onClick = navigateToRoom)
+            DirectoryItem(it, onClick = onClick)
         }
     }
 }
 
 @Composable
-private fun DirectoryItem(item: Item, onClick: (RoomId) -> Unit) {
+private fun DirectoryItem(item: Item, onClick: (Item) -> Unit) {
     val roomName = item.roomName
 
     Box(
         Modifier
             .height(IntrinsicSize.Min)
             .fillMaxWidth()
-            .clickable {
-                onClick(item.id)
-            }) {
+            .clickable { onClick(item) }
+    ) {
         Row(Modifier.padding(20.dp)) {
             val secondaryText = MaterialTheme.colors.onBackground.copy(alpha = 0.5f)
 

@@ -44,6 +44,7 @@ import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.messenger.MessengerActivity
 import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.navigator.IntentFactory
+import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
@@ -93,6 +94,11 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         override fun home(context: Context) = Intent(context, MainActivity::class.java)
         override fun messenger(context: Context, roomId: RoomId) = MessengerActivity.newInstance(context, roomId)
         override fun messengerShortcut(context: Context, roomId: RoomId) = MessengerActivity.newShortcutInstance(context, roomId)
+        override fun messengerAttachments(context: Context, roomId: RoomId, attachments: List<MessageAttachment>) = MessengerActivity.newMessageAttachment(
+            context,
+            roomId,
+            attachments
+        )
     })
 
     val featureModules = FeatureModules(
@@ -236,6 +242,7 @@ internal class MatrixModules(
                         val result = serviceProvider.cryptoService().encrypt(
                             roomId = when (message) {
                                 is MessageService.Message.TextMessage -> message.roomId
+                                is MessageService.Message.ImageMessage -> message.roomId
                             },
                             credentials = credentialsStore.credentials()!!,
                             when (message) {
@@ -250,6 +257,7 @@ internal class MatrixModules(
                                         )
                                     )
                                 )
+                                is MessageService.Message.ImageMessage -> TODO()
                             }
                         )
 

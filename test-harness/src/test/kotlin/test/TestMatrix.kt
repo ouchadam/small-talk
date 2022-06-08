@@ -115,6 +115,7 @@ class TestMatrix(
                     val result = serviceProvider.cryptoService().encrypt(
                         roomId = when (message) {
                             is MessageService.Message.TextMessage -> message.roomId
+                            is MessageService.Message.ImageMessage -> message.roomId
                         },
                         credentials = storeModule.credentialsStore().credentials()!!,
                         when (message) {
@@ -128,6 +129,7 @@ class TestMatrix(
                                     )
                                 )
                             )
+                            is MessageService.Message.ImageMessage -> TODO()
                         }
                     )
 

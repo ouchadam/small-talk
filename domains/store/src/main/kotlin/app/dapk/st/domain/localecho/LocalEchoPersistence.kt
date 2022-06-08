@@ -33,11 +33,13 @@ class LocalEchoPersistence(
             inMemoryEchos.value = echos.groupBy {
                 when (val message = it.message) {
                     is MessageService.Message.TextMessage -> message.roomId
+                    is MessageService.Message.ImageMessage -> message.roomId
                 }
             }.mapValues {
                 it.value.associateBy {
                     when (val message = it.message) {
                         is MessageService.Message.TextMessage -> message.localId
+                        is MessageService.Message.ImageMessage -> message.localId
                     }
                 }
             }

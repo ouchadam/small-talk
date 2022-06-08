@@ -19,11 +19,11 @@ class ShareEntryActivity : DapkActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val urisToShare = intent.readSendUrisOrNull() ?: throw IllegalArgumentException("")
+        val urisToShare = intent.readSendUrisOrNull() ?: throw IllegalArgumentException("Expected deeplink uris but they were missing")
         setContent {
             SmallTalkTheme {
                 Surface(Modifier.fillMaxSize()) {
-                    ShareEntryScreen(viewModel)
+                    ShareEntryScreen(navigator, viewModel)
                 }
             }
         }
