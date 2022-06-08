@@ -1,6 +1,6 @@
 package app.dapk.st.notifications
 
-import app.dapk.st.notifications.NotificationFixtures.aNotifications
+import fixture.NotificationFixtures.aNotifications
 import fake.FakeNotificationFactory
 import fake.FakeNotificationManager
 import fake.aFakeNotification
