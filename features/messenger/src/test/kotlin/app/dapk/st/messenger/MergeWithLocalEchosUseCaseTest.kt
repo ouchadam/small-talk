@@ -10,6 +10,7 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
 private val A_ROOM_MESSAGE_EVENT = aRoomMessageEvent(eventId = anEventId("1"))
+private val A_ROOM_IMAGE_MESSAGE_EVENT = aRoomMessageEvent(eventId = anEventId("2"))
 private val A_LOCAL_ECHO_EVENT_ID = anEventId("2")
 private const val A_LOCAL_ECHO_BODY = "body"
 private val A_ROOM_MEMBER = aRoomMember()
@@ -21,12 +22,21 @@ class MergeWithLocalEchosUseCaseTest {
     private val mergeWithLocalEchosUseCase = MergeWithLocalEchosUseCaseImpl(fakeLocalEchoMapper.instance)
 
     @Test
-    fun `given no local echos, when merging, then returns original state`() {
+    fun `given no local echos, when merging text message, then returns original state`() {
         val roomState = aRoomState(events = listOf(A_ROOM_MESSAGE_EVENT))
 
         val result = mergeWithLocalEchosUseCase.invoke(roomState, A_ROOM_MEMBER, emptyList())
 
         result shouldBeEqualTo roomState
+    }
+
+    @Test
+    fun `given no local echos, when merging events, then returns original ordered by timestamp descending`() {
+        val roomState = aRoomState(events = listOf(A_ROOM_IMAGE_MESSAGE_EVENT.copy(utcTimestamp = 1500), A_ROOM_MESSAGE_EVENT.copy(utcTimestamp = 1000)))
+
+        val result = mergeWithLocalEchosUseCase.invoke(roomState, A_ROOM_MEMBER, emptyList())
+
+        result shouldBeEqualTo roomState.copy(events = roomState.events.sortedByDescending { it.utcTimestamp })
     }
 
     @Test
