@@ -13,6 +13,8 @@ if (localProperties.exists()) {
 
 dependencies {
     def androidVer = androidSdkVersion
+    api files("${properties.getProperty("sdk.dir")}/platforms/android-${androidVer}/android.jar")
+
     kotlinFixtures(it)
     testFixturesImplementation testFixtures(project(":core"))
     testFixturesImplementation files("${properties.getProperty("sdk.dir")}/platforms/android-${androidVer}/android.jar")
