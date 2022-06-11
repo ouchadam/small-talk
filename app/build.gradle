@@ -13,7 +13,17 @@ android {
         def versionJson = new groovy.json.JsonSlurper().parseText(rootProject.file('version.json').text)
         versionCode versionJson.code
         versionName versionJson.name
-        resConfigs "en"
+
+        if (isDebugBuild) {
+            resConfigs "en", "xxhdpi"
+            variantFilter { variant ->
+                if (variant.buildType.name == "release") {
+                    setIgnore(true)
+                }
+            }
+        } else {
+            resConfigs "en"
+        }
     }
 
     bundle {
@@ -24,7 +34,7 @@ android {
 
     buildTypes {
         debug {
-            versionNameSuffix =" [debug]"
+            versionNameSuffix = " [debug]"
             matchingFallbacks = ['release']
             signingConfig.storeFile rootProject.file("tools/debug.keystore")
         }

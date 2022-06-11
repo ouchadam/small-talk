@@ -18,6 +18,8 @@ def launchTask = getGradle()
         .getTaskRequests()
         .toString()
         .toLowerCase()
+def isReleaseBuild = launchTask.contains("release")
+ext.isDebugBuild = !isReleaseBuild
 
 subprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
@@ -116,7 +118,6 @@ ext.applyAndroidLibraryModule = { project ->
 }
 
 ext.applyCrashlyticsIfRelease = { project ->
-    def isReleaseBuild = launchTask.contains("release")
     if (isReleaseBuild) {
         project.apply plugin: 'com.google.firebase.crashlytics'
         project.afterEvaluate {
