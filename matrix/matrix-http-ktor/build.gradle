@@ -9,5 +9,6 @@ dependencies {
     implementation Dependencies.mavenCentral.ktorCore
     implementation Dependencies.mavenCentral.ktorSerialization
     implementation Dependencies.mavenCentral.ktorLogging
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
+    implementation Dependencies.mavenCentral.ktorContentNegotiation
+    implementation Dependencies.mavenCentral.ktorJson
 }

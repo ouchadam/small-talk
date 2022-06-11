@@ -6,6 +6,7 @@ import io.ktor.http.*
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.net.UnknownHostException
+import java.nio.charset.Charset
 
 internal typealias FetchWellKnownUseCase = suspend (String) -> WellKnownResult
 
@@ -17,7 +18,7 @@ internal class FetchWellKnownUseCaseImpl(
     override suspend fun invoke(domainUrl: String): WellKnownResult {
         return runCatching {
             val rawResponse = httpClient.execute(rawWellKnownRequestForServersWithoutContentTypes(domainUrl))
-            json.decodeFromString(ApiWellKnown.serializer(), rawResponse)
+            json.decodeFromString(ApiWellKnown.serializer(), rawResponse.readString())
         }
             .fold(
                 onSuccess = { WellKnownResult.Success(it) },
