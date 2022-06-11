@@ -110,7 +110,7 @@ ext.Dependencies.with {
         kotlinGradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVer}"
         kotlinSerializationGradlePlugin = "org.jetbrains.kotlin:kotlin-serialization:${kotlinVer}"
         kotlinSerializationJson = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3"
-        kotlinCoroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1"
+        kotlinCoroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2"
         kotlinCoroutinesTest = 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.2'
         kotlinTest = "org.jetbrains.kotlin:kotlin-test-junit:${kotlinVer}"
 
