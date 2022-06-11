@@ -26,10 +26,12 @@ class RenderNotificationsUseCase(
     private suspend fun renderUnreadChange(allUnread: Map<RoomOverview, List<RoomEvent>>, diff: NotificationDiff) {
         log(NOTIFICATION, "unread changed - render notifications")
         notificationRenderer.render(
-            allUnread = allUnread,
-            removedRooms = diff.removed.keys,
-            roomsWithNewEvents = diff.changedOrNew.keys,
-            newRooms = diff.newRooms,
+            NotificationState(
+                allUnread = allUnread,
+                removedRooms = diff.removed.keys,
+                roomsWithNewEvents = diff.changedOrNew.keys,
+                newRooms = diff.newRooms,
+            )
         )
     }
 }

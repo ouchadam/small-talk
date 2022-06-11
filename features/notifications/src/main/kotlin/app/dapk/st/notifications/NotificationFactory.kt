@@ -1,198 +1,58 @@
 package app.dapk.st.notifications
 
 import android.app.Notification
-import android.app.PendingIntent
-import android.app.Person
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
+import app.dapk.st.core.DeviceMeta
+import app.dapk.st.core.whenPOrHigher
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.RoomMember
-import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
-import app.dapk.st.messenger.MessengerActivity
 import app.dapk.st.navigator.IntentFactory
 
 private const val GROUP_ID = "st"
 private const val channelId = "message"
 
 class NotificationFactory(
-    private val iconLoader: IconLoader,
     private val context: Context,
+    private val notificationStyleFactory: NotificationStyleFactory,
     private val intentFactory: IntentFactory,
+    private val iconLoader: IconLoader,
+    private val deviceMeta: DeviceMeta,
 ) {
-
     private val shouldAlwaysAlertDms = true
 
-    private fun RoomEvent.toNotifiableContent(): String = when (this) {
-        is RoomEvent.Image -> "\uD83D\uDCF7"
-        is RoomEvent.Message -> this.content
-        is RoomEvent.Reply -> this.message.toNotifiableContent()
-    }
-
-    suspend fun createNotifications(allUnread: Map<RoomOverview, List<RoomEvent>>, roomsWithNewEvents: Set<RoomId>, newRooms: Set<RoomId>): Notifications {
-        val notifications = allUnread.map { (roomOverview, events) ->
-            val messageEvents = events.map {
-                when (it) {
-                    is RoomEvent.Image -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
-                    is RoomEvent.Message -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
-                    is RoomEvent.Reply -> Notifiable(content = it.toNotifiableContent(), it.utcTimestamp, it.author)
-                }
-            }
-            when (messageEvents.isEmpty()) {
-                true -> NotificationDelegate.DismissRoom(roomOverview.roomId)
-                false -> createMessageNotification(messageEvents, roomOverview, roomsWithNewEvents, newRooms)
-            }
-        }
-
-        val summaryNotification = if (notifications.filterIsInstance<NotificationDelegate.Room>().isNotEmpty()) {
-            val isAlerting = notifications.any { it is NotificationDelegate.Room && it.isAlerting }
-            createSummary(notifications, isAlerting = isAlerting)
-        } else {
-            null
-        }
-        return Notifications(summaryNotification, notifications)
-    }
-
-    private fun createSummary(notifications: List<NotificationDelegate>, isAlerting: Boolean): Notification {
-        val summaryInboxStyle = Notification.InboxStyle().also { style ->
-            notifications.sortedBy {
-                when (it) {
-                    is NotificationDelegate.DismissRoom -> -1
-                    is NotificationDelegate.Room -> it.notification.`when`
-                }
-            }.forEach {
-                when (it) {
-                    is NotificationDelegate.DismissRoom -> {
-                        // do nothing
-                    }
-                    is NotificationDelegate.Room -> {
-                        style.addLine(it.summary)
-                    }
-                }
-            }
-        }
-
-
-        if (notifications.size > 1) {
-            summaryInboxStyle.setSummaryText("${notifications.countMessages()} messages from ${notifications.size} chats")
-        }
-
-        val openAppIntent = PendingIntent.getActivity(
-            context,
-            1000,
-            intentFactory.home(context)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        return builder()
-            .setStyle(summaryInboxStyle)
-            .setOnlyAlertOnce(!isAlerting)
-            .setSmallIcon(R.drawable.ic_notification_small_icon)
-            .setGroupSummary(true)
-            .setGroup(GROUP_ID)
-            .setContentIntent(openAppIntent)
-            .build()
-    }
-
-    private fun List<NotificationDelegate>.countMessages() = this.sumOf {
-        when (it) {
-            is NotificationDelegate.DismissRoom -> 0
-            is NotificationDelegate.Room -> it.messageCount
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.P)
-    private suspend fun createMessageStyle(events: List<Notifiable>, roomOverview: RoomOverview): Notification.MessagingStyle {
-        val messageStyle = Notification.MessagingStyle(
-            Person.Builder()
-                .setName("me")
-                .setKey(roomOverview.roomId.value)
-                .build()
-        )
-
-        messageStyle.conversationTitle = roomOverview.roomName.takeIf { roomOverview.isGroup }
-        messageStyle.isGroupConversation = roomOverview.isGroup
-
-        events.forEach { message ->
-            val sender = Person.Builder()
-                .setName(message.author.displayName ?: message.author.id.value)
-                .setIcon(message.author.avatarUrl?.let { iconLoader.load(it.value) })
-                .setKey(message.author.id.value)
-                .build()
-
-            messageStyle.addMessage(
-                Notification.MessagingStyle.Message(
-                    message.content,
-                    message.utcTimestamp,
-                    sender,
-                )
-            )
-        }
-        return messageStyle
-    }
-
-    private suspend fun createMessageNotification(
+    suspend fun createMessageNotification(
         events: List<Notifiable>,
         roomOverview: RoomOverview,
         roomsWithNewEvents: Set<RoomId>,
         newRooms: Set<RoomId>
-    ): NotificationDelegate {
+    ): NotificationTypes {
         val sortedEvents = events.sortedBy { it.utcTimestamp }
-
-        val messageStyle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            createMessageStyle(sortedEvents, roomOverview)
-        } else {
-            val inboxStyle = Notification.InboxStyle()
-            sortedEvents.forEach {
-                inboxStyle.addLine("${it.author.displayName ?: it.author.id.value}: ${it.content}")
-            }
-            inboxStyle
-        }
-
-        val openRoomIntent = PendingIntent.getActivity(
-            context,
-            roomOverview.roomId.hashCode(),
-            MessengerActivity.newInstance(context, roomOverview.roomId)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-
+        val messageStyle = notificationStyleFactory.message(sortedEvents, roomOverview)
+        val openRoomIntent = intentFactory.notificationOpenMessage(context, roomOverview.roomId)
         val shouldAlertMoreThanOnce = when {
             roomOverview.isDm() -> roomsWithNewEvents.contains(roomOverview.roomId) && shouldAlwaysAlertDms
             else -> newRooms.contains(roomOverview.roomId)
         }
 
-        return NotificationDelegate.Room(
-            builder()
-                .setWhen(sortedEvents.last().utcTimestamp)
-                .setShowWhen(true)
-                .setGroup(GROUP_ID)
-                .run {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        this.setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                    } else {
-                        this
-                    }
-                }
-                .setOnlyAlertOnce(!shouldAlertMoreThanOnce)
-                .setContentIntent(openRoomIntent)
-                .setStyle(messageStyle)
-                .setCategory(Notification.CATEGORY_MESSAGE)
-                .run {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        this.setShortcutId(roomOverview.roomId.value)
-                    } else {
-                        this
-                    }
-                }
-                .setSmallIcon(R.drawable.ic_notification_small_icon)
-                .setLargeIcon(roomOverview.roomAvatarUrl?.let { iconLoader.load(it.value) })
-                .setAutoCancel(true)
-                .build(),
+        return NotificationTypes.Room(
+            AndroidNotification(
+                channelId = channelId,
+                whenTimestamp = sortedEvents.last().utcTimestamp,
+                groupId = GROUP_ID,
+                groupAlertBehavior = deviceMeta.whenPOrHigher(
+                    block = { Notification.GROUP_ALERT_SUMMARY },
+                    fallback = { null }
+                ),
+                shortcutId = roomOverview.roomId.value,
+                alertMoreThanOnce = shouldAlertMoreThanOnce,
+                contentIntent = openRoomIntent,
+                messageStyle = messageStyle,
+                category = Notification.CATEGORY_MESSAGE,
+                smallIcon = R.drawable.ic_notification_small_icon,
+                largeIcon = roomOverview.roomAvatarUrl?.let { iconLoader.load(it.value) },
+                autoCancel = true
+            ),
             roomId = roomOverview.roomId,
             summary = sortedEvents.last().content,
             messageCount = sortedEvents.size,
@@ -200,16 +60,19 @@ class NotificationFactory(
         )
     }
 
-    private fun builder(channel: String = channelId) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Notification.Builder(context, channel)
-    } else {
-        Notification.Builder(context)
+    fun createSummary(notifications: List<NotificationTypes.Room>): AndroidNotification {
+        val summaryInboxStyle = notificationStyleFactory.summary(notifications)
+        val openAppIntent = intentFactory.notificationOpenApp(context)
+        return AndroidNotification(
+            channelId = channelId,
+            messageStyle = summaryInboxStyle,
+            alertMoreThanOnce = notifications.any { it.isAlerting },
+            smallIcon = R.drawable.ic_notification_small_icon,
+            contentIntent = openAppIntent,
+            groupId = GROUP_ID,
+            isGroupSummary = true,
+        )
     }
-
 }
 
 private fun RoomOverview.isDm() = !this.isGroup
-
-data class Notifications(val summaryNotification: Notification?, val delegates: List<NotificationDelegate>)
-
-data class Notifiable(val content: String, val utcTimestamp: Long, val author: RoomMember)
