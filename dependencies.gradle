@@ -95,14 +95,14 @@ ext.Dependencies.with {
 
     google = new DependenciesContainer()
     google.with {
-        androidGradlePlugin = "com.android.tools.build:gradle:7.1.2"
+        androidGradlePlugin = "com.android.tools.build:gradle:7.2.1"
 
         androidxComposeUi = "androidx.compose.ui:ui:${composeVer}"
         androidxComposeFoundation = "androidx.compose.foundation:foundation:${composeVer}"
         androidxComposeMaterial = "androidx.compose.material:material:${composeVer}"
         androidxComposeIconsExtended = "androidx.compose.material:material-icons-extended:${composeVer}"
         androidxActivityCompose = "androidx.activity:activity-compose:1.4.0"
-        kotlinCompilerExtensionVersion = "1.1.0-rc02"
+        kotlinCompilerExtensionVersion = "${composeVer}"
     }
 
     mavenCentral = new DependenciesContainer()
