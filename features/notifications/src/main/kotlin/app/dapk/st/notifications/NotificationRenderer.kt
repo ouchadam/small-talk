@@ -1,6 +1,5 @@
 package app.dapk.st.notifications
 
-import android.app.Notification
 import android.app.NotificationManager
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.CoroutineDispatchers
@@ -9,7 +8,6 @@ import app.dapk.st.core.log
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val SUMMARY_NOTIFICATION_ID = 101
@@ -17,13 +15,14 @@ private const val MESSAGE_NOTIFICATION_ID = 100
 
 class NotificationRenderer(
     private val notificationManager: NotificationManager,
-    private val notificationFactory: NotificationFactory,
+    private val notificationStateMapper: NotificationStateMapper,
+    private val androidNotificationBuilder: AndroidNotificationBuilder,
     private val dispatchers: CoroutineDispatchers,
 ) {
 
-    suspend fun render(allUnread: Map<RoomOverview, List<RoomEvent>>, removedRooms: Set<RoomId>, roomsWithNewEvents: Set<RoomId>, newRooms: Set<RoomId>) {
-        removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
-        val notifications = notificationFactory.createNotifications(allUnread, roomsWithNewEvents, newRooms)
+    suspend fun render(state: NotificationState) {
+        state.removedRooms.forEach { notificationManager.cancel(it.value, MESSAGE_NOTIFICATION_ID) }
+        val notifications = notificationStateMapper.mapToNotifications(state)
 
         withContext(dispatchers.main) {
             notifications.summaryNotification.ifNull {
@@ -31,31 +30,46 @@ class NotificationRenderer(
                 notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
             }
 
-            val onlyContainsRemovals = removedRooms.isNotEmpty() && roomsWithNewEvents.isEmpty()
+            val onlyContainsRemovals = state.onlyContainsRemovals()
             notifications.delegates.forEach {
                 when (it) {
-                    is NotificationDelegate.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
-                    is NotificationDelegate.Room -> {
+                    is NotificationTypes.DismissRoom -> notificationManager.cancel(it.roomId.value, MESSAGE_NOTIFICATION_ID)
+                    is NotificationTypes.Room -> {
                         if (!onlyContainsRemovals) {
                             log(AppLogTag.NOTIFICATION, "notifying ${it.roomId.value}")
-                            notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification)
+                            notificationManager.notify(it.roomId.value, MESSAGE_NOTIFICATION_ID, it.notification.build(androidNotificationBuilder))
                         }
                     }
                 }
             }
 
             notifications.summaryNotification?.let {
-                if (notifications.delegates.filterIsInstance<NotificationDelegate.Room>().isNotEmpty() && !onlyContainsRemovals) {
+                if (notifications.delegates.filterIsInstance<NotificationTypes.Room>().isNotEmpty() && !onlyContainsRemovals) {
                     log(AppLogTag.NOTIFICATION, "notifying summary")
-                    notificationManager.notify(SUMMARY_NOTIFICATION_ID, it)
+                    notificationManager.notify(SUMMARY_NOTIFICATION_ID, it.build(androidNotificationBuilder))
                 }
             }
         }
     }
-
 }
 
-sealed interface NotificationDelegate {
-    data class Room(val notification: Notification, val roomId: RoomId, val summary: String, val messageCount: Int, val isAlerting: Boolean) : NotificationDelegate
-    data class DismissRoom(val roomId: RoomId) : NotificationDelegate
+data class NotificationState(
+    val allUnread: Map<RoomOverview, List<RoomEvent>>,
+    val removedRooms: Set<RoomId>,
+    val roomsWithNewEvents: Set<RoomId>,
+    val newRooms: Set<RoomId>
+)
+
+private fun NotificationState.onlyContainsRemovals() = this.removedRooms.isNotEmpty() && this.roomsWithNewEvents.isEmpty()
+
+sealed interface NotificationTypes {
+    data class Room(
+        val notification: AndroidNotification,
+        val roomId: RoomId,
+        val summary: String,
+        val messageCount: Int,
+        val isAlerting: Boolean
+    ) : NotificationTypes
+
+    data class DismissRoom(val roomId: RoomId) : NotificationTypes
 }

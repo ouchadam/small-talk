@@ -1,14 +1,10 @@
 package app.dapk.st.notifications
 
-import app.dapk.st.matrix.common.EventId
-import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import fake.FakeRoomStore
-import fixture.aRoomId
-import fixture.aRoomMessageEvent
-import fixture.aRoomOverview
-import fixture.anEventId
+import fixture.*
+import fixture.NotificationDiffFixtures.aNotificationDiff
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -16,12 +12,12 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
 private val NO_UNREADS = emptyMap<RoomOverview, List<RoomEvent>>()
-val A_MESSAGE = aRoomMessageEvent(eventId = anEventId("1"), content = "hello")
-val A_MESSAGE_2 = aRoomMessageEvent(eventId = anEventId("2"), content = "world")
-val A_ROOM_OVERVIEW = aRoomOverview(roomId = aRoomId("1"))
-val A_ROOM_OVERVIEW_2 = aRoomOverview(roomId = aRoomId("2"))
+private val A_MESSAGE = aRoomMessageEvent(eventId = anEventId("1"), content = "hello")
+private val A_MESSAGE_2 = aRoomMessageEvent(eventId = anEventId("2"), content = "world")
+private val A_ROOM_OVERVIEW = aRoomOverview(roomId = aRoomId("1"))
+private val A_ROOM_OVERVIEW_2 = aRoomOverview(roomId = aRoomId("2"))
 
-class ObserveUnreadNotificationsUseCaseTest {
+class ObserveUnreadRenderNotificationsUseCaseTest {
 
     private val fakeRoomStore = FakeRoomStore()
 
@@ -93,13 +89,6 @@ class ObserveUnreadNotificationsUseCaseTest {
 
     private fun givenNoInitialUnreads(vararg unreads: Map<RoomOverview, List<RoomEvent>>) = fakeRoomStore.givenUnreadEvents(flowOf(NO_UNREADS, *unreads))
 }
-
-private fun aNotificationDiff(
-    unchanged: Map<RoomId, List<EventId>> = emptyMap(),
-    changedOrNew: Map<RoomId, List<EventId>> = emptyMap(),
-    removed: Map<RoomId, List<EventId>> = emptyMap(),
-    newRooms: Set<RoomId> = emptySet(),
-) = NotificationDiff(unchanged, changedOrNew, removed, newRooms)
 
 private fun RoomOverview.withUnreads(vararg events: RoomEvent) = mapOf(this to events.toList())
 private fun RoomOverview.toDiff(vararg events: RoomEvent) = mapOf(this.roomId to events.map { it.eventId })
