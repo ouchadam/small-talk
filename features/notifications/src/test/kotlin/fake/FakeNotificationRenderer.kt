@@ -1,6 +1,7 @@
 package fake
 
 import app.dapk.st.notifications.NotificationRenderer
+import app.dapk.st.notifications.NotificationState
 import app.dapk.st.notifications.UnreadNotifications
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -12,10 +13,12 @@ class FakeNotificationRenderer {
         unreadNotifications.forEach { unread ->
             coVerify {
                 instance.render(
-                    allUnread = unread.first,
-                    removedRooms = unread.second.removed.keys,
-                    roomsWithNewEvents = unread.second.changedOrNew.keys,
-                    newRooms = unread.second.newRooms,
+                    NotificationState(
+                        allUnread = unread.first,
+                        removedRooms = unread.second.removed.keys,
+                        roomsWithNewEvents = unread.second.changedOrNew.keys,
+                        newRooms = unread.second.newRooms,
+                    )
                 )
             }
         }

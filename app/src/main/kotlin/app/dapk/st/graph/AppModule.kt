@@ -1,15 +1,14 @@
 package app.dapk.st.graph
 
 import android.app.Application
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
 import app.dapk.st.SharedPreferencesDelegate
-import app.dapk.st.core.BuildMeta
-import app.dapk.st.core.CoreAndroidModule
-import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.core.SingletonFlows
+import app.dapk.st.core.*
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
@@ -91,6 +90,22 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker)
 
     val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
+        override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
+            context,
+            1000,
+            home(context)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        override fun notificationOpenMessage(context: Context, roomId: RoomId) = PendingIntent.getActivity(
+            context,
+            roomId.hashCode(),
+            messenger(context, roomId)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         override fun home(context: Context) = Intent(context, MainActivity::class.java)
         override fun messenger(context: Context, roomId: RoomId) = MessengerActivity.newInstance(context, roomId)
         override fun messengerShortcut(context: Context, roomId: RoomId) = MessengerActivity.newShortcutInstance(context, roomId)
@@ -182,6 +197,7 @@ internal class FeatureModules internal constructor(
             workModule.workScheduler(),
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,
+            deviceMeta = DeviceMeta(Build.VERSION.SDK_INT)
         )
     }
 

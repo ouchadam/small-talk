@@ -1,19 +1,15 @@
 package fake
 
-import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
-import app.dapk.st.notifications.NotificationFactory
+import app.dapk.st.notifications.NotificationState
+import app.dapk.st.notifications.NotificationStateMapper
 import io.mockk.coEvery
 import io.mockk.mockk
 import test.delegateReturn
 
 class FakeNotificationFactory {
 
-    val instance = mockk<NotificationFactory>()
+    val instance = mockk<NotificationStateMapper>()
 
-    fun givenNotifications(allUnread: Map<RoomOverview, List<RoomEvent>>, roomsWithNewEvents: Set<RoomId>, newRooms: Set<RoomId>) = coEvery {
-        instance.createNotifications(allUnread, roomsWithNewEvents, newRooms)
-    }.delegateReturn()
+    fun givenNotifications(state: NotificationState) = coEvery { instance.mapToNotifications(state) }.delegateReturn()
 
 }

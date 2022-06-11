@@ -23,6 +23,7 @@ def excludes = [
 
         // Tmp until serializationx can ignore generated
         '**/Api*',
+        '**/RoomEvent*',
 ]
 
 def initializeReport(report, projects, classExcludes) {

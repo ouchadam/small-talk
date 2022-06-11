@@ -12,10 +12,10 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
 private val NO_UNREADS = emptyMap<RoomOverview, List<RoomEvent>>()
-val A_MESSAGE = aRoomMessageEvent(eventId = anEventId("1"), content = "hello")
-val A_MESSAGE_2 = aRoomMessageEvent(eventId = anEventId("2"), content = "world")
-val A_ROOM_OVERVIEW = aRoomOverview(roomId = aRoomId("1"))
-val A_ROOM_OVERVIEW_2 = aRoomOverview(roomId = aRoomId("2"))
+private val A_MESSAGE = aRoomMessageEvent(eventId = anEventId("1"), content = "hello")
+private val A_MESSAGE_2 = aRoomMessageEvent(eventId = anEventId("2"), content = "world")
+private val A_ROOM_OVERVIEW = aRoomOverview(roomId = aRoomId("1"))
+private val A_ROOM_OVERVIEW_2 = aRoomOverview(roomId = aRoomId("2"))
 
 class ObserveUnreadRenderNotificationsUseCaseTest {
 

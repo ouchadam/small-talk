@@ -1,6 +1,7 @@
 package app.dapk.st.navigator
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Parcel
@@ -51,6 +52,8 @@ interface Navigator {
 
 interface IntentFactory {
 
+    fun notificationOpenApp(context: Context): PendingIntent
+    fun notificationOpenMessage(context: Context, roomId: RoomId): PendingIntent
     fun home(context: Context): Intent
     fun messenger(context: Context, roomId: RoomId): Intent
     fun messengerShortcut(context: Context, roomId: RoomId): Intent

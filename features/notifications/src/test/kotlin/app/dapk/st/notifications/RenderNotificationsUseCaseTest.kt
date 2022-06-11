@@ -31,7 +31,7 @@ class RenderNotificationsUseCaseTest {
 
     @Test
     fun `given renderable unread events, when listening for changes, then renders change`() = runTest {
-        fakeNotificationRenderer.instance.expect { it.render(any(), any(), any(), any()) }
+        fakeNotificationRenderer.instance.expect { it.render(any()) }
         fakeObserveUnreadNotificationsUseCase.given().emits(AN_UNREAD_NOTIFICATIONS)
 
         renderNotificationsUseCase.listenForNotificationChanges()
