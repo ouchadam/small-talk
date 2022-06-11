@@ -1,4 +1,4 @@
-applyAndroidLibraryModule(project)
+applyAndroidComposeLibraryModule(project)
 
 dependencies {
     implementation project(":core")

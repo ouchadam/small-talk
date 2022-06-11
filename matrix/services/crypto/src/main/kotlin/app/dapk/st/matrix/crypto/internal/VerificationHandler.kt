@@ -182,6 +182,9 @@ internal class VerificationHandler(
                 sendToDevice(ToDevicePayload.VerificationDone(verificationTransaction.transactionId))
                 stateFlow.emit(Verification.State.Done)
             }
+            is Verification.Event.Done -> {
+                // TODO
+            }
         }
     }
 

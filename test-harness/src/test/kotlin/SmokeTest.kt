@@ -172,5 +172,8 @@ fun testAfterInitialSync(block: suspend MatrixTestScope.(TestMatrix, TestMatrix)
 private fun Flow<Verification.State>.automaticVerification(testMatrix: TestMatrix) = this.onEach {
     when (it) {
         is Verification.State.WaitingForMatchConfirmation -> testMatrix.client.cryptoService().verificationAction(Verification.Action.AcknowledgeMatch)
+        else -> {
+            // do nothing
+        }
     }
 }
