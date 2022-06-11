@@ -123,8 +123,10 @@ ext.Dependencies.with {
         ktorAndroid = "io.ktor:ktor-client-android:${ktorVer}"
         ktorCore = "io.ktor:ktor-client-core:${ktorVer}"
         ktorSerialization = "io.ktor:ktor-client-serialization:${ktorVer}"
+        ktorJson = "io.ktor:ktor-serialization-kotlinx-json:${ktorVer}"
         ktorLogging = "io.ktor:ktor-client-logging-jvm:${ktorVer}"
         ktorJava = "io.ktor:ktor-client-java:${ktorVer}"
+        ktorContentNegotiation = "io.ktor:ktor-client-content-negotiation:${ktorVer}"
 
         coil = "io.coil-kt:coil-compose:2.1.0"
         accompanistSystemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.24.9-beta"
