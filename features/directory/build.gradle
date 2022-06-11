@@ -4,7 +4,7 @@ dependencies {
     implementation project(":matrix:services:sync")
     implementation project(":matrix:services:message")
     implementation project(":matrix:services:room")
-    implementation project(":domains:android:core")
+    implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
     implementation project(":features:messenger")
     implementation project(":core")

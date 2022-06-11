@@ -22,6 +22,7 @@ include ':features:verification'
 
 include ':domains:android:stub'
 include ':domains:android:core'
+include ':domains:android:compose-core'
 include ':domains:android:imageloader'
 include ':domains:android:work'
 include ':domains:android:tracking'
