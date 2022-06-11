@@ -36,6 +36,7 @@ import app.dapk.st.olm.OlmWrapper
 import kotlinx.coroutines.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.amshove.kluent.fail
 import test.impl.InMemoryDatabase
 import test.impl.InMemoryPreferences
 import test.impl.InstantScheduler
@@ -257,8 +258,12 @@ class TestMatrix(
     }
 
     suspend fun newlogin() {
-        client.authService()
+        val result = client.authService()
             .login(AuthService.LoginRequest(user.roomMember.id.value, user.password, null))
+
+        if (result !is AuthService.LoginResult.Success) {
+            fail("Login failed: $result")
+        }
     }
 
     suspend fun restoreLogin() {
