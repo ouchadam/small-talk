@@ -20,7 +20,10 @@ object InMemoryDatabase {
     }
 
     fun temp(): DapkDb {
-        return DapkDb(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        return DapkDb(driver).also {
+            DapkDb.Schema.create(driver)
+        }
     }
 
 }

@@ -151,7 +151,7 @@ class MatrixTestScope(private val testScope: TestScope) {
         }
     }
 
-    fun testMatrix(user: TestUser) = TestMatrix(user).also {
+    fun testMatrix(user: TestUser, isTemp: Boolean) = TestMatrix(user, temporaryDatabase = isTemp).also {
         inProgressInstances.add(it)
     }
 

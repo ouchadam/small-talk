@@ -45,6 +45,7 @@ import java.time.Clock
 
 class TestMatrix(
     private val user: TestUser,
+    temporaryDatabase: Boolean = false,
     includeHttpLogging: Boolean = false,
     includeLogging: Boolean = false,
 ) {
@@ -57,7 +58,10 @@ class TestMatrix(
     }
 
     private val preferences = InMemoryPreferences()
-    private val database = InMemoryDatabase.realInstance(user.roomMember.id.value)
+    private val database = when (temporaryDatabase) {
+        true -> InMemoryDatabase.temp()
+        false -> InMemoryDatabase.realInstance(user.roomMember.id.value)
+    }
     private val coroutineDispatchers = CoroutineDispatchers(
         Dispatchers.Unconfined,
         main = Dispatchers.Unconfined,
