@@ -65,31 +65,14 @@ class SmokeTest {
 
     @Test
     @Order(4)
-    fun `can send and receive encrypted messages`() = testAfterInitialSync { alice, bob ->
-        val message = "from alice to bob : ${System.currentTimeMillis()}".from(SharedState.alice.roomMember)
-        alice.sendEncryptedMessage(SharedState.sharedRoom, message.content)
-        bob.expectMessage(SharedState.sharedRoom, message)
-
-        val message2 = "from bob to alice : ${System.currentTimeMillis()}".from(SharedState.bob.roomMember)
-        bob.sendEncryptedMessage(SharedState.sharedRoom, message2.content)
-        alice.expectMessage(SharedState.sharedRoom, message2)
-
-        val aliceSecondDevice = TestMatrix(SharedState.alice).also { it.newlogin() }
-        aliceSecondDevice.client.syncService().startSyncing().collectAsync {
-            val message3 = "from alice to bob and alice's second device : ${System.currentTimeMillis()}".from(SharedState.alice.roomMember)
-            alice.sendEncryptedMessage(SharedState.sharedRoom, message3.content)
-            aliceSecondDevice.expectMessage(SharedState.sharedRoom, message3)
-            bob.expectMessage(SharedState.sharedRoom, message3)
-
-            val message4 = "from alice's second device to bob and alice's first device : ${System.currentTimeMillis()}".from(SharedState.alice.roomMember)
-            aliceSecondDevice.sendEncryptedMessage(SharedState.sharedRoom, message4.content)
-            alice.expectMessage(SharedState.sharedRoom, message4)
-            bob.expectMessage(SharedState.sharedRoom, message4)
-        }
-    }
+    fun `can send and receive clear text messages`() = testTextMessaging(isEncrypted = false)
 
     @Test
     @Order(5)
+    fun `can send and receive encrypted text messages`() = testTextMessaging(isEncrypted = true)
+
+    @Test
+    @Order(6)
     fun `can request and verify devices`() = testAfterInitialSync { alice, bob ->
         alice.client.cryptoService().verificationAction(Verification.Action.Request(bob.userId(), bob.deviceId()))
         alice.client.cryptoService().verificationState().automaticVerification(alice).expectAsync { it == Verification.State.Done }
@@ -109,6 +92,30 @@ class SmokeTest {
         }
 
         result shouldBeEqualTo listOf(RoomId(value = "!qOSENTtFUuCEKJSVzl:matrix.org"))
+    }
+
+    private fun testTextMessaging(isEncrypted: Boolean) = testAfterInitialSync { alice, bob ->
+        val message = "from alice to bob : ${System.currentTimeMillis()}".from(SharedState.alice.roomMember)
+        alice.sendTextMessage(SharedState.sharedRoom, message.content, isEncrypted)
+        bob.expectTextMessage(SharedState.sharedRoom, message)
+
+        val message2 = "from bob to alice : ${System.currentTimeMillis()}".from(SharedState.bob.roomMember)
+        bob.sendTextMessage(SharedState.sharedRoom, message2.content, isEncrypted)
+        alice.expectTextMessage(SharedState.sharedRoom, message2)
+
+        val aliceSecondDevice = testMatrix(SharedState.alice).also { it.newlogin() }
+        aliceSecondDevice.client.syncService().startSyncing().collectAsync {
+            val message3 = "from alice to bob and alice's second device : ${System.currentTimeMillis()}".from(SharedState.alice.roomMember)
+            alice.sendTextMessage(SharedState.sharedRoom, message3.content, isEncrypted)
+            aliceSecondDevice.expectTextMessage(SharedState.sharedRoom, message3)
+            bob.expectTextMessage(SharedState.sharedRoom, message3)
+
+            val message4 = "from alice's second device to bob and alice's first device : ${System.currentTimeMillis()}".from(SharedState.alice.roomMember)
+            aliceSecondDevice.sendTextMessage(SharedState.sharedRoom, message4.content, isEncrypted)
+            alice.expectTextMessage(SharedState.sharedRoom, message4)
+            bob.expectTextMessage(SharedState.sharedRoom, message4)
+
+        }
     }
 }
 
@@ -134,7 +141,6 @@ private suspend fun login(user: TestUser) {
         .client
         .authService()
         .login(AuthService.LoginRequest(userName = user.roomMember.id.value, password = user.password, serverUrl = null))
-
 
     result shouldBeInstanceOf AuthService.LoginResult.Success::class.java
     (result as AuthService.LoginResult.Success).userCredentials.let { credentials ->

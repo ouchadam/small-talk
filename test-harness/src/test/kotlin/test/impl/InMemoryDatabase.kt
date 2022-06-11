@@ -19,4 +19,8 @@ object InMemoryDatabase {
         })
     }
 
+    fun temp(): DapkDb {
+        return DapkDb(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
+    }
+
 }

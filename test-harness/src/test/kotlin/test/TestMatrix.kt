@@ -33,8 +33,7 @@ import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import test.impl.InMemoryDatabase
@@ -277,6 +276,24 @@ class TestMatrix(
 
     suspend fun deviceId() = storeModule.credentialsStore().credentials()!!.deviceId
     suspend fun userId() = storeModule.credentialsStore().credentials()!!.userId
+
+    suspend fun release() {
+        coroutineDispatchers.global.waitForCancel()
+        coroutineDispatchers.io.waitForCancel()
+        coroutineDispatchers.main.waitForCancel()
+    }
+}
+
+private suspend fun CoroutineDispatcher.waitForCancel() {
+    if (this.isActive) {
+        this.job.cancelAndJoin()
+    }
+}
+
+private suspend fun CoroutineScope.waitForCancel() {
+    if (this.isActive) {
+        this.coroutineContext.job.cancelAndJoin()
+    }
 }
 
 class JavaBase64 : Base64 {
