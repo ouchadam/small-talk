@@ -42,16 +42,16 @@ internal fun registerRequest(userName: String, password: String, baseUrl: String
     baseUrl = baseUrl,
 )
 
-internal fun wellKnownRequest(baseUrl: String) = httpRequest<String>(
+internal fun wellKnownRequest(baseUrl: String) = httpRequest<RawResponse>(
     path = ".well-known/matrix/client",
     method = MatrixHttpClient.Method.GET,
     baseUrl = baseUrl,
     authenticated = false,
 )
 
-@JvmInline
-@Serializable
-internal value class RawResponse(val value: String)
+typealias RawResponse = ByteArray
+
+fun RawResponse.readString() = this.toString(Charsets.UTF_8)
 
 internal data class Auth(
     val session: String,
