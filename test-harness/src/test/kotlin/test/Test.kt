@@ -104,6 +104,7 @@ class MatrixTestScope(private val testScope: TestScope) {
         val collected = mutableListOf<T>()
         val work = testScope.async {
             flow.onEach {
+                println("found: $it")
                 collected.add(it)
             }.first { it == expected }
         }
@@ -124,12 +125,14 @@ class MatrixTestScope(private val testScope: TestScope) {
     }
 
     suspend fun TestMatrix.expectTextMessage(roomId: RoomId, message: TestMessage) {
+        println("expecting ${message.content}")
         this.client.syncService().room(roomId)
             .map { it.events.filterIsInstance<RoomEvent.Message>().map { TestMessage(it.content, it.author) }.firstOrNull() }
             .assert(message)
     }
 
     suspend fun TestMatrix.sendTextMessage(roomId: RoomId, content: String, isEncrypted: Boolean) {
+        println("sending $content")
         this.client.messageService().scheduleMessage(
             MessageService.Message.TextMessage(
                 content = MessageService.Message.Content.TextContent(body = content),
