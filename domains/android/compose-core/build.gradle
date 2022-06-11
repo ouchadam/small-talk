@@ -1,7 +1,7 @@
-plugins { id 'kotlin' }
+applyAndroidComposeLibraryModule(project)
 
 dependencies {
-    compileOnly project(":domains:android:stub")
     implementation project(":core")
     implementation project(":features:navigator")
+    api project(":domains:android:core")
 }
