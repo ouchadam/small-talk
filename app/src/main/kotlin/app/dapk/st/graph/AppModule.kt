@@ -89,7 +89,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers)
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker)
 
-    val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
+    val coreAndroidModule = app.dapk.st.core.CoreAndroidModule(intentFactory = object : IntentFactory {
         override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
             context,
             1000,
@@ -137,7 +137,7 @@ internal class FeatureModules internal constructor(
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
     private val workModule: WorkModule,
-    private val coreAndroidModule: CoreAndroidModule,
+    private val coreAndroidModule: app.dapk.st.core.CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
