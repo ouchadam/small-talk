@@ -8,9 +8,7 @@ import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.SyncService.SyncEvent.Typing
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 
 @JvmInline
 value class UnreadCount(val value: Int)
@@ -32,22 +30,33 @@ class DirectoryUseCase(
 ) {
 
     fun state(): Flow<DirectoryState> {
-        return combine(
-            syncService.startSyncing().map { credentialsStore.credentials()!!.userId },
-            syncService.overview(),
-            messageService.localEchos(),
-            roomStore.observeUnreadCountById(),
-            syncService.events()
-        ) { userId, overviewState, localEchos, unread, events ->
-            overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
-                RoomFoo(
-                    overview = roomOverview,
-                    unreadCount = UnreadCount(unread[roomOverview.roomId] ?: 0),
-                    typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }
-                )
+        return flow { emit(credentialsStore.credentials()!!.userId) }.flatMapMerge { userId ->
+            combine(
+                overviewDatasource(),
+                messageService.localEchos(),
+                roomStore.observeUnreadCountById(),
+                syncService.events()
+            ) { overviewState, localEchos, unread, events ->
+                overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
+                    RoomFoo(
+                        overview = roomOverview,
+                        unreadCount = UnreadCount(unread[roomOverview.roomId] ?: 0),
+                        typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }
+                    )
+                }
             }
         }
     }
+
+    private fun overviewDatasource() = combine(
+        syncService.startSyncing().map { false }.onStart { emit(true) },
+        syncService.overview()
+    ) { isFirstLoad, overview ->
+        when {
+            isFirstLoad && overview.isEmpty() -> null
+            else -> overview
+        }
+    }.filterNotNull()
 
     private suspend fun OverviewState.mergeWithLocalEchos(localEchos: Map<RoomId, List<MessageService.LocalEcho>>, userId: UserId): OverviewState {
         return when {

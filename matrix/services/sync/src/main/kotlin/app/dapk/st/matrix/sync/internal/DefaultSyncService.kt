@@ -95,7 +95,6 @@ internal class DefaultSyncService(
             }
         }
             .onStart {
-                emit(Unit)
                 val subscriptions = syncSubscriptionCount.incrementAndGet()
                 logger.matrixLog(MatrixLogTag.SYNC, "flow onStart - count: $subscriptions")
             }

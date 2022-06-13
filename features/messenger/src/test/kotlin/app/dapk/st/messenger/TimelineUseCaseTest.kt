@@ -91,7 +91,7 @@ class TimelineUseCaseTest {
         echos: List<MessageService.LocalEcho> = emptyList(),
         events: List<SyncService.SyncEvent> = emptyList()
     ) {
-        fakeSyncService.givenSyncs()
+        fakeSyncService.givenStartsSyncing()
         fakeSyncService.givenRoom(A_ROOM_ID).returns(flowOf(roomState))
         fakeMessageService.givenEchos(A_ROOM_ID).returns(flowOf(echos))
         fakeSyncService.givenEvents(A_ROOM_ID).returns(flowOf(events))

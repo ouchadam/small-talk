@@ -9,6 +9,8 @@ import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.matrix.sync.SyncService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerState>
 
@@ -21,11 +23,10 @@ internal class TimelineUseCaseImpl(
 
     override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerState> {
         return combine(
-            syncService.startSyncing(),
-            syncService.room(roomId),
+            roomDatasource(roomId),
             messageService.localEchos(roomId),
             syncService.events()
-        ) { _, roomState, localEchos, events ->
+        ) { roomState, localEchos, events ->
             MessengerState(
                 roomState = when {
                     localEchos.isEmpty() -> roomState
@@ -43,6 +44,10 @@ internal class TimelineUseCaseImpl(
         }
     }
 
+    private fun roomDatasource(roomId: RoomId) = combine(
+        syncService.startSyncing().map { false }.onStart { emit(true) },
+        syncService.room(roomId)
+    ) { _, room -> room }
 }
 
 private fun UserId.toFallbackMember() = RoomMember(this, displayName = null, avatarUrl = null)
