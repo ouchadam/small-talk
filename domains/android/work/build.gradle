@@ -1,7 +1,6 @@
-plugins { id 'kotlin' }
+applyAndroidLibraryModule(project)
 
 dependencies {
-    compileOnly project(":domains:android:stub")
     implementation project(':core')
     implementation project(':domains:android:core')
 }

@@ -33,10 +33,10 @@ import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.amshove.kluent.fail
 import test.impl.InMemoryDatabase
 import test.impl.InMemoryPreferences
 import test.impl.InstantScheduler
@@ -45,6 +45,7 @@ import java.time.Clock
 
 class TestMatrix(
     private val user: TestUser,
+    temporaryDatabase: Boolean = false,
     includeHttpLogging: Boolean = false,
     includeLogging: Boolean = false,
 ) {
@@ -57,7 +58,10 @@ class TestMatrix(
     }
 
     private val preferences = InMemoryPreferences()
-    private val database = InMemoryDatabase.realInstance(user.roomMember.id.value)
+    private val database = when (temporaryDatabase) {
+        true -> InMemoryDatabase.temp()
+        false -> InMemoryDatabase.realInstance(user.roomMember.id.value)
+    }
     private val coroutineDispatchers = CoroutineDispatchers(
         Dispatchers.Unconfined,
         main = Dispatchers.Unconfined,
@@ -261,8 +265,12 @@ class TestMatrix(
     }
 
     suspend fun newlogin() {
-        client.authService()
+        val result = client.authService()
             .login(AuthService.LoginRequest(user.roomMember.id.value, user.password, null))
+
+        if (result !is AuthService.LoginResult.Success) {
+            fail("Login failed: $result")
+        }
     }
 
     suspend fun restoreLogin() {
@@ -280,6 +288,24 @@ class TestMatrix(
 
     suspend fun deviceId() = storeModule.credentialsStore().credentials()!!.deviceId
     suspend fun userId() = storeModule.credentialsStore().credentials()!!.userId
+
+    suspend fun release() {
+        coroutineDispatchers.global.waitForCancel()
+        coroutineDispatchers.io.waitForCancel()
+        coroutineDispatchers.main.waitForCancel()
+    }
+}
+
+private suspend fun CoroutineDispatcher.waitForCancel() {
+    if (this.isActive) {
+        this.job.cancelAndJoin()
+    }
+}
+
+private suspend fun CoroutineScope.waitForCancel() {
+    if (this.isActive) {
+        this.coroutineContext.job.cancelAndJoin()
+    }
 }
 
 class JavaBase64 : Base64 {

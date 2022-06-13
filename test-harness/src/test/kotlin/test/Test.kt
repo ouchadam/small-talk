@@ -3,6 +3,7 @@
 package test
 
 import TestMessage
+import TestUser
 import app.dapk.st.core.extensions.ifNull
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.message.MessageService
@@ -31,6 +32,8 @@ fun restoreLoginAndInitialSync(m1: TestMatrix, m2: TestMatrix, testBody: suspend
         println("restore login 2")
         m2.restoreLogin()
         val testHelper = MatrixTestScope(this)
+        testHelper.testMatrix(m1)
+        testHelper.testMatrix(m2)
         with(testHelper) {
             combine(m1.client.syncService().startSyncing(), m2.client.syncService().startSyncing()) { _, _ -> }.collectAsync {
                 m1.client.syncService().overview().first()
@@ -38,6 +41,7 @@ fun restoreLoginAndInitialSync(m1: TestMatrix, m2: TestMatrix, testBody: suspend
                 testBody(testHelper, m1, m2)
             }
         }
+        testHelper.release()
     }
 }
 
@@ -54,6 +58,7 @@ suspend fun <T> Flow<T>.collectAsync(scope: CoroutineScope, block: suspend () ->
 class MatrixTestScope(private val testScope: TestScope) {
 
     private val inProgressExpects = mutableListOf<Deferred<*>>()
+    private val inProgressInstances = mutableListOf<TestMatrix>()
 
     suspend fun <T> Flow<T>.collectAsync(block: suspend () -> Unit) {
         collectAsync(testScope, block)
@@ -99,6 +104,7 @@ class MatrixTestScope(private val testScope: TestScope) {
         val collected = mutableListOf<T>()
         val work = testScope.async {
             flow.onEach {
+                println("found: $it")
                 collected.add(it)
             }.first { it == expected }
         }
@@ -118,18 +124,20 @@ class MatrixTestScope(private val testScope: TestScope) {
             .expect { it.any { it.roomId == roomId } }
     }
 
-    suspend fun TestMatrix.expectMessage(roomId: RoomId, message: TestMessage) {
+    suspend fun TestMatrix.expectTextMessage(roomId: RoomId, message: TestMessage) {
+        println("expecting ${message.content}")
         this.client.syncService().room(roomId)
             .map { it.events.filterIsInstance<RoomEvent.Message>().map { TestMessage(it.content, it.author) }.firstOrNull() }
             .assert(message)
     }
 
-    suspend fun TestMatrix.sendEncryptedMessage(roomId: RoomId, content: String) {
+    suspend fun TestMatrix.sendTextMessage(roomId: RoomId, content: String, isEncrypted: Boolean) {
+        println("sending $content")
         this.client.messageService().scheduleMessage(
             MessageService.Message.TextMessage(
                 content = MessageService.Message.Content.TextContent(body = content),
                 roomId = roomId,
-                sendEncrypted = true,
+                sendEncrypted = isEncrypted,
                 localId = "local.${UUID.randomUUID()}",
                 timestampUtc = System.currentTimeMillis(),
             )
@@ -141,6 +149,18 @@ class MatrixTestScope(private val testScope: TestScope) {
         client.syncService().startSyncing().collectAsync(testScope) {
             client.syncService().overview().first()
         }
+    }
+
+    fun testMatrix(user: TestUser, isTemp: Boolean, withLogging: Boolean = false) = TestMatrix(
+        user,
+        temporaryDatabase = isTemp,
+        includeLogging = withLogging
+    ).also { inProgressInstances.add(it) }
+
+    fun testMatrix(testMatrix: TestMatrix) = inProgressInstances.add(testMatrix)
+
+    suspend fun release() {
+        inProgressInstances.forEach { it.release() }
     }
 
 }

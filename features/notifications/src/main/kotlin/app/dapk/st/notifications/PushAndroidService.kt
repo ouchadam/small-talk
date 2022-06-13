@@ -11,9 +11,7 @@ import app.dapk.st.work.WorkScheduler
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.*
 
 private var previousJob: Job? = null
 
@@ -72,7 +70,7 @@ class PushAndroidService : FirebaseMessagingService() {
 
     private suspend fun waitForEvent(timeout: Long, eventId: EventId): EventId? {
         return withTimeoutOrNull(timeout) {
-            combine(module.syncService().startSyncing(), module.syncService().observeEvent(eventId)) { _, event -> event }
+            combine(module.syncService().startSyncing().startInstantly(), module.syncService().observeEvent(eventId)) { _, event -> event }
                 .firstOrNull {
                     it == eventId
                 }
@@ -81,10 +79,12 @@ class PushAndroidService : FirebaseMessagingService() {
 
     private suspend fun waitForUnreadChange(timeout: Long): String? {
         return withTimeoutOrNull(timeout) {
-            combine(module.syncService().startSyncing(), module.roomStore().observeUnread()) { _, unread -> unread }
+            combine(module.syncService().startSyncing().startInstantly(), module.roomStore().observeUnread()) { _, unread -> unread }
                 .first()
             "ignored"
         }
     }
 
 }
+
+private fun Flow<Unit>.startInstantly() = this.onStart { emit(Unit) }

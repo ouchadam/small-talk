@@ -4,12 +4,12 @@ import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.SyncService
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.emptyFlow
 import test.delegateReturn
 
 class FakeSyncService : SyncService by mockk() {
-    fun givenSyncs() {
-        every { startSyncing() }.returns(flowOf(Unit))
+    fun givenStartsSyncing() {
+        every { startSyncing() }.returns(emptyFlow())
     }
 
     fun givenRoom(roomId: RoomId) = every { room(roomId) }.delegateReturn()
