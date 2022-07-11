@@ -103,6 +103,8 @@ ext.Dependencies.with {
         androidxComposeIconsExtended = "androidx.compose.material:material-icons-extended:${composeVer}"
         androidxActivityCompose = "androidx.activity:activity-compose:1.4.0"
         kotlinCompilerExtensionVersion = "1.2.0"
+
+        firebaseCrashlyticsPlugin = "com.google.firebase:firebase-crashlytics-gradle:2.9.1"
     }
 
     mavenCentral = new DependenciesContainer()

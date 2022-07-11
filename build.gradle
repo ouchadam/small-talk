@@ -9,7 +9,7 @@ buildscript {
         classpath Dependencies.mavenCentral.kotlinGradlePlugin
         classpath Dependencies.mavenCentral.sqldelightGradlePlugin
         classpath Dependencies.mavenCentral.kotlinSerializationGradlePlugin
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.8.1'
+        classpath Dependencies.google.firebaseCrashlyticsPlugin
     }
 }
 
