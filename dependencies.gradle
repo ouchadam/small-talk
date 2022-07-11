@@ -105,6 +105,7 @@ ext.Dependencies.with {
         kotlinCompilerExtensionVersion = "1.2.0"
 
         firebaseCrashlyticsPlugin = "com.google.firebase:firebase-crashlytics-gradle:2.9.1"
+        jdkLibs = "com.android.tools:desugar_jdk_libs:1.1.5"
     }
 
     mavenCentral = new DependenciesContainer()
