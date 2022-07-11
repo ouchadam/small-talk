@@ -70,6 +70,10 @@ class NotificationFactory(
             smallIcon = R.drawable.ic_notification_small_icon,
             contentIntent = openAppIntent,
             groupId = GROUP_ID,
+            groupAlertBehavior = deviceMeta.whenPOrHigher(
+                block = { Notification.GROUP_ALERT_SUMMARY },
+                fallback = { null }
+            ),
             isGroupSummary = true,
         )
     }
