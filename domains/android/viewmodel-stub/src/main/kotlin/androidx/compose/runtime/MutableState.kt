@@ -1,5 +1,5 @@
 @file:JvmName("SnapshotStateKt")
-
+@file:Suppress("UNUSED")
 package androidx.compose.runtime
 
 import kotlin.reflect.KProperty

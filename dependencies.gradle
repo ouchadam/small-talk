@@ -88,7 +88,7 @@ ext.Dependencies.with {
         }
     }
 
-    def kotlinVer = "1.6.10"
+    def kotlinVer = "1.7.0"
     def sqldelightVer = "1.5.3"
     def composeVer = "1.1.1"
     def ktorVer = "2.0.3"
@@ -102,7 +102,10 @@ ext.Dependencies.with {
         androidxComposeMaterial = "androidx.compose.material:material:${composeVer}"
         androidxComposeIconsExtended = "androidx.compose.material:material-icons-extended:${composeVer}"
         androidxActivityCompose = "androidx.activity:activity-compose:1.4.0"
-        kotlinCompilerExtensionVersion = "${composeVer}"
+        kotlinCompilerExtensionVersion = "1.2.0"
+
+        firebaseCrashlyticsPlugin = "com.google.firebase:firebase-crashlytics-gradle:2.9.1"
+        jdkLibs = "com.android.tools:desugar_jdk_libs:1.1.5"
     }
 
     mavenCentral = new DependenciesContainer()

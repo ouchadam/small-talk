@@ -31,10 +31,12 @@ class SingletonFlows(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> get(key: String): Flow<T> {
         return cache[key]!! as Flow<T>
     }
 
+    @Suppress("UNCHECKED_CAST")
     suspend fun <T> update(key: String, value: T) {
         (cache[key] as? MutableSharedFlow<T>)?.emit(value)
     }

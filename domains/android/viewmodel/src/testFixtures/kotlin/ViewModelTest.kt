@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import test.ExpectTest
 
+@Suppress("UNCHECKED_CAST")
 class ViewModelTest {
 
     var instance: TestMutableState<Any>? = null

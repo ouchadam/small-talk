@@ -199,6 +199,13 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
                 item { Spacer(Modifier.height(12.dp)) }
             }
         }
+
+        is Lce.Error -> {
+            // TODO
+        }
+        is Lce.Loading -> {
+            // TODO
+        }
     }
 }
 
