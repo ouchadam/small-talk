@@ -34,6 +34,8 @@ class AndroidNotificationStyleBuilder(
             .setKey(person.key)
             .build()
     ).also { style ->
+        style.conversationTitle = title
+        style.isGroupConversation = isGroup
         content.forEach {
             val sender = personBuilderFactory()
                 .setName(it.sender.name)

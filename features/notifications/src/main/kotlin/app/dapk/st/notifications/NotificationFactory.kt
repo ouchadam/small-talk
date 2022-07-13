@@ -10,7 +10,6 @@ import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.navigator.IntentFactory
 
 private const val GROUP_ID = "st"
-private const val channelId = "message"
 
 class NotificationFactory(
     private val context: Context,

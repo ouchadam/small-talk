@@ -4,7 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 
-private const val channelId = "message"
+const val channelId = "message"
 
 class NotificationChannels(
     private val notificationManager: NotificationManager
