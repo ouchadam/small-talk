@@ -6,19 +6,17 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 
 class RenderNotificationsUseCase(
     private val notificationRenderer: NotificationRenderer,
     private val observeRenderableUnreadEventsUseCase: ObserveUnreadNotificationsUseCase,
-    notificationChannels: NotificationChannels,
+    private val notificationChannels: NotificationChannels,
 ) {
-
-    init {
-        notificationChannels.initChannels()
-    }
 
     suspend fun listenForNotificationChanges() {
         observeRenderableUnreadEventsUseCase()
+            .onStart { notificationChannels.initChannels() }
             .onEach { (each, diff) -> renderUnreadChange(each, diff) }
             .collect()
     }
