@@ -484,8 +484,8 @@ internal sealed class ApiTimelineEvent {
 
                 @Serializable
                 internal data class Info(
-                    @SerialName("h") val height: Int,
-                    @SerialName("w") val width: Int,
+                    @SerialName("h") val height: Int? = null,
+                    @SerialName("w") val width: Int? = null,
                 )
             }
 
