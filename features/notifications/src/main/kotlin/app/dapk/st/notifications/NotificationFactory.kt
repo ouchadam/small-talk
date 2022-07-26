@@ -34,17 +34,21 @@ class NotificationFactory(
             else -> newRooms.contains(roomOverview.roomId)
         }
 
+        val last = sortedEvents.last()
         return NotificationTypes.Room(
             AndroidNotification(
-                channelId = channelId,
-                whenTimestamp = sortedEvents.last().utcTimestamp,
+                channelId = when  {
+                    roomOverview.isDm() -> DIRECT_CHANNEL_ID
+                    else -> GROUP_CHANNEL_ID
+                },
+                whenTimestamp = last.utcTimestamp,
                 groupId = GROUP_ID,
                 groupAlertBehavior = deviceMeta.whenPOrHigher(
                     block = { Notification.GROUP_ALERT_SUMMARY },
                     fallback = { null }
                 ),
                 shortcutId = roomOverview.roomId.value,
-                alertMoreThanOnce = shouldAlertMoreThanOnce,
+                alertMoreThanOnce = false,
                 contentIntent = openRoomIntent,
                 messageStyle = messageStyle,
                 category = Notification.CATEGORY_MESSAGE,
@@ -53,7 +57,7 @@ class NotificationFactory(
                 autoCancel = true
             ),
             roomId = roomOverview.roomId,
-            summary = sortedEvents.last().content,
+            summary = last.content,
             messageCount = sortedEvents.size,
             isAlerting = shouldAlertMoreThanOnce
         )
@@ -63,7 +67,7 @@ class NotificationFactory(
         val summaryInboxStyle = notificationStyleFactory.summary(notifications)
         val openAppIntent = intentFactory.notificationOpenApp(context)
         return AndroidNotification(
-            channelId = channelId,
+            channelId = notifications.firstOrNull { it.isAlerting }?.notification?.channelId ?: notifications.first().notification.channelId,
             messageStyle = summaryInboxStyle,
             alertMoreThanOnce = notifications.any { it.isAlerting },
             smallIcon = R.drawable.ic_notification_small_icon,
@@ -74,6 +78,7 @@ class NotificationFactory(
                 fallback = { null }
             ),
             isGroupSummary = true,
+            category = Notification.CATEGORY_MESSAGE,
         )
     }
 }
