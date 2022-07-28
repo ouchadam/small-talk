@@ -67,9 +67,11 @@ class NotificationFactory(
     fun createSummary(notifications: List<NotificationTypes.Room>): AndroidNotification {
         val summaryInboxStyle = notificationStyleFactory.summary(notifications)
         val openAppIntent = intentFactory.notificationOpenApp(context)
+        val mostRecent = notifications.mostRecent()
         return AndroidNotification(
-            channelId = notifications.mostRecent().summaryChannelId,
+            channelId = mostRecent.summaryChannelId,
             messageStyle = summaryInboxStyle,
+            whenTimestamp = mostRecent.notification.whenTimestamp,
             alertMoreThanOnce = notifications.any { it.isAlerting },
             smallIcon = R.drawable.ic_notification_small_icon,
             contentIntent = openAppIntent,

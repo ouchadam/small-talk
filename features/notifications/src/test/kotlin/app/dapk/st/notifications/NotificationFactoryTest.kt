@@ -60,7 +60,7 @@ class NotificationFactoryTest {
 
         val result = notificationFactory.createSummary(notifications)
 
-        result shouldBeEqualTo expectedSummary(channelId = A_CHANNEL_ID, shouldAlertMoreThanOnce = true)
+        result shouldBeEqualTo expectedSummary(notifications.first().notification, shouldAlertMoreThanOnce = true)
     }
 
     @Test
@@ -76,7 +76,7 @@ class NotificationFactoryTest {
 
         val result = notificationFactory.createSummary(notifications)
 
-        result shouldBeEqualTo expectedSummary(channelId = A_CHANNEL_ID, shouldAlertMoreThanOnce = false)
+        result shouldBeEqualTo expectedSummary(notifications.first().notification, shouldAlertMoreThanOnce = false)
     }
 
     @Test
@@ -158,8 +158,9 @@ class NotificationFactoryTest {
         summaryChannelId = channel,
     )
 
-    private fun expectedSummary(channelId: String, shouldAlertMoreThanOnce: Boolean) = AndroidNotification(
-        channelId = channelId,
+    private fun expectedSummary(notification: AndroidNotification, shouldAlertMoreThanOnce: Boolean) = AndroidNotification(
+        channelId = notification.channelId,
+        whenTimestamp = notification.whenTimestamp,
         messageStyle = A_NOTIFICATION_STYLE,
         alertMoreThanOnce = shouldAlertMoreThanOnce,
         smallIcon = R.drawable.ic_notification_small_icon,
