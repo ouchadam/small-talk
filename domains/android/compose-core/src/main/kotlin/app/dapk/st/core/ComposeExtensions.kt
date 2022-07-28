@@ -41,6 +41,9 @@ fun LifecycleEffect(onStart: () -> Unit = {}, onStop: () -> Unit = {}) {
             when (event) {
                 Lifecycle.Event.ON_START -> onStart()
                 Lifecycle.Event.ON_STOP -> onStop()
+                else -> {
+                    // ignored
+                }
             }
         }
 

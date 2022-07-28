@@ -93,8 +93,7 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
 private fun MessengerViewModel.ObserveEvents() {
     StartObserving {
         this@ObserveEvents.events.launch {
-            when (it) {
-            }
+            // TODO()
         }
     }
 }
@@ -438,6 +437,10 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                         }
+
+                        is RoomEvent.Reply -> {
+                            // TODO - a reply to a reply
+                        }
                     }
                 }
 
@@ -474,6 +477,10 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             contentDescription = null,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+                    is RoomEvent.Reply -> {
+                        // TODO - a reply to a reply
                     }
                 }
 

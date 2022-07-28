@@ -42,6 +42,13 @@ fun EventLogScreen(viewModel: EventLoggerViewModel) {
                 }
             }
         }
+
+        is Lce.Error -> {
+            // TODO
+        }
+        is Lce.Loading -> {
+            // TODO
+        }
     }
 
 }

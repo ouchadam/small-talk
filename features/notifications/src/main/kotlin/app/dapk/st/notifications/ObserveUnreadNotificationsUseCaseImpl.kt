@@ -34,10 +34,12 @@ private fun Flow<UnreadNotifications>.onlyRenderableChanges(): Flow<UnreadNotifi
                     log(AppLogTag.NOTIFICATION, "Ignoring unread change due to no renderable changes")
                     false
                 }
+
                 inferredCurrentNotifications.isEmpty() && diff.removed.isNotEmpty() -> {
                     log(AppLogTag.NOTIFICATION, "Ignoring unread change due to no currently showing messages and changes are all messages marked as read")
                     false
                 }
+
                 else -> true
             }
         }
@@ -45,28 +47,47 @@ private fun Flow<UnreadNotifications>.onlyRenderableChanges(): Flow<UnreadNotifi
 }
 
 private fun Flow<Map<RoomOverview, List<RoomEvent>>>.mapWithDiff(): Flow<Pair<Map<RoomOverview, List<RoomEvent>>, NotificationDiff>> {
-    val previousUnreadEvents = mutableMapOf<RoomId, List<EventId>>()
+    val previousUnreadEvents = mutableMapOf<RoomId, List<TimestampedEventId>>()
     return this.map { each ->
-        val allUnreadIds = each.toIds()
+        val allUnreadIds = each.toTimestampedIds()
         val notificationDiff = calculateDiff(allUnreadIds, previousUnreadEvents)
         previousUnreadEvents.clearAndPutAll(allUnreadIds)
         each to notificationDiff
     }
 }
 
-private fun calculateDiff(allUnread: Map<RoomId, List<EventId>>, previousUnread: Map<RoomId, List<EventId>>?): NotificationDiff {
+private fun calculateDiff(allUnread: Map<RoomId, List<TimestampedEventId>>, previousUnread: Map<RoomId, List<TimestampedEventId>>?): NotificationDiff {
+    val previousLatestEventTimestamps = previousUnread.toLatestTimestamps()
     val newRooms = allUnread.filter { !previousUnread.containsKey(it.key) }.keys
-    val unchanged = previousUnread?.filter { allUnread.containsKey(it.key) && it.value == allUnread[it.key] } ?: emptyMap()
-    val changedOrNew = allUnread.filterNot { unchanged.containsKey(it.key) }
+
+    val unchanged = previousUnread?.filter {
+        allUnread.containsKey(it.key) && (it.value == allUnread[it.key])
+    } ?: emptyMap()
+    val changedOrNew = allUnread.filterNot { unchanged.containsKey(it.key) }.mapValues { (key, value) ->
+        val isChangedRoom = !newRooms.contains(key)
+        if (isChangedRoom) {
+            val latest = previousLatestEventTimestamps[key] ?: 0L
+            value.filter {
+                val isExistingEvent = (previousUnread?.get(key)?.contains(it) ?: false)
+                !isExistingEvent && it.second > latest
+            }
+        } else {
+            value
+        }
+    }.filter { it.value.isNotEmpty() }
     val removed = previousUnread?.filter { !allUnread.containsKey(it.key) } ?: emptyMap()
-    return NotificationDiff(unchanged, changedOrNew, removed, newRooms)
+    return NotificationDiff(unchanged.toEventIds(), changedOrNew.toEventIds(), removed.toEventIds(), newRooms)
 }
 
-private fun List<RoomEvent>.toEventIds() = this.map { it.eventId }
+private fun Map<RoomId, List<TimestampedEventId>>?.toLatestTimestamps() = this?.mapValues { it.value.maxOf { it.second } } ?: emptyMap()
 
-private fun Map<RoomOverview, List<RoomEvent>>.toIds() = this
+private fun Map<RoomId, List<TimestampedEventId>>.toEventIds() = this.mapValues { it.value.map { it.first } }
+
+private fun Map<RoomOverview, List<RoomEvent>>.toTimestampedIds() = this
     .mapValues { it.value.toEventIds() }
     .mapKeys { it.key.roomId }
+
+private fun List<RoomEvent>.toEventIds() = this.map { it.eventId to it.utcTimestamp }
 
 private fun <T> Flow<T>.avoidShowingPreviousNotificationsOnLaunch() = drop(1)
 
@@ -76,3 +97,5 @@ data class NotificationDiff(
     val removed: Map<RoomId, List<EventId>>,
     val newRooms: Set<RoomId>
 )
+
+typealias TimestampedEventId = Pair<EventId, Long>
