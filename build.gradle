@@ -135,7 +135,7 @@ ext.kotlinTest = { dependencies ->
     dependencies.testImplementation 'io.mockk:mockk:1.12.4'
     dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
 
-    dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     dependencies.testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
 }
 
