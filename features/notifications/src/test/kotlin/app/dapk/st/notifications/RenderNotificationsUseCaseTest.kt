@@ -25,7 +25,12 @@ class RenderNotificationsUseCaseTest {
     )
 
     @Test
-    fun `when creating use case instance, then initiates channels`() {
+    fun `given events, when listening for changes then initiates channels once`() = runTest {
+        fakeNotificationRenderer.instance.expect { it.render(any()) }
+        fakeObserveUnreadNotificationsUseCase.given().emits(AN_UNREAD_NOTIFICATIONS)
+
+        renderNotificationsUseCase.listenForNotificationChanges()
+
         fakeNotificationChannels.verifyInitiated()
     }
 

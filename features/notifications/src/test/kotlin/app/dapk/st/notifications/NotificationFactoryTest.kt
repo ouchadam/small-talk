@@ -7,6 +7,7 @@ import app.dapk.st.core.DeviceMeta
 import app.dapk.st.matrix.common.AvatarUrl
 import app.dapk.st.matrix.sync.RoomOverview
 import fake.FakeContext
+import fixture.NotificationDelegateFixtures.anAndroidNotification
 import fixture.NotificationDelegateFixtures.anInboxStyle
 import fixture.NotificationFixtures.aRoomNotification
 import fixture.aRoomId
@@ -16,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
+private const val A_CHANNEL_ID = "a channel id"
 private val AN_OPEN_APP_INTENT = aPendingIntent()
 private val AN_OPEN_ROOM_INTENT = aPendingIntent()
 private val A_NOTIFICATION_STYLE = anInboxStyle()
@@ -29,7 +31,6 @@ private val EVENTS = listOf(
     LATEST_EVENT,
     aNotifiable("message two", utcTimestamp = 2),
 )
-
 
 class NotificationFactoryTest {
 
@@ -48,24 +49,34 @@ class NotificationFactoryTest {
 
     @Test
     fun `given alerting room notification, when creating summary, then is alerting`() {
-        val notifications = listOf(aRoomNotification(isAlerting = true))
+        val notifications = listOf(
+            aRoomNotification(
+                summaryChannelId = A_CHANNEL_ID,
+                notification = anAndroidNotification(channelId = A_CHANNEL_ID), isAlerting = true
+            )
+        )
         fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
         fakeNotificationStyleFactory.givenSummary(notifications).returns(anInboxStyle())
 
         val result = notificationFactory.createSummary(notifications)
 
-        result shouldBeEqualTo expectedSummary(shouldAlertMoreThanOnce = true)
+        result shouldBeEqualTo expectedSummary(channelId = A_CHANNEL_ID, shouldAlertMoreThanOnce = true)
     }
 
     @Test
     fun `given non alerting room notification, when creating summary, then is alerting`() {
-        val notifications = listOf(aRoomNotification(isAlerting = false))
+        val notifications = listOf(
+            aRoomNotification(
+                summaryChannelId = A_CHANNEL_ID,
+                notification = anAndroidNotification(channelId = A_CHANNEL_ID), isAlerting = false
+            )
+        )
         fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
         fakeNotificationStyleFactory.givenSummary(notifications).returns(anInboxStyle())
 
         val result = notificationFactory.createSummary(notifications)
 
-        result shouldBeEqualTo expectedSummary(shouldAlertMoreThanOnce = false)
+        result shouldBeEqualTo expectedSummary(channelId = A_CHANNEL_ID, shouldAlertMoreThanOnce = false)
     }
 
     @Test
@@ -75,6 +86,7 @@ class NotificationFactoryTest {
         val result = notificationFactory.createMessageNotification(EVENTS, A_GROUP_ROOM_OVERVIEW, setOf(A_ROOM_ID), newRooms = setOf(A_ROOM_ID))
 
         result shouldBeEqualTo expectedMessage(
+            channel = GROUP_CHANNEL_ID,
             shouldAlertMoreThanOnce = true,
         )
     }
@@ -86,6 +98,7 @@ class NotificationFactoryTest {
         val result = notificationFactory.createMessageNotification(EVENTS, A_GROUP_ROOM_OVERVIEW, setOf(A_ROOM_ID), newRooms = emptySet())
 
         result shouldBeEqualTo expectedMessage(
+            channel = GROUP_CHANNEL_ID,
             shouldAlertMoreThanOnce = false,
         )
     }
@@ -97,6 +110,7 @@ class NotificationFactoryTest {
         val result = notificationFactory.createMessageNotification(EVENTS, A_DM_ROOM_OVERVIEW, setOf(A_ROOM_ID), newRooms = setOf(A_ROOM_ID))
 
         result shouldBeEqualTo expectedMessage(
+            channel = DIRECT_CHANNEL_ID,
             shouldAlertMoreThanOnce = true,
         )
     }
@@ -108,6 +122,7 @@ class NotificationFactoryTest {
         val result = notificationFactory.createMessageNotification(EVENTS, A_DM_ROOM_OVERVIEW, setOf(A_ROOM_ID), newRooms = emptySet())
 
         result shouldBeEqualTo expectedMessage(
+            channel = DIRECT_CHANNEL_ID,
             shouldAlertMoreThanOnce = true,
         )
     }
@@ -119,15 +134,16 @@ class NotificationFactoryTest {
     }
 
     private fun expectedMessage(
+        channel: String,
         shouldAlertMoreThanOnce: Boolean,
     ) = NotificationTypes.Room(
         AndroidNotification(
-            channelId = "message",
+            channelId = SUMMARY_CHANNEL_ID,
             whenTimestamp = LATEST_EVENT.utcTimestamp,
             groupId = "st",
             groupAlertBehavior = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.GROUP_ALERT_SUMMARY else null,
             shortcutId = A_ROOM_ID.value,
-            alertMoreThanOnce = shouldAlertMoreThanOnce,
+            alertMoreThanOnce = false,
             contentIntent = AN_OPEN_ROOM_INTENT,
             messageStyle = A_NOTIFICATION_STYLE,
             category = Notification.CATEGORY_MESSAGE,
@@ -139,15 +155,17 @@ class NotificationFactoryTest {
         summary = LATEST_EVENT.content,
         messageCount = EVENTS.size,
         isAlerting = shouldAlertMoreThanOnce,
+        summaryChannelId = channel,
     )
 
-    private fun expectedSummary(shouldAlertMoreThanOnce: Boolean) = AndroidNotification(
-        channelId = "message",
+    private fun expectedSummary(channelId: String, shouldAlertMoreThanOnce: Boolean) = AndroidNotification(
+        channelId = channelId,
         messageStyle = A_NOTIFICATION_STYLE,
         alertMoreThanOnce = shouldAlertMoreThanOnce,
         smallIcon = R.drawable.ic_notification_small_icon,
         contentIntent = AN_OPEN_APP_INTENT,
         groupId = "st",
+        category = Notification.CATEGORY_MESSAGE,
         isGroupSummary = true,
         autoCancel = true
     )

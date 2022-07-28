@@ -16,7 +16,14 @@ class NotificationStateMapper(
         val messageEvents = roomEventsToNotifiableMapper.map(events)
         when (messageEvents.isEmpty()) {
             true -> NotificationTypes.DismissRoom(roomOverview.roomId)
-            false -> notificationFactory.createMessageNotification(messageEvents, roomOverview, state.roomsWithNewEvents, state.newRooms)
+            false -> {
+                notificationFactory.createMessageNotification(
+                    events = messageEvents,
+                    roomOverview = roomOverview,
+                    roomsWithNewEvents = state.roomsWithNewEvents,
+                    newRooms = state.newRooms
+                )
+            }
         }
     }
 

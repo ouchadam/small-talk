@@ -10,7 +10,6 @@ import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.navigator.IntentFactory
 
 private const val GROUP_ID = "st"
-private const val channelId = "message"
 
 class NotificationFactory(
     private val context: Context,
@@ -35,17 +34,18 @@ class NotificationFactory(
             else -> newRooms.contains(roomOverview.roomId)
         }
 
+        val last = sortedEvents.last()
         return NotificationTypes.Room(
             AndroidNotification(
-                channelId = channelId,
-                whenTimestamp = sortedEvents.last().utcTimestamp,
+                channelId = SUMMARY_CHANNEL_ID,
+                whenTimestamp = last.utcTimestamp,
                 groupId = GROUP_ID,
                 groupAlertBehavior = deviceMeta.whenPOrHigher(
                     block = { Notification.GROUP_ALERT_SUMMARY },
                     fallback = { null }
                 ),
                 shortcutId = roomOverview.roomId.value,
-                alertMoreThanOnce = shouldAlertMoreThanOnce,
+                alertMoreThanOnce = false,
                 contentIntent = openRoomIntent,
                 messageStyle = messageStyle,
                 category = Notification.CATEGORY_MESSAGE,
@@ -54,9 +54,13 @@ class NotificationFactory(
                 autoCancel = true
             ),
             roomId = roomOverview.roomId,
-            summary = sortedEvents.last().content,
+            summary = last.content,
             messageCount = sortedEvents.size,
-            isAlerting = shouldAlertMoreThanOnce
+            isAlerting = shouldAlertMoreThanOnce,
+            summaryChannelId = when {
+                roomOverview.isDm() -> DIRECT_CHANNEL_ID
+                else -> GROUP_CHANNEL_ID
+            }
         )
     }
 
@@ -64,7 +68,7 @@ class NotificationFactory(
         val summaryInboxStyle = notificationStyleFactory.summary(notifications)
         val openAppIntent = intentFactory.notificationOpenApp(context)
         return AndroidNotification(
-            channelId = channelId,
+            channelId = notifications.mostRecent().summaryChannelId,
             messageStyle = summaryInboxStyle,
             alertMoreThanOnce = notifications.any { it.isAlerting },
             smallIcon = R.drawable.ic_notification_small_icon,
@@ -75,8 +79,11 @@ class NotificationFactory(
                 fallback = { null }
             ),
             isGroupSummary = true,
+            category = Notification.CATEGORY_MESSAGE,
         )
     }
 }
+
+private fun List<NotificationTypes.Room>.mostRecent() = this.sortedBy { it.notification.whenTimestamp }.first()
 
 private fun RoomOverview.isDm() = !this.isGroup
