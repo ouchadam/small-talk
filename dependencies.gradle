@@ -136,7 +136,7 @@ ext.Dependencies.with {
 
         junit = "junit:junit:4.13.2"
         kluent = "org.amshove.kluent:kluent:1.68"
-        mockk = 'io.mockk:mockk:1.12.4'
+        mockk = 'io.mockk:mockk:1.12.5'
 
         matrixOlm = "org.matrix.android:olm-sdk:3.2.12"
     }
