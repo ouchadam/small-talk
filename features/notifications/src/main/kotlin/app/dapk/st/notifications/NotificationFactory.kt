@@ -37,10 +37,7 @@ class NotificationFactory(
         val last = sortedEvents.last()
         return NotificationTypes.Room(
             AndroidNotification(
-                channelId = when  {
-                    roomOverview.isDm() -> DIRECT_CHANNEL_ID
-                    else -> GROUP_CHANNEL_ID
-                },
+                channelId = SUMMARY_CHANNEL_ID,
                 whenTimestamp = last.utcTimestamp,
                 groupId = GROUP_ID,
                 groupAlertBehavior = deviceMeta.whenPOrHigher(
@@ -59,7 +56,11 @@ class NotificationFactory(
             roomId = roomOverview.roomId,
             summary = last.content,
             messageCount = sortedEvents.size,
-            isAlerting = shouldAlertMoreThanOnce
+            isAlerting = shouldAlertMoreThanOnce,
+            summaryChannelId = when {
+                roomOverview.isDm() -> DIRECT_CHANNEL_ID
+                else -> GROUP_CHANNEL_ID
+            }
         )
     }
 
@@ -67,7 +68,7 @@ class NotificationFactory(
         val summaryInboxStyle = notificationStyleFactory.summary(notifications)
         val openAppIntent = intentFactory.notificationOpenApp(context)
         return AndroidNotification(
-            channelId = notifications.firstOrNull { it.isAlerting }?.notification?.channelId ?: notifications.first().notification.channelId,
+            channelId = notifications.mostRecent().summaryChannelId,
             messageStyle = summaryInboxStyle,
             alertMoreThanOnce = notifications.any { it.isAlerting },
             smallIcon = R.drawable.ic_notification_small_icon,
@@ -82,5 +83,7 @@ class NotificationFactory(
         )
     }
 }
+
+private fun List<NotificationTypes.Room>.mostRecent() = this.sortedBy { it.notification.whenTimestamp }.first()
 
 private fun RoomOverview.isDm() = !this.isGroup

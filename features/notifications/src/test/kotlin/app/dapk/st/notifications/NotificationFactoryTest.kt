@@ -32,7 +32,6 @@ private val EVENTS = listOf(
     aNotifiable("message two", utcTimestamp = 2),
 )
 
-
 class NotificationFactoryTest {
 
     private val fakeContext = FakeContext()
@@ -50,7 +49,12 @@ class NotificationFactoryTest {
 
     @Test
     fun `given alerting room notification, when creating summary, then is alerting`() {
-        val notifications = listOf(aRoomNotification(notification = anAndroidNotification(channelId = A_CHANNEL_ID), isAlerting = true))
+        val notifications = listOf(
+            aRoomNotification(
+                summaryChannelId = A_CHANNEL_ID,
+                notification = anAndroidNotification(channelId = A_CHANNEL_ID), isAlerting = true
+            )
+        )
         fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
         fakeNotificationStyleFactory.givenSummary(notifications).returns(anInboxStyle())
 
@@ -61,7 +65,12 @@ class NotificationFactoryTest {
 
     @Test
     fun `given non alerting room notification, when creating summary, then is alerting`() {
-        val notifications = listOf(aRoomNotification(notification = anAndroidNotification(channelId = A_CHANNEL_ID), isAlerting = false))
+        val notifications = listOf(
+            aRoomNotification(
+                summaryChannelId = A_CHANNEL_ID,
+                notification = anAndroidNotification(channelId = A_CHANNEL_ID), isAlerting = false
+            )
+        )
         fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
         fakeNotificationStyleFactory.givenSummary(notifications).returns(anInboxStyle())
 
@@ -129,7 +138,7 @@ class NotificationFactoryTest {
         shouldAlertMoreThanOnce: Boolean,
     ) = NotificationTypes.Room(
         AndroidNotification(
-            channelId = channel,
+            channelId = SUMMARY_CHANNEL_ID,
             whenTimestamp = LATEST_EVENT.utcTimestamp,
             groupId = "st",
             groupAlertBehavior = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.GROUP_ALERT_SUMMARY else null,
@@ -146,6 +155,7 @@ class NotificationFactoryTest {
         summary = LATEST_EVENT.content,
         messageCount = EVENTS.size,
         isAlerting = shouldAlertMoreThanOnce,
+        summaryChannelId = channel,
     )
 
     private fun expectedSummary(channelId: String, shouldAlertMoreThanOnce: Boolean) = AndroidNotification(
