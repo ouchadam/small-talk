@@ -68,7 +68,8 @@ sealed interface NotificationTypes {
         val roomId: RoomId,
         val summary: String,
         val messageCount: Int,
-        val isAlerting: Boolean
+        val isAlerting: Boolean,
+        val summaryChannelId: String,
     ) : NotificationTypes
 
     data class DismissRoom(val roomId: RoomId) : NotificationTypes

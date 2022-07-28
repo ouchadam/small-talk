@@ -18,12 +18,14 @@ object NotificationFixtures {
         summary: String = "a summary line",
         messageCount: Int = 1,
         isAlerting: Boolean = false,
+        summaryChannelId: String = "a-summary-channel-id",
     ) = NotificationTypes.Room(
         notification,
         aRoomId(),
         summary = summary,
         messageCount = messageCount,
-        isAlerting = isAlerting
+        isAlerting = isAlerting,
+        summaryChannelId = summaryChannelId
     )
 
     fun aDismissRoomNotification(
