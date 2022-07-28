@@ -132,11 +132,11 @@ ext.Dependencies.with {
         ktorContentNegotiation = "io.ktor:ktor-client-content-negotiation:${ktorVer}"
 
         coil = "io.coil-kt:coil-compose:2.1.0"
-        accompanistSystemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.24.10-beta"
+        accompanistSystemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.24.13-rc"
 
         junit = "junit:junit:4.13.2"
         kluent = "org.amshove.kluent:kluent:1.68"
-        mockk = 'io.mockk:mockk:1.12.4'
+        mockk = 'io.mockk:mockk:1.12.5'
 
         matrixOlm = "org.matrix.android:olm-sdk:3.2.12"
     }
