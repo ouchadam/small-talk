@@ -338,6 +338,7 @@ class JavaImageContentReader : ImageContentReader {
             height = image.height,
             width = image.width,
             size = size,
+            mimeType = "image/${file.extension}",
             fileName = file.name,
             content = file.readBytes()
         )

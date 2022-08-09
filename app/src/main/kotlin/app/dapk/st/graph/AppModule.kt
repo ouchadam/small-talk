@@ -443,6 +443,7 @@ internal class AndroidImageContentReader(private val contentResolver: ContentRes
                 height = options.outHeight,
                 width = options.outWidth,
                 size = output.size.toLong(),
+                mimeType = options.outMimeType,
                 fileName = androidUri.lastPathSegment ?: "file",
                 content = output
             )

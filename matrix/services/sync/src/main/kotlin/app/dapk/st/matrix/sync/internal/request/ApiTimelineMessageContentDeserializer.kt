@@ -19,10 +19,7 @@ internal object ApiTimelineMessageContentDeserializer : KSerializer<ApiTimelineE
         return when (element.jsonObject["msgtype"]?.jsonPrimitive?.content) {
             "m.text" -> ApiTimelineEvent.TimelineMessage.Content.Text.serializer().deserialize(decoder)
             "m.image" -> ApiTimelineEvent.TimelineMessage.Content.Image.serializer().deserialize(decoder)
-            else -> {
-                println(element)
-                ApiTimelineEvent.TimelineMessage.Content.Ignored
-            }
+            else -> ApiTimelineEvent.TimelineMessage.Content.Ignored
         }
     }
 
