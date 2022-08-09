@@ -69,15 +69,16 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
                 }
             }
         })
-        Room(state.roomState)
         when (state.composerState) {
             is ComposerState.Text -> {
+                Room(state.roomState)
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
                 )
             }
+
             is ComposerState.Attachments -> {
                 AttachmentComposer(
                     state.composerState,
@@ -131,6 +132,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>) {
                 }
             }
         }
+
         is Lce.Error -> {
             Box(contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -210,6 +212,7 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
                 }
             }
         }
+
         false -> {
             Box(modifier = Modifier.fillParentMaxWidth(0.95f), contentAlignment = Alignment.TopStart) {
                 Bubble(
@@ -320,9 +323,11 @@ private fun Bubble(
                     wasPreviousMessageSameSender -> {
                         Spacer(modifier = Modifier.width(displayImageSize))
                     }
+
                     message.author.avatarUrl == null -> {
                         MissingAvatarIcon(message.author.displayName ?: message.author.id.value, displayImageSize)
                     }
+
                     else -> {
                         MessengerUrlIcon(message.author.avatarUrl!!.value, displayImageSize)
                     }
@@ -423,6 +428,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                                 textAlign = TextAlign.Start,
                             )
                         }
+
                         is RoomEvent.Image -> {
                             Spacer(modifier = Modifier.height(4.dp))
                             Image(
@@ -464,6 +470,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             textAlign = TextAlign.Start,
                         )
                     }
+
                     is RoomEvent.Image -> {
                         Spacer(modifier = Modifier.height(4.dp))
                         Image(
@@ -507,6 +514,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
         MessageMeta.FromServer -> {
             // last message is self
         }
+
         is MessageMeta.LocalEcho -> {
             when (val state = meta.state) {
                 MessageMeta.LocalEcho.State.Sending, MessageMeta.LocalEcho.State.Sent -> {
@@ -523,6 +531,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
                         }
                     }
                 }
+
                 is MessageMeta.LocalEcho.State.Error -> {
                     Spacer(modifier = Modifier.width(4.dp))
                     Box(
@@ -603,61 +612,32 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
 
 @Composable
 private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> Unit, onCancel: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom
-    ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.Bottom)
-                .weight(1f)
-                .fillMaxHeight()
-                .background(MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.BackgroundOpacity), RoundedCornerShape(24.dp)),
-            contentAlignment = Alignment.TopStart,
-        ) {
-            Box(Modifier.padding(14.dp)) {
-                val context = LocalContext.current
-                Image(
-                    modifier = Modifier.size(50.dp, 50.dp),
-                    painter = rememberAsyncImagePainter(
-                        model = ImageRequest.Builder(context)
-                            .data(state.values.first().uri.value.toUri())
-                            .build()
-                    ),
-                    contentDescription = null,
+    Box(modifier = Modifier.fillMaxSize()) {
+        val context = LocalContext.current
+        Image(
+            modifier = Modifier.fillMaxHeight().wrapContentWidth().align(Alignment.Center),
+            painter = rememberAsyncImagePainter(
+                model = ImageRequest.Builder(context)
+                    .data(state.values.first().uri.value.toUri())
+                    .build()
+            ),
+            contentDescription = null,
+        )
+
+        Box(Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
+            IconButton(
+                enabled = true,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colors.primary),
+                onClick = onSend,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Send,
+                    contentDescription = "",
+                    tint = MaterialTheme.colors.onPrimary,
                 )
             }
-        }
-        Spacer(modifier = Modifier.width(6.dp))
-        var size by remember { mutableStateOf(IntSize(0, 0)) }
-        IconButton(
-            enabled = true,
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(MaterialTheme.colors.primary)
-                .run {
-                    if (size.height == 0 || size.width == 0) {
-                        this
-                            .onSizeChanged {
-                                size = it
-                            }
-                            .fillMaxHeight()
-                    } else {
-                        with(LocalDensity.current) {
-                            size(size.width.toDp(), size.height.toDp())
-                        }
-                    }
-                },
-            onClick = onSend,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Send,
-                contentDescription = "",
-                tint = MaterialTheme.colors.onPrimary,
-            )
         }
     }
 }
