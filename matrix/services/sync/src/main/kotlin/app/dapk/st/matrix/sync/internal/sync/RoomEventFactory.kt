@@ -44,6 +44,7 @@ internal class RoomEventFactory(
 
     private fun ApiTimelineEvent.TimelineMessage.readImageMeta(userCredentials: UserCredentials): RoomEvent.Image.ImageMeta {
         val content = this.content as ApiTimelineEvent.TimelineMessage.Content.Image
+        println(content)
         return RoomEvent.Image.ImageMeta(
             content.info?.width,
             content.info?.height,

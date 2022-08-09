@@ -58,6 +58,7 @@ class LocalEchoPersistence(
             database.transaction {
                 when (message) {
                     is MessageService.Message.TextMessage -> database.localEchoQueries.delete(message.localId)
+                    is MessageService.Message.ImageMessage -> database.localEchoQueries.delete(message.localId)
                 }
             }
         } catch (error: Exception) {
@@ -80,6 +81,14 @@ class LocalEchoPersistence(
         mirrorScope.launch {
             when (val message = localEcho.message) {
                 is MessageService.Message.TextMessage -> database.localEchoQueries.insert(
+                    DbLocalEcho(
+                        message.localId,
+                        message.roomId.value,
+                        Json.encodeToString(MessageService.LocalEcho.serializer(), localEcho)
+                    )
+                )
+
+                is MessageService.Message.ImageMessage -> database.localEchoQueries.insert(
                     DbLocalEcho(
                         message.localId,
                         message.roomId.value,

@@ -4,11 +4,9 @@ import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
 import app.dapk.st.matrix.MatrixServiceProvider
 import app.dapk.st.matrix.ServiceDepFactory
-import app.dapk.st.matrix.common.AlgorithmName
-import app.dapk.st.matrix.common.EventId
-import app.dapk.st.matrix.common.MessageType
-import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.message.internal.DefaultMessageService
+import app.dapk.st.matrix.message.internal.ImageContentReader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -49,7 +47,7 @@ interface MessageService : MatrixService {
         @Serializable
         @SerialName("image_message")
         data class ImageMessage(
-            @SerialName("content") val content: Content.ImageContent,
+            @SerialName("content") val content: Content.ApiImageContent,
             @SerialName("send_encrypted") val sendEncrypted: Boolean,
             @SerialName("room_id") val roomId: RoomId,
             @SerialName("local_id") val localId: String,
@@ -65,10 +63,25 @@ interface MessageService : MatrixService {
             ) : Content()
 
             @Serializable
-            data class ImageContent(
+            data class ApiImageContent(
                 @SerialName("uri") val uri: String,
-                @SerialName("msgtype") val type: String = MessageType.IMAGE.value,
             ) : Content()
+
+            @Serializable
+            data class ImageContent(
+                @SerialName("url") val url: MxUrl,
+                @SerialName("body") val filename: String,
+                @SerialName("info") val info: Info,
+                @SerialName("msgtype") val type: String = MessageType.IMAGE.value,
+            ) : Content() {
+
+                @Serializable
+                data class Info(
+                    @SerialName("h") val height: Int,
+                    @SerialName("w") val width: Int,
+                    @SerialName("size") val size: Long,
+                )
+            }
         }
     }
 
@@ -127,10 +140,11 @@ interface MessageService : MatrixService {
 fun MatrixServiceInstaller.installMessageService(
     localEchoStore: LocalEchoStore,
     backgroundScheduler: BackgroundScheduler,
+    imageContentReader: ImageContentReader,
     messageEncrypter: ServiceDepFactory<MessageEncrypter> = ServiceDepFactory { MissingMessageEncrypter },
 ) {
     this.install { (httpClient, _, installedServices) ->
-        SERVICE_KEY to DefaultMessageService(httpClient, localEchoStore, backgroundScheduler, messageEncrypter.create(installedServices))
+        SERVICE_KEY to DefaultMessageService(httpClient, localEchoStore, backgroundScheduler, messageEncrypter.create(installedServices), imageContentReader)
     }
 }
 

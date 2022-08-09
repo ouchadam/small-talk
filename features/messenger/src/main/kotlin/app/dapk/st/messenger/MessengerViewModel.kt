@@ -109,7 +109,7 @@ internal class MessengerViewModel(
                     viewModelScope.launch {
                         messageService.scheduleMessage(
                             MessageService.Message.ImageMessage(
-                                MessageService.Message.Content.ImageContent(uri = copy.values.first().uri.value),
+                                MessageService.Message.Content.ApiImageContent(uri = copy.values.first().uri.value),
                                 roomId = roomState.roomOverview.roomId,
                                 sendEncrypted = roomState.roomOverview.isEncrypted,
                                 localId = localIdFactory.create(),

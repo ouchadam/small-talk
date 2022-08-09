@@ -22,6 +22,7 @@ import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.room.RoomMessenger
@@ -41,7 +42,9 @@ import test.impl.InMemoryDatabase
 import test.impl.InMemoryPreferences
 import test.impl.InstantScheduler
 import test.impl.PrintingErrorTracking
+import java.io.File
 import java.time.Clock
+import javax.imageio.ImageIO
 
 class TestMatrix(
     private val user: TestUser,
@@ -114,7 +117,7 @@ class TestMatrix(
                 coroutineDispatchers = coroutineDispatchers,
             )
 
-            installMessageService(storeModule.localEchoStore, InstantScheduler(it)) { serviceProvider ->
+            installMessageService(storeModule.localEchoStore, InstantScheduler(it), JavaImageContentReader()) { serviceProvider ->
                 MessageEncrypter { message ->
                     val result = serviceProvider.cryptoService().encrypt(
                         roomId = when (message) {
@@ -133,6 +136,7 @@ class TestMatrix(
                                     )
                                 )
                             )
+
                             is MessageService.Message.ImageMessage -> TODO()
                         }
                     )
@@ -200,12 +204,14 @@ class TestMatrix(
                                     apiEvent.content.methods,
                                     apiEvent.content.timestampPosix,
                                 )
+
                                 is ApiToDeviceEvent.VerificationReady -> Verification.Event.Ready(
                                     apiEvent.sender,
                                     apiEvent.content.fromDevice,
                                     apiEvent.content.transactionId,
                                     apiEvent.content.methods,
                                 )
+
                                 is ApiToDeviceEvent.VerificationStart -> Verification.Event.Started(
                                     apiEvent.sender,
                                     apiEvent.content.fromDevice,
@@ -216,6 +222,7 @@ class TestMatrix(
                                     apiEvent.content.short,
                                     apiEvent.content.transactionId,
                                 )
+
                                 is ApiToDeviceEvent.VerificationAccept -> Verification.Event.Accepted(
                                     apiEvent.sender,
                                     apiEvent.content.fromDevice,
@@ -226,12 +233,14 @@ class TestMatrix(
                                     apiEvent.content.short,
                                     apiEvent.content.transactionId,
                                 )
+
                                 is ApiToDeviceEvent.VerificationCancel -> TODO()
                                 is ApiToDeviceEvent.VerificationKey -> Verification.Event.Key(
                                     apiEvent.sender,
                                     apiEvent.content.transactionId,
                                     apiEvent.content.key
                                 )
+
                                 is ApiToDeviceEvent.VerificationMac -> Verification.Event.Mac(
                                     apiEvent.sender,
                                     apiEvent.content.transactionId,
@@ -288,6 +297,7 @@ class TestMatrix(
 
     suspend fun deviceId() = storeModule.credentialsStore().credentials()!!.deviceId
     suspend fun userId() = storeModule.credentialsStore().credentials()!!.userId
+    suspend fun credentials() = storeModule.credentialsStore().credentials()!!
 
     suspend fun release() {
         coroutineDispatchers.global.waitForCancel()
@@ -316,4 +326,21 @@ class JavaBase64 : Base64 {
     override fun decode(input: String): ByteArray {
         return java.util.Base64.getDecoder().decode(input)
     }
+}
+
+class JavaImageContentReader : ImageContentReader {
+
+    override fun read(uri: String): ImageContentReader.ImageContent {
+        val file = File(uri)
+        val size = file.length()
+        val image = ImageIO.read(file)
+        return ImageContentReader.ImageContent(
+            height = image.height,
+            width = image.width,
+            size = size,
+            fileName = file.name,
+            content = file.readBytes()
+        )
+    }
+
 }

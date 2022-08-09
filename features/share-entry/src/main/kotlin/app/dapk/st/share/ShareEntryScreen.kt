@@ -84,7 +84,7 @@ private fun Content(listState: LazyListState, state: Content, onClick: (Item) ->
 
 @Composable
 private fun DirectoryItem(item: Item, onClick: (Item) -> Unit) {
-    val roomName = item.roomName
+    val roomName = item.roomName.ifEmpty { "Empty " }
 
     Box(
         Modifier

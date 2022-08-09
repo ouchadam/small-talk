@@ -2,8 +2,11 @@ package app.dapk.st.graph
 
 import android.app.Application
 import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
@@ -33,6 +36,7 @@ import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.push.pushService
@@ -86,10 +90,10 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
-    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers)
+    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker)
 
-    val coreAndroidModule = app.dapk.st.core.CoreAndroidModule(intentFactory = object : IntentFactory {
+    val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
         override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
             context,
             1000,
@@ -137,7 +141,7 @@ internal class FeatureModules internal constructor(
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
     private val workModule: WorkModule,
-    private val coreAndroidModule: app.dapk.st.core.CoreAndroidModule,
+    private val coreAndroidModule: CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
@@ -213,6 +217,7 @@ internal class MatrixModules(
     private val workModule: WorkModule,
     private val logger: MatrixLogger,
     private val coroutineDispatchers: CoroutineDispatchers,
+    private val contentResolver: ContentResolver,
 ) {
 
     val matrix by unsafeLazy {
@@ -253,7 +258,8 @@ internal class MatrixModules(
                     base64 = base64,
                     coroutineDispatchers = coroutineDispatchers,
                 )
-                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler())) { serviceProvider ->
+                val imageContentReader = AndroidImageContentReader(contentResolver)
+                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader) { serviceProvider ->
                     MessageEncrypter { message ->
                         val result = serviceProvider.cryptoService().encrypt(
                             roomId = when (message) {
@@ -273,6 +279,7 @@ internal class MatrixModules(
                                         )
                                     )
                                 )
+
                                 is MessageService.Message.ImageMessage -> TODO()
                             }
                         )
@@ -344,12 +351,14 @@ internal class MatrixModules(
                                         apiEvent.content.methods,
                                         apiEvent.content.timestampPosix,
                                     )
+
                                     is ApiToDeviceEvent.VerificationReady -> Verification.Event.Ready(
                                         apiEvent.sender,
                                         apiEvent.content.fromDevice,
                                         apiEvent.content.transactionId,
                                         apiEvent.content.methods,
                                     )
+
                                     is ApiToDeviceEvent.VerificationStart -> Verification.Event.Started(
                                         apiEvent.sender,
                                         apiEvent.content.fromDevice,
@@ -360,6 +369,7 @@ internal class MatrixModules(
                                         apiEvent.content.short,
                                         apiEvent.content.transactionId,
                                     )
+
                                     is ApiToDeviceEvent.VerificationCancel -> TODO()
                                     is ApiToDeviceEvent.VerificationAccept -> TODO()
                                     is ApiToDeviceEvent.VerificationKey -> Verification.Event.Key(
@@ -367,6 +377,7 @@ internal class MatrixModules(
                                         apiEvent.content.transactionId,
                                         apiEvent.content.key
                                     )
+
                                     is ApiToDeviceEvent.VerificationMac -> Verification.Event.Mac(
                                         apiEvent.sender,
                                         apiEvent.content.transactionId,
@@ -416,4 +427,25 @@ internal class DomainModules(
 
     val pushModule by unsafeLazy { PushModule(matrixModules.push, errorTracker) }
     val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
+}
+
+internal class AndroidImageContentReader(private val contentResolver: ContentResolver) : ImageContentReader {
+    override fun read(uri: String): ImageContentReader.ImageContent {
+        val androidUri = Uri.parse(uri)
+        val fileStream = contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")
+
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeStream(fileStream, null, options)
+
+        return contentResolver.openInputStream(androidUri)?.use { stream ->
+            val output = stream.readBytes()
+            ImageContentReader.ImageContent(
+                height = options.outHeight,
+                width = options.outWidth,
+                size = output.size.toLong(),
+                fileName = androidUri.lastPathSegment ?: "file",
+                content = output
+            )
+        } ?: throw IllegalArgumentException("Could not process $uri")
+    }
 }
