@@ -71,7 +71,7 @@ class MessengerViewModelTest {
         val state = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
         fakeObserveTimelineUseCase.given(A_ROOM_ID, A_SELF_ID).returns(flowOf(state))
 
-        viewModel.test().post(MessengerAction.OnMessengerVisible(A_ROOM_ID, emptyList()))
+        viewModel.test().post(MessengerAction.OnMessengerVisible(A_ROOM_ID, attachments = null))
 
         assertStates<MessengerScreenState>(
             { copy(roomId = A_ROOM_ID) },
