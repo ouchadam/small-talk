@@ -8,7 +8,7 @@ import app.dapk.st.matrix.sync.RoomEvent
 
 internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
 
-    fun MessageService.LocalEcho.toMessage(member: RoomMember): RoomEvent.Message {
+    fun MessageService.LocalEcho.toMessage(member: RoomMember): RoomEvent {
         return when (val message = this.message) {
             is MessageService.Message.TextMessage -> {
                 RoomEvent.Message(
@@ -17,6 +17,15 @@ internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
                     author = member,
                     utcTimestamp = message.timestampUtc,
                     meta = metaMapper.toMeta(this)
+                )
+            }
+            is MessageService.Message.ImageMessage -> {
+                RoomEvent.Image(
+                    eventId = this.eventId ?: EventId(this.localId),
+                    author = member,
+                    utcTimestamp = message.timestampUtc,
+                    meta = metaMapper.toMeta(this),
+                    imageMeta = RoomEvent.Image.ImageMeta(100, 100, message.content.uri, null),
                 )
             }
         }

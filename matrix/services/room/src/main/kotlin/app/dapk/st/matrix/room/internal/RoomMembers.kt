@@ -36,6 +36,8 @@ class RoomMembers(private val memberStore: MemberStore, private val membersCache
         }
     }
 
+    suspend fun findMembersSummary(roomId: RoomId) = memberStore.query(roomId, limit = 8)
+
     suspend fun insert(roomId: RoomId, members: List<RoomMember>) {
         membersCache.insert(roomId, members)
         memberStore.insert(roomId, members)

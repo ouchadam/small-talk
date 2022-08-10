@@ -51,7 +51,6 @@ class NotificationRendererTest {
         }
 
         notificationRenderer.render(NotificationState(emptyMap(), removedRooms, emptySet(), emptySet()))
-
         verifyExpects()
     }
 

@@ -22,6 +22,7 @@ import test.MatrixTestScope
 import test.TestMatrix
 import test.flowTest
 import test.restoreLoginAndInitialSync
+import java.nio.file.Paths
 import java.util.*
 
 private const val HTTPS_TEST_SERVER_URL = "https://localhost:8080/"
@@ -73,6 +74,14 @@ class SmokeTest {
 
     @Test
     @Order(6)
+    fun `can send and receive clear image messages`() = testAfterInitialSync { alice, bob ->
+        val testImage = loadResourceFile("test-image.png")
+        alice.sendImageMessage(SharedState.sharedRoom, testImage, isEncrypted = false)
+        bob.expectImageMessage(SharedState.sharedRoom, testImage, SharedState.alice.roomMember)
+    }
+
+    @Test
+    @Order(7)
     fun `can request and verify devices`() = testAfterInitialSync { alice, bob ->
         alice.client.cryptoService().verificationAction(Verification.Action.Request(bob.userId(), bob.deviceId()))
         alice.client.cryptoService().verificationState().automaticVerification(alice).expectAsync { it == Verification.State.Done }
@@ -85,7 +94,7 @@ class SmokeTest {
     fun `can import E2E room keys file`() = runTest {
         val ignoredUser = TestUser("ignored", RoomMember(UserId("ignored"), null, null), "ignored")
         val cryptoService = TestMatrix(ignoredUser, includeLogging = true).client.cryptoService()
-        val stream = Thread.currentThread().contextClassLoader.getResourceAsStream("element-keys.txt")!!
+        val stream = loadResourceStream("element-keys.txt")
 
         val result = with(cryptoService) {
             stream.importRoomKeys(password = "aaaaaa")
@@ -183,3 +192,6 @@ private fun Flow<Verification.State>.automaticVerification(testMatrix: TestMatri
         }
     }
 }
+
+private fun loadResourceStream(name: String) = Thread.currentThread().contextClassLoader.getResourceAsStream(name)!!
+private fun loadResourceFile(name: String) = Paths.get(Thread.currentThread().contextClassLoader.getResource(name)!!.toURI()).toFile()

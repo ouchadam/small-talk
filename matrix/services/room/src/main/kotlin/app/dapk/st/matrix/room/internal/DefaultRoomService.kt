@@ -39,6 +39,10 @@ class DefaultRoomService(
         return roomMembers.findMembers(roomId, userIds)
     }
 
+    override suspend fun findMembersSummary(roomId: RoomId): List<RoomMember> {
+        return roomMembers.findMembersSummary(roomId)
+    }
+
     override suspend fun insertMembers(roomId: RoomId, members: List<RoomMember>) {
         roomMembers.insert(roomId, members)
     }

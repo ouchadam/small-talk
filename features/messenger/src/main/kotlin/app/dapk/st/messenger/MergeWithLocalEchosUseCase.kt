@@ -25,7 +25,7 @@ internal class MergeWithLocalEchosUseCaseImpl(
         return roomState.copy(events = sortedEvents)
     }
 
-    private fun uniqueEchos(echos: List<MessageService.LocalEcho>, stateByEventId: Map<EventId, RoomEvent>, member: RoomMember): List<RoomEvent.Message> {
+    private fun uniqueEchos(echos: List<MessageService.LocalEcho>, stateByEventId: Map<EventId, RoomEvent>, member: RoomMember): List<RoomEvent> {
         return with(localEventMapper) {
             echos
                 .filter { echo -> echo.eventId == null || stateByEventId[echo.eventId] == null }

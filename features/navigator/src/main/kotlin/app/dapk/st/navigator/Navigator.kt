@@ -4,7 +4,13 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Parcel
+import android.os.Parcelable
+import app.dapk.st.core.AndroidUri
+import app.dapk.st.core.MimeType
 import app.dapk.st.matrix.common.RoomId
+import kotlinx.parcelize.Parceler
+import kotlinx.parcelize.Parcelize
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -30,6 +36,11 @@ interface Navigator {
             activity.navigateUpTo(intentFactory.home(activity))
         }
 
+        fun toMessenger(roomId: RoomId, attachments: List<MessageAttachment>) {
+            val intent = intentFactory.messengerAttachments(activity, roomId, attachments)
+            activity.startActivity(intent)
+        }
+
         fun toFilePicker(requestCode: Int) {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
@@ -46,6 +57,7 @@ interface IntentFactory {
     fun home(context: Context): Intent
     fun messenger(context: Context, roomId: RoomId): Intent
     fun messengerShortcut(context: Context, roomId: RoomId): Intent
+    fun messengerAttachments(context: Context, roomId: RoomId, attachments: List<MessageAttachment>): Intent
 
 }
 
@@ -64,3 +76,24 @@ private class DefaultNavigator(activity: Activity, intentFactory: IntentFactory)
     override val navigate: Navigator.Dsl = Navigator.Dsl(activity, intentFactory)
 }
 
+@Parcelize
+data class MessageAttachment(val uri: AndroidUri, val type: MimeType) : Parcelable {
+    private companion object : Parceler<MessageAttachment> {
+        override fun create(parcel: Parcel): MessageAttachment {
+            val uri = AndroidUri(parcel.readString()!!)
+            val type = when(parcel.readString()!!) {
+                "mimetype-image" -> MimeType.Image
+                else -> throw IllegalStateException()
+            }
+            return MessageAttachment(uri, type)
+        }
+
+        override fun MessageAttachment.write(parcel: Parcel, flags: Int) {
+            parcel.writeString(uri.value)
+            when (type) {
+                MimeType.Image -> parcel.writeString("mimetype-image")
+            }
+        }
+    }
+
+}

@@ -21,6 +21,7 @@ interface RoomService : MatrixService {
 
     suspend fun findMember(roomId: RoomId, userId: UserId): RoomMember?
     suspend fun findMembers(roomId: RoomId, userIds: List<UserId>): List<RoomMember>
+    suspend fun findMembersSummary(roomId: RoomId): List<RoomMember>
     suspend fun insertMembers(roomId: RoomId, members: List<RoomMember>)
 
     suspend fun createDm(userId: UserId, encrypted: Boolean): RoomId
@@ -50,6 +51,7 @@ fun MatrixServiceProvider.roomService(): RoomService = this.getService(key = SER
 interface MemberStore {
     suspend fun insert(roomId: RoomId, members: List<RoomMember>)
     suspend fun query(roomId: RoomId, userIds: List<UserId>): List<RoomMember>
+    suspend fun query(roomId: RoomId, limit: Int): List<RoomMember>
 }
 
 interface RoomMessenger {

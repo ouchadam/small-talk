@@ -19,6 +19,7 @@ include ':features:notifications'
 include ':features:messenger'
 include ':features:navigator'
 include ':features:verification'
+include ':features:share-entry'
 
 include ':domains:android:stub'
 include ':domains:android:core'

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="app.dapk.st.share.ShareEntryActivity">
+        <data android:mimeType="image/*" />
+        <category android:name="android.shortcut.conversation" />
+    </share-target>
+</shortcuts>

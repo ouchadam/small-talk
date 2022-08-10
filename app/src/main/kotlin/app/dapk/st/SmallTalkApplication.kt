@@ -19,6 +19,7 @@ import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.notifications.PushAndroidService
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.settings.SettingsModule
+import app.dapk.st.share.ShareEntryModule
 import app.dapk.st.work.TaskRunnerModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -75,6 +76,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
             MessengerModule::class -> featureModules.messengerModule
             TaskRunnerModule::class -> appModule.domainModules.taskRunnerModule
             CoreAndroidModule::class -> appModule.coreAndroidModule
+            ShareEntryModule::class -> featureModules.shareEntryModule
             else -> throw IllegalArgumentException("Unknown: $klass")
         } as T
     }
