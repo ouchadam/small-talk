@@ -10,6 +10,13 @@ ext.Dependencies.with {
             }
         }
 
+        repositories.maven {
+            url 'https://jitpack.io'
+            content {
+                includeGroup "com.github.UnifiedPush"
+            }
+        }
+
         repositories.mavenCentral {
             content {
                 includeGroupByRegex "org\\.jetbrains.*"
@@ -140,6 +147,12 @@ ext.Dependencies.with {
 
         matrixOlm = "org.matrix.android:olm-sdk:3.2.12"
     }
+
+    jitPack = new DependenciesContainer()
+    jitPack.with {
+        unifiedPush = "com.github.UnifiedPush:android-connector:2.0.1"
+    }
+
 }
 
 class DependenciesContainer extends GroovyObjectSupport {
