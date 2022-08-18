@@ -8,10 +8,8 @@ import app.dapk.st.core.ProvidableModule
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.navigator.IntentFactory
-import app.dapk.st.push.RegisterFirebasePushTokenUseCase
 
 class NotificationsModule(
-    private val firebasePushTokenUseCase: RegisterFirebasePushTokenUseCase,
     private val iconLoader: IconLoader,
     private val roomStore: RoomStore,
     private val context: Context,
@@ -20,7 +18,6 @@ class NotificationsModule(
     private val deviceMeta: DeviceMeta,
 ) : ProvidableModule {
 
-    fun firebasePushTokenUseCase() = firebasePushTokenUseCase
     fun notificationsUseCase() = RenderNotificationsUseCase(
         notificationRenderer = NotificationRenderer(
             notificationManager(),

@@ -1,4 +1,4 @@
-package app.dapk.st.push
+package app.dapk.st.push.firebase
 
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlin.coroutines.resume

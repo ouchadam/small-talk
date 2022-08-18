@@ -4,7 +4,7 @@
     <application>
 
         <service
-            android:name=".FirebasePushService"
+            android:name=".firebase.FirebasePushService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>

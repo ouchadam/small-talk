@@ -3,7 +3,6 @@ package app.dapk.st.login
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.matrix.auth.AuthService
-import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.room.ProfileService
 import app.dapk.st.push.PushModule
 
@@ -15,6 +14,6 @@ class LoginModule(
 ) : ProvidableModule {
 
     fun loginViewModel(): LoginViewModel {
-        return LoginViewModel(authService, pushModule.registerFirebasePushTokenUseCase(), profileService, errorTracker)
+        return LoginViewModel(authService, pushModule.pushTokenRegistrar(), profileService, errorTracker)
     }
 }

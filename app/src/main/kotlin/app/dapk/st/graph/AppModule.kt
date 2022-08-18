@@ -92,7 +92,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val imageLoaderModule = ImageLoaderModule(context)
 
     private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
-    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule)
+    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context)
 
     val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
         override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
@@ -190,7 +190,6 @@ internal class FeatureModules internal constructor(
     val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
-            domainModules.pushModule.registerFirebasePushTokenUseCase(),
             imageLoaderModule.iconLoader(),
             storeModule.value.roomStore(),
             context,
@@ -424,6 +423,7 @@ internal class DomainModules(
     private val errorTracker: ErrorTracker,
     private val workModule: WorkModule,
     private val storeModule: Lazy<StoreModule>,
+    private val context: Application,
 ) {
 
     val pushModule by unsafeLazy {
@@ -434,7 +434,7 @@ internal class DomainModules(
             matrixModules.sync,
             store.roomStore(),
         )
-        PushModule(matrixModules.push, errorTracker, pushHandler)
+        PushModule(matrixModules.push, errorTracker, pushHandler, context)
     }
     val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
 }
