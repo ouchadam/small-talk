@@ -28,6 +28,7 @@
 - Message bubbles, supporting text, replies and edits
 - Push notifications (DMs always notify, Rooms notify once)
 - Importing of E2E room keys from Element clients
+- [UnifiedPush](https://unifiedpush.org/) 
 
 ### Planned
 
