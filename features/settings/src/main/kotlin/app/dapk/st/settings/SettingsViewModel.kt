@@ -101,10 +101,12 @@ internal class SettingsViewModel(
     fun fetchPushProviders() {
         updatePageState<Page.PushProviders> { copy(options = Lce.Loading()) }
         viewModelScope.launch {
+            val currentSelection = pushTokenRegistrars.currentSelection()
+            val options = pushTokenRegistrars.options()
             updatePageState<Page.PushProviders> {
                 copy(
-                    selection = pushTokenRegistrars.currentSelection(),
-                    options = Lce.Content(pushTokenRegistrars.options())
+                    selection = currentSelection,
+                    options = Lce.Content(options)
                 )
             }
         }

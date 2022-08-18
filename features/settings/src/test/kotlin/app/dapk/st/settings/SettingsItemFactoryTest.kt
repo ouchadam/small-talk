@@ -10,7 +10,7 @@ class SettingsItemFactoryTest {
 
     private val buildMeta = BuildMeta(versionName = "a-version-name", versionCode = 100)
 
-    private val settingsItemFactory = SettingsItemFactory(buildMeta)
+    private val settingsItemFactory = SettingsItemFactory(buildMeta, )
 
     @Test
     fun `when creating root items, then is expected`() {

@@ -8,7 +8,7 @@ internal class SettingsItemFactory(
     private val pushTokenRegistrars: PushTokenRegistrars,
 ) {
 
-    fun root() = listOf(
+    suspend fun root() = listOf(
         SettingItem.Header("General"),
         SettingItem.Text(SettingItem.Id.Encryption, "Encryption"),
         SettingItem.Text(SettingItem.Id.EventLog, "Event log"),

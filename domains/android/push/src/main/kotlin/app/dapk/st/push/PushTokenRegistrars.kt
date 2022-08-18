@@ -4,7 +4,6 @@ import android.content.Context
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.push.firebase.FirebasePushTokenRegistrar
 import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
-import kotlinx.coroutines.runBlocking
 import org.unifiedpush.android.connector.UnifiedPush
 
 private val FIREBASE_OPTION = Registrar("Google - Firebase (FCM)")
@@ -17,13 +16,13 @@ class PushTokenRegistrars(
     private val pushTokenStore: PushTokenRegistrarPreferences,
 ) : PushTokenRegistrar {
 
-    private var selection: Registrar = runBlocking { pushTokenStore.currentSelection()?.let { Registrar(it) } } ?: FIREBASE_OPTION
+    private var selection: Registrar? = null
 
     fun options(): List<Registrar> {
         return listOf(NONE, FIREBASE_OPTION) + UnifiedPush.getDistributors(context).map { Registrar(it) }
     }
 
-    fun currentSelection() = selection
+    suspend fun currentSelection() = selection ?: (pushTokenStore.currentSelection()?.let { Registrar(it) } ?: FIREBASE_OPTION).also { selection = it }
 
     suspend fun makeSelection(option: Registrar) {
         selection = option
