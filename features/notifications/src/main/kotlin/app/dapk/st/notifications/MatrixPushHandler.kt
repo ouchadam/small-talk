@@ -8,9 +8,11 @@ import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.push.PushHandler
+import app.dapk.st.push.PushTokenPayload
 import app.dapk.st.work.WorkScheduler
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.json.Json
 
 private var previousJob: Job? = null
 
@@ -22,13 +24,13 @@ class MatrixPushHandler(
     private val roomStore: RoomStore,
 ) : PushHandler {
 
-    override fun onNewToken(token: String) {
+    override fun onNewToken(payload: PushTokenPayload) {
         log(AppLogTag.PUSH, "new push token received")
         workScheduler.schedule(
             WorkScheduler.WorkTask(
                 type = "push_token",
                 jobId = 2,
-                jsonPayload = token
+                jsonPayload = Json.encodeToString(PushTokenPayload.serializer(), payload)
             )
         )
     }

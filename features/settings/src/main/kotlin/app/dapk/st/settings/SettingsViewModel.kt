@@ -8,6 +8,8 @@ import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.push.PushTokenRegistrars
+import app.dapk.st.push.Registrar
 import app.dapk.st.settings.SettingItem.Id.*
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.viewmodel.DapkViewModel
@@ -24,6 +26,7 @@ internal class SettingsViewModel(
     private val syncService: SyncService,
     private val uriFilenameResolver: UriFilenameResolver,
     private val settingsItemFactory: SettingsItemFactory,
+    private val pushTokenRegistrars: PushTokenRegistrars,
     factory: MutableStateFactory<SettingsScreenState> = defaultStateFactory(),
 ) : DapkViewModel<SettingsScreenState, SettingsEvent>(
     initialState = SettingsScreenState(SpiderPage(Page.Routes.root, "Settings", null, Page.Root(Lce.Loading()))),
@@ -50,36 +53,67 @@ internal class SettingsViewModel(
                     _events.emit(SignedOut)
                 }
             }
+
             AccessToken -> {
                 viewModelScope.launch {
                     require(item is SettingItem.AccessToken)
                     _events.emit(CopyToClipboard("Token copied", item.accessToken))
                 }
             }
+
             ClearCache -> {
                 viewModelScope.launch {
                     cacheCleaner.cleanCache(removeCredentials = false)
                     _events.emit(Toast(message = "Cache deleted"))
                 }
             }
+
             EventLog -> {
                 viewModelScope.launch {
                     _events.emit(OpenEventLog)
                 }
             }
+
             Encryption -> {
                 updateState {
                     copy(page = SpiderPage(Page.Routes.encryption, "Encryption", Page.Routes.root, Page.Security))
                 }
             }
+
             PrivacyPolicy -> {
                 viewModelScope.launch {
                     _events.emit(OpenUrl(PRIVACY_POLICY_URL))
                 }
             }
+
+            PushProvider -> {
+                updateState {
+                    copy(page = SpiderPage(Page.Routes.pushProviders, "Push providers", Page.Routes.root, Page.PushProviders()))
+                }
+            }
+
             Ignored -> {
                 // do nothing
             }
+        }
+    }
+
+    fun fetchPushProviders() {
+        updatePageState<Page.PushProviders> { copy(options = Lce.Loading()) }
+        viewModelScope.launch {
+            updatePageState<Page.PushProviders> {
+                copy(
+                    selection = pushTokenRegistrars.currentSelection(),
+                    options = Lce.Content(pushTokenRegistrars.options())
+                )
+            }
+        }
+    }
+
+    fun selectPushProvider(registrar: Registrar) {
+        viewModelScope.launch {
+            pushTokenRegistrars.makeSelection(registrar)
+            fetchPushProviders()
         }
     }
 

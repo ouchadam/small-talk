@@ -92,7 +92,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val imageLoaderModule = ImageLoaderModule(context)
 
     private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
-    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context)
+    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
         override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
@@ -180,6 +180,7 @@ internal class FeatureModules internal constructor(
     val settingsModule by unsafeLazy {
         SettingsModule(
             storeModule.value,
+            pushModule,
             matrixModules.crypto,
             matrixModules.sync,
             context.contentResolver,
@@ -424,6 +425,7 @@ internal class DomainModules(
     private val workModule: WorkModule,
     private val storeModule: Lazy<StoreModule>,
     private val context: Application,
+    private val dispatchers: CoroutineDispatchers,
 ) {
 
     val pushModule by unsafeLazy {
@@ -434,7 +436,13 @@ internal class DomainModules(
             matrixModules.sync,
             store.roomStore(),
         )
-        PushModule(matrixModules.push, errorTracker, pushHandler, context)
+        PushModule(
+            errorTracker,
+            pushHandler,
+            context,
+            dispatchers,
+            SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", dispatchers)
+        )
     }
     val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
 }

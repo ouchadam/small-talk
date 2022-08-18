@@ -13,8 +13,8 @@ class DefaultPushService(
 
     private val useCase = RegisterPushUseCase(httpClient, credentialsStore, logger)
 
-    override suspend fun registerPush(token: String) {
-        useCase.registerPushToken(token)
+    override suspend fun registerPush(token: String, gatewayUrl: String) {
+        useCase.registerPushToken(token, gatewayUrl)
     }
 
 }

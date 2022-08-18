@@ -11,7 +11,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:exported="true" android:enabled="true" android:name=".unifiedpush.CustomR">
+        <receiver android:exported="true" android:enabled="true" android:name=".unifiedpush.UnifiedPushMessageReceiver">
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.MESSAGE"/>
                 <action android:name="org.unifiedpush.android.connector.UNREGISTERED"/>

@@ -13,7 +13,7 @@ internal class RegisterPushUseCase(
     private val logger: MatrixLogger,
 ) {
 
-    suspend fun registerPushToken(token: String) {
+    suspend fun registerPushToken(token: String, gatewayUrl: String) {
         if (credentialsStore.isSignedIn()) {
             logger.matrixLog("register push token: $token")
             matrixClient.execute(
@@ -29,7 +29,7 @@ internal class RegisterPushUseCase(
                         append = false,
                         data = PushRequest.Payload(
                             format = "event_id_only",
-                            url = "https://sygnal.dapk.app/_matrix/push/v1/notify",
+                            url = gatewayUrl,
                         ),
                     )
                 )
