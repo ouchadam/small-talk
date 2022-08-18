@@ -1,13 +1,18 @@
 package app.dapk.st.settings
 
 import app.dapk.st.core.BuildMeta
+import app.dapk.st.push.PushTokenRegistrars
 
-internal class SettingsItemFactory(private val buildMeta: BuildMeta) {
+internal class SettingsItemFactory(
+    private val buildMeta: BuildMeta,
+    private val pushTokenRegistrars: PushTokenRegistrars,
+) {
 
-    fun root() = listOf(
+    suspend fun root() = listOf(
         SettingItem.Header("General"),
         SettingItem.Text(SettingItem.Id.Encryption, "Encryption"),
         SettingItem.Text(SettingItem.Id.EventLog, "Event log"),
+        SettingItem.Text(SettingItem.Id.PushProvider, "Push provider", pushTokenRegistrars.currentSelection().id),
         SettingItem.Header("Data"),
         SettingItem.Text(SettingItem.Id.ClearCache, "Clear cache"),
         SettingItem.Header("Account"),

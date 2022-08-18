@@ -48,6 +48,7 @@ import app.dapk.st.messenger.MessengerActivity
 import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.navigator.IntentFactory
 import app.dapk.st.navigator.MessageAttachment
+import app.dapk.st.notifications.MatrixPushHandler
 import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
@@ -91,7 +92,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val imageLoaderModule = ImageLoaderModule(context)
 
     private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
-    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker)
+    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
         override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
@@ -125,7 +126,6 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         matrixModules,
         domainModules,
         trackingModule,
-        workModule,
         coreAndroidModule,
         imageLoaderModule,
         context,
@@ -140,7 +140,6 @@ internal class FeatureModules internal constructor(
     private val matrixModules: MatrixModules,
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
-    private val workModule: WorkModule,
     private val coreAndroidModule: CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
     context: Context,
@@ -181,6 +180,7 @@ internal class FeatureModules internal constructor(
     val settingsModule by unsafeLazy {
         SettingsModule(
             storeModule.value,
+            pushModule,
             matrixModules.crypto,
             matrixModules.sync,
             context.contentResolver,
@@ -191,14 +191,9 @@ internal class FeatureModules internal constructor(
     val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
-            matrixModules.push,
-            matrixModules.sync,
-            storeModule.value.credentialsStore(),
-            domainModules.pushModule.registerFirebasePushTokenUseCase(),
             imageLoaderModule.iconLoader(),
             storeModule.value.roomStore(),
             context,
-            workModule.workScheduler(),
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,
             deviceMeta = DeviceMeta(Build.VERSION.SDK_INT)
@@ -207,6 +202,10 @@ internal class FeatureModules internal constructor(
 
     val shareEntryModule by unsafeLazy {
         ShareEntryModule(matrixModules.sync, matrixModules.room)
+    }
+
+    val pushModule by unsafeLazy {
+        domainModules.pushModule
     }
 
 }
@@ -423,9 +422,28 @@ internal class MatrixModules(
 internal class DomainModules(
     private val matrixModules: MatrixModules,
     private val errorTracker: ErrorTracker,
+    private val workModule: WorkModule,
+    private val storeModule: Lazy<StoreModule>,
+    private val context: Application,
+    private val dispatchers: CoroutineDispatchers,
 ) {
 
-    val pushModule by unsafeLazy { PushModule(matrixModules.push, errorTracker) }
+    val pushModule by unsafeLazy {
+        val store = storeModule.value
+        val pushHandler = MatrixPushHandler(
+            workScheduler = workModule.workScheduler(),
+            credentialsStore = store.credentialsStore(),
+            matrixModules.sync,
+            store.roomStore(),
+        )
+        PushModule(
+            errorTracker,
+            pushHandler,
+            context,
+            dispatchers,
+            SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", dispatchers)
+        )
+    }
     val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
 }
 

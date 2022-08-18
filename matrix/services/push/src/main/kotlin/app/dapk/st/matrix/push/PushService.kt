@@ -12,7 +12,7 @@ private val SERVICE_KEY = PushService::class
 
 interface PushService : MatrixService {
 
-    suspend fun registerPush(token: String)
+    suspend fun registerPush(token: String, gatewayUrl: String)
 
     @Serializable
     data class PushRequest(

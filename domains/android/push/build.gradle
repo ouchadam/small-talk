@@ -1,8 +1,13 @@
 applyAndroidLibraryModule(project)
+apply plugin: "org.jetbrains.kotlin.plugin.serialization"
 
 dependencies {
     implementation project(':core')
+    implementation project(':domains:android:core')
+    implementation project(':domains:store')
     implementation project(':matrix:services:push')
     implementation platform('com.google.firebase:firebase-bom:29.0.3')
     implementation 'com.google.firebase:firebase-messaging'
+    implementation Dependencies.mavenCentral.kotlinSerializationJson
+    implementation Dependencies.jitPack.unifiedPush
 }

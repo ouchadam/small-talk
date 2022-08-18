@@ -16,8 +16,9 @@ import app.dapk.st.home.HomeModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.notifications.NotificationsModule
-import app.dapk.st.notifications.PushAndroidService
 import app.dapk.st.profile.ProfileModule
+import app.dapk.st.push.firebase.FirebasePushService
+import app.dapk.st.push.PushModule
 import app.dapk.st.settings.SettingsModule
 import app.dapk.st.share.ShareEntryModule
 import app.dapk.st.work.TaskRunnerModule
@@ -54,7 +55,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
 
     private fun onApplicationLaunch(notificationsModule: NotificationsModule, storeModule: StoreModule) {
         applicationScope.launch {
-            notificationsModule.firebasePushTokenUseCase().registerCurrentToken()
+            featureModules.pushModule.pushTokenRegistrar().registerCurrentToken()
             storeModule.localEchoStore.preload()
         }
 
@@ -73,6 +74,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
             SettingsModule::class -> featureModules.settingsModule
             ProfileModule::class -> featureModules.profileModule
             NotificationsModule::class -> featureModules.notificationsModule
+            PushModule::class -> featureModules.pushModule
             MessengerModule::class -> featureModules.messengerModule
             TaskRunnerModule::class -> appModule.domainModules.taskRunnerModule
             CoreAndroidModule::class -> appModule.coreAndroidModule
@@ -82,10 +84,9 @@ class SmallTalkApplication : Application(), ModuleProvider {
     }
 
     override fun reset() {
-        featureModules.notificationsModule.firebasePushTokenUseCase().unregister()
+        featureModules.pushModule.pushTokenRegistrar().unregister()
         appModule.coroutineDispatchers.io.cancel()
         applicationScope.cancel()
-        stopService(Intent(this, PushAndroidService::class.java))
         lazyAppModule.reset()
         lazyFeatureModules.reset()
 

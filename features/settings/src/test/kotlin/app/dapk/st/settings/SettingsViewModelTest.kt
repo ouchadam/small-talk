@@ -34,6 +34,7 @@ internal class SettingsViewModelTest {
     private val fakeCryptoService = FakeCryptoService()
     private val fakeSyncService = FakeSyncService()
     private val fakeUriFilenameResolver = FakeUriFilenameResolver()
+    private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeSettingsItemFactory = FakeSettingsItemFactory()
 
     private val viewModel = SettingsViewModel(
@@ -43,6 +44,7 @@ internal class SettingsViewModelTest {
         fakeSyncService,
         fakeUriFilenameResolver.instance,
         fakeSettingsItemFactory.instance,
+        fakePushTokenRegistrars.instance,
         runViewModelTest.testMutableStateFactory(),
     )
 

@@ -7,7 +7,7 @@ import app.dapk.st.login.LoginEvent.LoginComplete
 import app.dapk.st.login.LoginScreenState.*
 import app.dapk.st.matrix.auth.AuthService
 import app.dapk.st.matrix.room.ProfileService
-import app.dapk.st.push.RegisterFirebasePushTokenUseCase
+import app.dapk.st.push.PushTokenRegistrar
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel(
     private val authService: AuthService,
-    private val firebasePushTokenUseCase: RegisterFirebasePushTokenUseCase,
+    private val pushTokenRegistrar: PushTokenRegistrar,
     private val profileService: ProfileService,
     private val errorTracker: ErrorTracker,
 ) : DapkViewModel<LoginScreenState, LoginEvent>(
@@ -32,7 +32,7 @@ class LoginViewModel(
                     is AuthService.LoginResult.Success -> {
                         runCatching {
                             listOf(
-                                async { firebasePushTokenUseCase.registerCurrentToken() },
+                                async { pushTokenRegistrar.registerCurrentToken() },
                                 async { preloadMe() },
                             ).awaitAll()
                         }

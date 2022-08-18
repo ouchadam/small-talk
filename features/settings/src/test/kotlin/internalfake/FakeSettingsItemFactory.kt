@@ -1,6 +1,7 @@
 package internalfake
 
 import app.dapk.st.settings.SettingsItemFactory
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import test.delegateReturn
@@ -8,5 +9,5 @@ import test.delegateReturn
 internal class FakeSettingsItemFactory {
     val instance = mockk<SettingsItemFactory>()
 
-    fun givenRoot() = every { instance.root() }.delegateReturn()
+    fun givenRoot() = coEvery { instance.root() }.delegateReturn()
 }

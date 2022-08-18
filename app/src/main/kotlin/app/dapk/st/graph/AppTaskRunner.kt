@@ -1,8 +1,10 @@
 package app.dapk.st.graph
 
 import app.dapk.st.matrix.push.PushService
+import app.dapk.st.push.PushTokenPayload
 import app.dapk.st.work.TaskRunner
 import io.ktor.client.plugins.*
+import kotlinx.serialization.json.Json
 
 class AppTaskRunner(
     private val pushService: PushService,
@@ -12,7 +14,8 @@ class AppTaskRunner(
         return when (val type = workTask.task.type) {
             "push_token" -> {
                 runCatching {
-                    pushService.registerPush(workTask.task.jsonPayload)
+                    val payload = Json.decodeFromString(PushTokenPayload.serializer(), workTask.task.jsonPayload)
+                    pushService.registerPush(payload.token, payload.gatewayUrl)
                 }.fold(
                     onSuccess = { TaskRunner.TaskResult.Success(workTask.source) },
                     onFailure = {
@@ -25,6 +28,7 @@ class AppTaskRunner(
                     }
                 )
             }
+
             else -> throw IllegalArgumentException("Unknown work type: $type")
         }
 

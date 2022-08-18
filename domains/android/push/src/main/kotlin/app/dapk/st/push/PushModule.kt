@@ -1,16 +1,40 @@
 package app.dapk.st.push
 
+import android.content.Context
+import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.ProvidableModule
 import app.dapk.st.core.extensions.ErrorTracker
-import app.dapk.st.matrix.push.PushService
+import app.dapk.st.core.extensions.unsafeLazy
+import app.dapk.st.domain.Preferences
+import app.dapk.st.domain.push.PushTokenRegistrarPreferences
+import app.dapk.st.push.firebase.FirebasePushTokenRegistrar
+import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
 
 class PushModule(
-    private val pushService: PushService,
     private val errorTracker: ErrorTracker,
-) {
+    private val pushHandler: PushHandler,
+    private val context: Context,
+    private val dispatchers: CoroutineDispatchers,
+    private val preferences: Preferences,
+) : ProvidableModule {
 
-    fun registerFirebasePushTokenUseCase() = RegisterFirebasePushTokenUseCase(
-        pushService,
-        errorTracker,
-    )
+    private val registrars by unsafeLazy {
+        PushTokenRegistrars(
+            context,
+            FirebasePushTokenRegistrar(
+                errorTracker,
+                context,
+                pushHandler,
+            ),
+            UnifiedPushRegistrar(context),
+            PushTokenRegistrarPreferences(preferences)
+        )
+    }
+
+    fun pushTokenRegistrars() = registrars
+
+    fun pushTokenRegistrar(): PushTokenRegistrar = pushTokenRegistrars()
+    fun pushHandler() = pushHandler
+    fun dispatcher() = dispatchers
 
 }
