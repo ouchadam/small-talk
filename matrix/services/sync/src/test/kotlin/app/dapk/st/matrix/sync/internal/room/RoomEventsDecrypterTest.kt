@@ -23,6 +23,8 @@ private val AN_ENCRYPTED_ROOM_REPLY = aRoomReplyMessageEvent(
 private val A_DECRYPTED_CONTENT = DecryptedContent.TimelineText(aTimelineTextEventContent(body = A_DECRYPTED_MESSAGE_CONTENT))
 private val A_USER_CREDENTIALS = aUserCredentials()
 
+private val json = Json { encodeDefaults = true }
+
 class RoomEventsDecrypterTest {
 
     private val fakeMessageDecrypter = FakeMessageDecrypter()
@@ -67,7 +69,7 @@ class RoomEventsDecrypterTest {
     private fun givenEncryptedMessage(roomMessage: RoomEvent.Message, decryptsTo: DecryptedContent) {
         val model = roomMessage.encryptedContent!!.toModel()
         fakeMessageDecrypter.givenDecrypt(model)
-            .returns(aDecryptionSuccessResult(payload = JsonString(Json { encodeDefaults = true }.encodeToString(DecryptedContent.serializer(), decryptsTo))))
+            .returns(aDecryptionSuccessResult(payload = JsonString(json.encodeToString(DecryptedContent.serializer(), decryptsTo))))
     }
 
     private fun givenEncryptedReply(roomReply: RoomEvent.Reply, decryptsTo: DecryptedContent) {

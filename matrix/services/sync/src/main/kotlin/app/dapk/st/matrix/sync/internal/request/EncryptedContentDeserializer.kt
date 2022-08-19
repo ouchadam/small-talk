@@ -17,8 +17,8 @@ internal object EncryptedContentDeserializer : KSerializer<ApiEncryptedContent> 
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement()
         return when (val algorithm = element.jsonObject["algorithm"]?.jsonPrimitive?.content) {
-            "m.olm.v1.curve25519-aes-sha2" -> ApiEncryptedContent.OlmV1.serializer().deserialize(decoder)
-            "m.megolm.v1.aes-sha2" -> ApiEncryptedContent.MegOlmV1.serializer().deserialize(decoder)
+            "m.olm.v1.curve25519-aes-sha2" -> decoder.json.decodeFromJsonElement(ApiEncryptedContent.OlmV1.serializer(), element)
+            "m.megolm.v1.aes-sha2" -> decoder.json.decodeFromJsonElement(ApiEncryptedContent.MegOlmV1.serializer(), element)
             null -> ApiEncryptedContent.Unknown
             else -> throw IllegalArgumentException("Unknown algorithm : $algorithm")
         }
