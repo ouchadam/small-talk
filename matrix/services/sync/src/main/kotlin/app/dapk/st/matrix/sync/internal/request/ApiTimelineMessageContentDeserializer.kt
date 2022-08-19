@@ -17,8 +17,8 @@ internal object ApiTimelineMessageContentDeserializer : KSerializer<ApiTimelineE
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement()
         return when (element.jsonObject["msgtype"]?.jsonPrimitive?.content) {
-            "m.text" -> ApiTimelineEvent.TimelineMessage.Content.Text.serializer().deserialize(decoder)
-            "m.image" -> ApiTimelineEvent.TimelineMessage.Content.Image.serializer().deserialize(decoder)
+            "m.text" -> decoder.json.decodeFromJsonElement(ApiTimelineEvent.TimelineMessage.Content.Text.serializer(), element)
+            "m.image" -> decoder.json.decodeFromJsonElement(ApiTimelineEvent.TimelineMessage.Content.Image.serializer(), element)
             else -> ApiTimelineEvent.TimelineMessage.Content.Ignored
         }
     }
