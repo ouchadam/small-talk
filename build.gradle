@@ -132,7 +132,7 @@ ext.kotlinTest = { dependencies ->
     dependencies.testImplementation Dependencies.mavenCentral.kluent
     dependencies.testImplementation Dependencies.mavenCentral.kotlinTest
     dependencies.testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.6.10"
-    dependencies.testImplementation 'io.mockk:mockk:1.12.5'
+    dependencies.testImplementation 'io.mockk:mockk:1.12.7'
     dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
 
     dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
@@ -140,7 +140,7 @@ ext.kotlinTest = { dependencies ->
 }
 
 ext.kotlinFixtures = { dependencies ->
-    dependencies.testFixturesImplementation 'io.mockk:mockk:1.12.4'
+    dependencies.testFixturesImplementation 'io.mockk:mockk:1.12.7'
     dependencies.testFixturesImplementation Dependencies.mavenCentral.kluent
     dependencies.testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
 }
