@@ -46,8 +46,11 @@ android {
                     "proguard/serializationx.pro",
                     "proguard/olm.pro"
 
-            // actual releases are signed with a different config
-            signingConfig = buildTypes.debug.signingConfig
+            if (project.hasProperty("unsigned")) {
+                // releases are signed externally
+            } else {
+                signingConfig = buildTypes.debug.signingConfig
+            }
         }
     }
 

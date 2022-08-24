@@ -8,7 +8,7 @@ const config = {
 
 const rcBranchName = "release-candidate"
 
-export const script = async ({ github, context, core }) => {
+export const startReleaseProcess = async ({ github, context, core }) => {
     console.log("script start")
     if (await doesNotHaveInProgressRelease(github) && await isWorkingBranchAhead(github)) {
         await startRelease(github)
@@ -17,6 +17,11 @@ export const script = async ({ github, context, core }) => {
     }
     return ""
 }
+
+export const publishRelease  = async (github, artifact) => {
+
+}
+
 
 const isWorkingBranchAhead = async (github) => {
     const result = await github.rest.repos.compareCommitsWithBasehead({
