@@ -1,0 +1,43 @@
+
+
+# on pushes to release candidate
+# create release apk
+# create tag, draft github release, upload universal
+
+
+name: Generate and publish Release Candidate
+
+on:
+  push:
+    branches:
+      - 'release'
+
+jobs:
+  publish-release-candidate:
+    name: Publish release candidate
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - uses: actions/setup-node@v3
+        with:
+          node-version:
+            16
+      - run: npm ci
+        working-directory: ./tools/beta-release/
+
+      - run: |
+          mkdir .secrets && touch .secrets/upload-key.jks
+          echo ${{ secrets.UPLOAD_KEY }} | base64 -d  >> .secrets/upload-key.jks
+
+      - name: Assemble release variant
+        run: ./tools/generate-release.sh ${{ secrets.STORE_PASS }}
+
