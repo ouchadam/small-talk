@@ -11,4 +11,5 @@
 .cxx
 local.properties
 /benchmark-out
-/node_modules
+**/node_modules
+.secrets
