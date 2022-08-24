@@ -4,7 +4,8 @@ import kotlin.reflect.KClass
 
 interface ModuleProvider {
 
-    fun <T: ProvidableModule> provide(klass: KClass<T>): T
+    fun <T : ProvidableModule> provide(klass: KClass<T>): T
+    fun reset()
 }
 
 interface ProvidableModule

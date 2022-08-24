@@ -35,4 +35,12 @@ class MemberPersistence(
                 .map { Json.decodeFromString(RoomMember.serializer(), it) }
         }
     }
+
+    override suspend fun query(roomId: RoomId, limit: Int): List<RoomMember> {
+        return coroutineDispatchers.withIoContext {
+            database.roomMemberQueries.selectMembersByRoom(roomId.value, limit.toLong())
+                .executeAsList()
+                .map { Json.decodeFromString(RoomMember.serializer(), it) }
+        }
+    }
 }

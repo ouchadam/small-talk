@@ -7,6 +7,7 @@ import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.domain.eventlog.EventLogPersistence
 import app.dapk.st.domain.localecho.LocalEchoPersistence
 import app.dapk.st.domain.profile.ProfilePersistence
+import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.domain.sync.OverviewPersistence
 import app.dapk.st.domain.sync.RoomPersistence
 import app.dapk.st.matrix.common.CredentialsStore
@@ -33,6 +34,10 @@ class StoreModule(
     fun syncStore(): SyncStore = SyncTokenPreferences(preferences)
     fun filterStore(): FilterStore = FilterPreferences(preferences)
     val localEchoStore: LocalEchoStore by unsafeLazy { LocalEchoPersistence(errorTracker, database) }
+
+    fun pushStore() = PushTokenRegistrarPreferences(preferences)
+
+    fun applicationStore() = ApplicationPreferences(preferences)
 
     fun olmStore() = OlmPersistence(database, credentialsStore())
     fun knownDevicesStore() = DevicePersistence(database, KnownDevicesCache(), coroutineDispatchers)

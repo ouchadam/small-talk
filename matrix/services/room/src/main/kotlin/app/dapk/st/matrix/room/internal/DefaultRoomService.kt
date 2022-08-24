@@ -39,6 +39,10 @@ class DefaultRoomService(
         return roomMembers.findMembers(roomId, userIds)
     }
 
+    override suspend fun findMembersSummary(roomId: RoomId): List<RoomMember> {
+        return roomMembers.findMembersSummary(roomId)
+    }
+
     override suspend fun insertMembers(roomId: RoomId, members: List<RoomMember>) {
         roomMembers.insert(roomId, members)
     }
@@ -61,6 +65,10 @@ class DefaultRoomService(
 
     override suspend fun joinRoom(roomId: RoomId) {
         httpClient.execute(joinRoomRequest(roomId))
+    }
+
+    override suspend fun rejectJoinRoom(roomId: RoomId) {
+        httpClient.execute(rejectJoinRoomRequest(roomId))
     }
 }
 
@@ -86,6 +94,13 @@ internal fun joinRoomRequest(roomId: RoomId) = httpRequest<Unit>(
     method = MatrixHttpClient.Method.POST,
     body = emptyJsonBody()
 )
+
+internal fun rejectJoinRoomRequest(roomId: RoomId) = httpRequest<Unit>(
+    path = "_matrix/client/r0/rooms/${roomId.value}/leave",
+    method = MatrixHttpClient.Method.POST,
+    body = emptyJsonBody()
+)
+
 
 @Suppress("EnumEntryName")
 @Serializable
@@ -120,6 +135,6 @@ internal data class JoinedMembersResponse(
 
 @Serializable
 internal data class ApiJoinedMember(
-    @SerialName("display_name") val displayName: String,
+    @SerialName("display_name") val displayName: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
 )

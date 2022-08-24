@@ -8,15 +8,18 @@ import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.SyncService.SyncEvent.Typing
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.*
 
 @JvmInline
 value class UnreadCount(val value: Int)
 
 typealias DirectoryState = List<RoomFoo>
 
-data class RoomFoo(val overview: RoomOverview, val unreadCount: UnreadCount, val typing: Typing?)
+data class RoomFoo(
+    val overview: RoomOverview,
+    val unreadCount: UnreadCount,
+    val typing: Typing?
+)
 
 class DirectoryUseCase(
     private val syncService: SyncService,
@@ -26,27 +29,34 @@ class DirectoryUseCase(
     private val roomStore: RoomStore,
 ) {
 
-    suspend fun startSyncing(): Flow<Unit> {
-        return syncService.startSyncing()
-    }
-
-    suspend fun state(): Flow<DirectoryState> {
-        val userId = credentialsStore.credentials()!!.userId
-        return combine(
-            syncService.overview(),
-            messageService.localEchos(),
-            roomStore.observeUnreadCountById(),
-            syncService.events()
-        ) { overviewState, localEchos, unread, events ->
-            overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
-                RoomFoo(
-                    overview = roomOverview,
-                    unreadCount = UnreadCount(unread[roomOverview.roomId] ?: 0),
-                    typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }
-                )
+    fun state(): Flow<DirectoryState> {
+        return flow { emit(credentialsStore.credentials()!!.userId) }.flatMapMerge { userId ->
+            combine(
+                overviewDatasource(),
+                messageService.localEchos(),
+                roomStore.observeUnreadCountById(),
+                syncService.events()
+            ) { overviewState, localEchos, unread, events ->
+                overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
+                    RoomFoo(
+                        overview = roomOverview,
+                        unreadCount = UnreadCount(unread[roomOverview.roomId] ?: 0),
+                        typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }
+                    )
+                }
             }
         }
     }
+
+    private fun overviewDatasource() = combine(
+        syncService.startSyncing().map { false }.onStart { emit(true) },
+        syncService.overview()
+    ) { isFirstLoad, overview ->
+        when {
+            isFirstLoad && overview.isEmpty() -> null
+            else -> overview
+        }
+    }.filterNotNull()
 
     private suspend fun OverviewState.mergeWithLocalEchos(localEchos: Map<RoomId, List<MessageService.LocalEcho>>, userId: UserId): OverviewState {
         return when {
@@ -74,6 +84,7 @@ class DirectoryUseCase(
                 lastMessage = LastMessage(
                     content = when (val message = latestEcho.message) {
                         is MessageService.Message.TextMessage -> message.content.body
+                        is MessageService.Message.ImageMessage -> "\uD83D\uDCF7"
                     },
                     utcTimestamp = latestEcho.timestampUtc,
                     author = member,

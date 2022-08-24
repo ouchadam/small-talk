@@ -2,6 +2,7 @@ package app.dapk.st.home
 
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.directory.DirectoryViewModel
+import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.home.HomeScreenState.*
 import app.dapk.st.login.LoginViewModel
 import app.dapk.st.matrix.common.CredentialsStore
@@ -17,6 +18,8 @@ class HomeViewModel(
     private val loginViewModel: LoginViewModel,
     private val profileViewModel: ProfileViewModel,
     private val profileService: ProfileService,
+    private val cacheCleaner: StoreCleaner,
+    private val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
 ) : DapkViewModel<HomeScreenState, HomeEvent>(
     initialState = Loading
 ) {
@@ -43,8 +46,17 @@ class HomeViewModel(
         }
     }
 
-    fun loggedOut() {
-        state = SignedOut
+    fun hasVersionChanged() = betaVersionUpgradeUseCase.hasVersionChanged()
+
+    fun clearCache() {
+        viewModelScope.launch {
+            cacheCleaner.cleanCache(removeCredentials = false)
+            _events.emit(HomeEvent.Relaunch)
+        }
+    }
+
+    fun scrollToTopOfMessages() {
+        directoryViewModel.scrollToTopOfMessages()
     }
 
     fun changePage(page: Page) {

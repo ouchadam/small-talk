@@ -1,26 +1,26 @@
 package app.dapk.st.matrix.room.internal
 
+import app.dapk.st.core.LRUCache
+import app.dapk.st.core.isNullOrEmpty
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.MemberStore
 
-class RoomMembers(private val memberStore: MemberStore) {
-
-    private val cache = mutableMapOf<RoomId, MutableMap<UserId, RoomMember>>()
+class RoomMembers(private val memberStore: MemberStore, private val membersCache: RoomMembersCache) {
 
     suspend fun findMember(roomId: RoomId, userId: UserId): RoomMember? {
         return findMembers(roomId, listOf(userId)).firstOrNull()
     }
 
     suspend fun findMembers(roomId: RoomId, userIds: List<UserId>): List<RoomMember> {
-        val roomCache = cache[roomId]
+        val roomCache = membersCache.room(roomId)
 
         return if (roomCache.isNullOrEmpty()) {
-            memberStore.query(roomId, userIds).also { cache(roomId, it) }
+            memberStore.query(roomId, userIds).also { membersCache.insert(roomId, it) }
         } else {
             val (cachedMembers, missingIds) = userIds.fold(mutableListOf<RoomMember>() to mutableListOf<UserId>()) { acc, current ->
-                when (val member = roomCache[current]) {
+                when (val member = roomCache?.get(current)) {
                     null -> acc.second.add(current)
                     else -> acc.first.add(member)
                 }
@@ -29,21 +29,29 @@ class RoomMembers(private val memberStore: MemberStore) {
 
             when {
                 missingIds.isNotEmpty() -> {
-                    (memberStore.query(roomId, missingIds).also { cache(roomId, it) } + cachedMembers)
+                    (memberStore.query(roomId, missingIds).also { membersCache.insert(roomId, it) } + cachedMembers)
                 }
                 else -> cachedMembers
             }
         }
     }
 
+    suspend fun findMembersSummary(roomId: RoomId) = memberStore.query(roomId, limit = 8)
+
     suspend fun insert(roomId: RoomId, members: List<RoomMember>) {
-        cache(roomId, members)
+        membersCache.insert(roomId, members)
         memberStore.insert(roomId, members)
     }
+}
 
-    private fun cache(roomId: RoomId, members: List<RoomMember>) {
-        val map = cache.getOrPut(roomId) { mutableMapOf() }
-        members.forEach { map[it.id] = it }
+class RoomMembersCache {
+
+    private val cache = LRUCache<RoomId, LRUCache<UserId, RoomMember>>(maxSize = 12)
+
+    fun room(roomId: RoomId) = cache.get(roomId)
+
+    fun insert(roomId: RoomId, members: List<RoomMember>) {
+        val map = cache.getOrPut(roomId) { LRUCache(maxSize = 25) }
+        members.forEach { map.put(it.id, it) }
     }
-
 }

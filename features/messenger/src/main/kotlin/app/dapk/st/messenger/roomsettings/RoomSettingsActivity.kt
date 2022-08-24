@@ -36,7 +36,7 @@ class RoomSettingsActivity : DapkActivity() {
         setContent {
             SmallTalkTheme {
                 Surface(Modifier.fillMaxSize()) {
-                    MessengerScreen(RoomId(payload.roomId), viewModel, navigator)
+//                    MessengerScreen(RoomId(payload.roomId), payload.attachments, viewModel, navigator)
                 }
             }
         }

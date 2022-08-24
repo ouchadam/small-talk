@@ -23,11 +23,12 @@ def excludes = [
 
         // Tmp until serializationx can ignore generated
         '**/Api*',
+        '**/RoomEvent*',
 ]
 
 def initializeReport(report, projects, classExcludes) {
     projects.each { project -> project.apply plugin: 'jacoco' }
-    report.executionData { fileTree(rootProject.rootDir.absolutePath).include("**/build/jacoco/*.exec") }
+    report.executionData { fileTree(rootProject.rootDir.absolutePath).include("**/build/**/*.exec") }
 
     report.reports {
         xml.enabled true
@@ -89,7 +90,7 @@ def collectProjects(predicate) {
 task allCodeCoverageReport(type: JacocoReport) {
     outputs.upToDateWhen { false }
     rootProject.apply plugin: 'jacoco'
-    def projects = collectProjects { true }
+    def projects = collectProjects { !it.name.contains("stub") }
     dependsOn { ["app:assembleDebug"] + projects*.test }
     initializeReport(it, projects, excludes)
 }

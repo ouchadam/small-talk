@@ -10,9 +10,20 @@ android {
     ndkVersion "25.0.8141415"
     defaultConfig {
         applicationId "app.dapk.st"
-        versionCode 2
-        versionName "0.0.1-alpha1"
-        resConfigs "en"
+        def versionJson = new groovy.json.JsonSlurper().parseText(rootProject.file('version.json').text)
+        versionCode versionJson.code
+        versionName versionJson.name
+
+        if (isDebugBuild) {
+            resConfigs "en", "xxhdpi"
+            variantFilter { variant ->
+                if (variant.buildType.name == "release") {
+                    setIgnore(true)
+                }
+            }
+        } else {
+            resConfigs "en"
+        }
     }
 
     bundle {
@@ -23,6 +34,7 @@ android {
 
     buildTypes {
         debug {
+            versionNameSuffix = " [debug]"
             matchingFallbacks = ['release']
             signingConfig.storeFile rootProject.file("tools/debug.keystore")
         }
@@ -33,8 +45,14 @@ android {
                     'proguard/app.pro',
                     "proguard/serializationx.pro",
                     "proguard/olm.pro"
+
+            // actual releases are signed with a different config
             signingConfig = buildTypes.debug.signingConfig
         }
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
     }
 
     packagingOptions {
@@ -43,6 +61,8 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring Dependencies.google.jdkLibs
+
     implementation project(":features:home")
     implementation project(":features:directory")
     implementation project(":features:login")
@@ -51,8 +71,10 @@ dependencies {
     implementation project(":features:messenger")
     implementation project(":features:profile")
     implementation project(":features:navigator")
+    implementation project(":features:share-entry")
 
     implementation project(':domains:store')
+    implementation project(":domains:android:compose-core")
     implementation project(":domains:android:core")
     implementation project(":domains:android:tracking")
     implementation project(":domains:android:push")
@@ -79,5 +101,5 @@ dependencies {
     implementation Dependencies.mavenCentral.matrixOlm
 
     implementation Dependencies.mavenCentral.kotlinSerializationJson
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
+    debugImplementation Dependencies.mavenCentral.leakCanary
 }

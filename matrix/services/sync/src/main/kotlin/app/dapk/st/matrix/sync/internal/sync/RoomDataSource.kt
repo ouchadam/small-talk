@@ -14,6 +14,8 @@ class RoomDataSource(
 
     private val roomCache = mutableMapOf<RoomId, RoomState>()
 
+    fun contains(roomId: RoomId) = roomCache.containsKey(roomId)
+
     suspend fun read(roomId: RoomId) = when (val cached = roomCache[roomId]) {
         null -> roomStore.retrieve(roomId)?.also { roomCache[roomId] = it }
         else -> cached
@@ -26,5 +28,10 @@ class RoomDataSource(
             roomCache[roomId] = newState
             roomStore.persist(roomId, newState)
         }
+    }
+
+    suspend fun remove(roomsLeft: List<RoomId>) {
+        roomsLeft.forEach { roomCache.remove(it) }
+        roomStore.remove(roomsLeft)
     }
 }

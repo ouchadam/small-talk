@@ -4,9 +4,8 @@ import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.ifOrNull
 import app.dapk.st.core.extensions.nullAndTrack
 import app.dapk.st.matrix.common.EventId
-import app.dapk.st.matrix.common.MatrixLogger
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.matrixLog
+import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.sync.MessageMeta
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomMembersService
@@ -18,8 +17,8 @@ private typealias Lookup = suspend (EventId) -> LookupResult
 
 internal class RoomEventCreator(
     private val roomMembersService: RoomMembersService,
-    private val logger: MatrixLogger,
     private val errorTracker: ErrorTracker,
+    private val roomEventFactory: RoomEventFactory,
 ) {
 
     suspend fun ApiTimelineEvent.Encrypted.toRoomEvent(roomId: RoomId): RoomEvent? {
@@ -44,89 +43,127 @@ internal class RoomEventCreator(
         }
     }
 
-    suspend fun ApiTimelineEvent.TimelineText.toRoomEvent(roomId: RoomId, lookup: Lookup): RoomEvent? {
+    suspend fun ApiTimelineEvent.TimelineMessage.toRoomEvent(userCredentials: UserCredentials, roomId: RoomId, lookup: Lookup): RoomEvent? {
+        return TimelineEventMapper(userCredentials, roomId, roomEventFactory).mapToRoomEvent(this, lookup)
+    }
+}
+
+internal class TimelineEventMapper(
+    private val userCredentials: UserCredentials,
+    private val roomId: RoomId,
+    private val roomEventFactory: RoomEventFactory,
+) {
+
+    suspend fun mapToRoomEvent(event: ApiTimelineEvent.TimelineMessage, lookup: Lookup): RoomEvent? {
         return when {
-            this.isEdit() -> handleEdit(roomId, this.content.relation!!.eventId!!, lookup)
-            this.isReply() -> handleReply(roomId, lookup)
-            else -> this.toMessage(roomId)
+            event.content == ApiTimelineEvent.TimelineMessage.Content.Ignored -> null
+            event.isEdit() -> event.handleEdit(editedEventId = event.content.relation!!.eventId!!, lookup)
+            event.isReply() -> event.handleReply(replyToId = event.content.relation!!.inReplyTo!!.eventId, lookup)
+            else -> roomEventFactory.mapToRoomEvent(event)
         }
     }
 
-    private suspend fun ApiTimelineEvent.TimelineText.handleEdit(roomId: RoomId, editedEventId: EventId, lookup: Lookup): RoomEvent? {
-        return lookup(editedEventId).fold(
-            onApiTimelineEvent = {
-                ifOrNull(this.utcTimestamp > it.utcTimestamp) {
-                    it.toMessage(
-                        roomId,
-                        utcTimestamp = this.utcTimestamp,
-                        content = this.content.body?.removePrefix(" * ")?.trim() ?: "redacted",
-                        edited = true,
-                    )
-                }
-            },
-            onRoomEvent = {
-                ifOrNull(this.utcTimestamp > it.utcTimestamp) {
-                    when (it) {
-                        is RoomEvent.Message -> it.edited(this)
-                        is RoomEvent.Reply -> it.copy(message = it.message.edited(this))
-                    }
-                }
-            },
-            onEmpty = { this.toMessage(roomId, edited = true) }
-        )
-    }
-
-    private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineText) = this.copy(
-        content = edit.content.body?.removePrefix(" * ")?.trim() ?: "redacted",
-        utcTimestamp = edit.utcTimestamp,
-        edited = true,
-    )
-
-    private suspend fun ApiTimelineEvent.TimelineText.handleReply(roomId: RoomId, lookup: Lookup): RoomEvent {
-        val replyTo = this.content.relation!!.inReplyTo!!
-
-        val relationEvent = lookup(replyTo.eventId).fold(
-            onApiTimelineEvent = { it.toMessage(roomId) },
+    private suspend fun ApiTimelineEvent.TimelineMessage.handleReply(replyToId: EventId, lookup: Lookup): RoomEvent {
+        val relationEvent = lookup(replyToId).fold(
+            onApiTimelineEvent = { it.toMessage() },
             onRoomEvent = { it },
             onEmpty = { null }
         )
 
-        logger.matrixLog("found relation: $relationEvent")
-
         return when (relationEvent) {
-            null -> this.toMessage(roomId)
+            null -> this.toMessage()
             else -> {
                 RoomEvent.Reply(
-                    message = this.toMessage(roomId, content = this.content.formattedBody?.stripTags() ?: "redacted"),
+                    message = roomEventFactory.mapToRoomEvent(this),
                     replyingTo = when (relationEvent) {
                         is RoomEvent.Message -> relationEvent
                         is RoomEvent.Reply -> relationEvent.message
+                        is RoomEvent.Image -> relationEvent
                     }
                 )
             }
         }
     }
 
-    private suspend fun ApiTimelineEvent.TimelineText.toMessage(
-        roomId: RoomId,
-        content: String = this.content.body ?: "redacted",
+    private suspend fun ApiTimelineEvent.TimelineMessage.toMessage() = when (this.content) {
+        is ApiTimelineEvent.TimelineMessage.Content.Image -> this.toImageMessage()
+        is ApiTimelineEvent.TimelineMessage.Content.Text -> this.toFallbackTextMessage()
+        ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
+    }
+
+    private suspend fun ApiTimelineEvent.TimelineMessage.toFallbackTextMessage() = this.toTextMessage(content = this.asTextContent().body ?: "redacted")
+
+    private suspend fun ApiTimelineEvent.TimelineMessage.handleEdit(editedEventId: EventId, lookup: Lookup): RoomEvent? {
+        return lookup(editedEventId).fold(
+            onApiTimelineEvent = { editApiEvent(original = it, incomingEdit = this) },
+            onRoomEvent = { editRoomEvent(original = it, incomingEdit = this) },
+            onEmpty = { this.toTextMessage(edited = true) }
+        )
+    }
+
+    private fun editRoomEvent(original: RoomEvent, incomingEdit: ApiTimelineEvent.TimelineMessage): RoomEvent? {
+        return ifOrNull(incomingEdit.utcTimestamp > original.utcTimestamp) {
+            when (original) {
+                is RoomEvent.Message -> original.edited(incomingEdit)
+                is RoomEvent.Reply -> original.copy(
+                    message = when (original.message) {
+                        is RoomEvent.Image -> original.message
+                        is RoomEvent.Message -> original.message.edited(incomingEdit)
+                        is RoomEvent.Reply -> original.message
+                    }
+                )
+                is RoomEvent.Image -> {
+                    // can't edit images
+                    null
+                }
+            }
+        }
+    }
+
+    private suspend fun editApiEvent(original: ApiTimelineEvent.TimelineMessage, incomingEdit: ApiTimelineEvent.TimelineMessage): RoomEvent? {
+        return ifOrNull(incomingEdit.utcTimestamp > original.utcTimestamp) {
+            when (original.content) {
+                is ApiTimelineEvent.TimelineMessage.Content.Image -> original.toImageMessage(
+                    utcTimestamp = incomingEdit.utcTimestamp,
+                    edited = true,
+                )
+                is ApiTimelineEvent.TimelineMessage.Content.Text -> original.toTextMessage(
+                    utcTimestamp = incomingEdit.utcTimestamp,
+                    content = incomingEdit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
+                    edited = true,
+                )
+                ApiTimelineEvent.TimelineMessage.Content.Ignored -> null
+            }
+        }
+    }
+
+    private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
+        content = edit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
+        utcTimestamp = edit.utcTimestamp,
+        edited = true,
+    )
+
+    private suspend fun RoomEventFactory.mapToRoomEvent(source: ApiTimelineEvent.TimelineMessage): RoomEvent {
+        return when (source.content) {
+            is ApiTimelineEvent.TimelineMessage.Content.Image -> source.toImageMessage(userCredentials, roomId)
+            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(roomId)
+            ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
+        }
+    }
+
+    private suspend fun ApiTimelineEvent.TimelineMessage.toTextMessage(
+        content: String = this.asTextContent().formattedBody?.stripTags() ?: this.asTextContent().body ?: "redacted",
         edited: Boolean = false,
         utcTimestamp: Long = this.utcTimestamp,
-    ) = RoomEvent.Message(
-        eventId = this.id,
-        content = content,
-        author = roomMembersService.find(roomId, this.senderId)!!,
-        utcTimestamp = utcTimestamp,
-        meta = MessageMeta.FromServer,
-        edited = edited,
-    )
+    ) = with(roomEventFactory) { toTextMessage(roomId, content, edited, utcTimestamp) }
+
+    private suspend fun ApiTimelineEvent.TimelineMessage.toImageMessage(
+        edited: Boolean = false,
+        utcTimestamp: Long = this.utcTimestamp,
+    ) = with(roomEventFactory) { toImageMessage(userCredentials, roomId, edited, utcTimestamp) }
 
 }
 
-private fun String.stripTags() = this.substring(this.indexOf("</mx-reply>") + "</mx-reply>".length)
-    .trim()
-    .replace("<em>", "")
-    .replace("</em>", "")
-
-private fun ApiTimelineEvent.TimelineText.isEdit() = this.content.relation?.relationType == "m.replace" && this.content.relation.eventId != null
-private fun ApiTimelineEvent.TimelineText.isReply() = this.content.relation?.inReplyTo != null
+private fun ApiTimelineEvent.TimelineMessage.isEdit() = this.content.relation?.relationType == "m.replace" && this.content.relation?.eventId != null
+private fun ApiTimelineEvent.TimelineMessage.isReply() = this.content.relation?.inReplyTo != null
+private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text

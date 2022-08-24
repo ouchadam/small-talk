@@ -1,5 +1,6 @@
 package app.dapk.st.login
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -7,13 +8,21 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Web
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillNode
+import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,6 +34,7 @@ import app.dapk.st.core.StartObserving
 import app.dapk.st.login.LoginEvent.LoginComplete
 import app.dapk.st.login.LoginScreenState.*
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
     loginViewModel.ObserveEvents(onLoggedIn)
@@ -34,8 +44,10 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
 
     var userName by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var serverUrl by rememberSaveable { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    when (loginViewModel.state) {
+    when (val state = loginViewModel.state) {
         is Error -> {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -54,7 +66,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                 CircularProgressIndicator()
             }
         }
-        Idle ->
+        is Content ->
             Row {
                 Spacer(modifier = Modifier.weight(0.1f))
                 Column(
@@ -74,7 +86,9 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
 
                     val focusManager = LocalFocusManager.current
                     TextField(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autofill(listOf(AutofillType.Username), onFill = { userName = it }),
                         value = userName,
                         onValueChange = { userName = it },
                         singleLine = true,
@@ -87,10 +101,16 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                         keyboardOptions = KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
                     )
 
-                    val canDoLoginAttempt = userName.isNotEmpty() && password.isNotEmpty()
+                    val canDoLoginAttempt = if (state.showServerUrl) {
+                        userName.isNotEmpty() && password.isNotEmpty() && serverUrl.isNotEmpty()
+                    } else {
+                        userName.isNotEmpty() && password.isNotEmpty()
+                    }
 
                     TextField(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autofill(listOf(AutofillType.Password), onFill = { password = it }),
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
@@ -98,10 +118,13 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                         leadingIcon = {
                             Icon(imageVector = Icons.Outlined.Lock, contentDescription = null)
                         },
-                        keyboardActions = KeyboardActions(onDone = { loginViewModel.login(userName, password) }),
+                        keyboardActions = KeyboardActions(
+                            onDone = { loginViewModel.login(userName, password, serverUrl) },
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                        ),
                         keyboardOptions = KeyboardOptions(
                             autoCorrect = false,
-                            imeAction = ImeAction.Done.takeIf { canDoLoginAttempt } ?: ImeAction.None,
+                            imeAction = ImeAction.Done.takeIf { canDoLoginAttempt } ?: ImeAction.Next.takeIf { state.showServerUrl } ?: ImeAction.None,
                             keyboardType = KeyboardType.Password
                         ),
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
@@ -113,11 +136,33 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                         }
                     )
 
+                    if (state.showServerUrl) {
+                        TextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = serverUrl,
+                            onValueChange = { serverUrl = it },
+                            label = { Text("Server URL") },
+                            singleLine = true,
+                            leadingIcon = {
+                                Icon(imageVector = Icons.Default.Web, contentDescription = null)
+                            },
+                            keyboardActions = KeyboardActions(onDone = { loginViewModel.login(userName, password, serverUrl) }),
+                            keyboardOptions = KeyboardOptions(
+                                autoCorrect = false,
+                                imeAction = ImeAction.Done.takeIf { canDoLoginAttempt } ?: ImeAction.None,
+                                keyboardType = KeyboardType.Uri
+                            ),
+                        )
+                    }
+
                     Spacer(Modifier.height(4.dp))
 
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { loginViewModel.login(userName, password) },
+                        onClick = {
+                            keyboardController?.hide()
+                            loginViewModel.login(userName, password, serverUrl)
+                        },
                         enabled = canDoLoginAttempt
                     ) {
                         Text("Sign in".uppercase(), fontSize = 18.sp)
@@ -128,12 +173,38 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
+private fun Modifier.autofill(
+    autofillTypes: List<AutofillType>,
+    onFill: ((String) -> Unit),
+) = composed {
+    val autofill = LocalAutofill.current
+    val autofillNode = AutofillNode(onFill = onFill, autofillTypes = autofillTypes)
+    LocalAutofillTree.current += autofillNode
+
+    this
+        .onGloballyPositioned { autofillNode.boundingBox = it.boundsInWindow() }
+        .onFocusChanged { focusState ->
+            autofill?.run {
+                if (focusState.isFocused) {
+                    requestAutofillForNode(autofillNode)
+                } else {
+                    cancelAutofillForNode(autofillNode)
+                }
+            }
+        }
+}
+
 @Composable
 private fun LoginViewModel.ObserveEvents(onLoggedIn: () -> Unit) {
+    val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
                 LoginComplete -> onLoggedIn()
+                LoginEvent.WellKnownMissing -> {
+                    Toast.makeText(context, "Couldn't find the homeserver, please enter the server URL", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }

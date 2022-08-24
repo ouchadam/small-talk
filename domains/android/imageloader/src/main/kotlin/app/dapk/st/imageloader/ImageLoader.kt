@@ -1,12 +1,13 @@
 package app.dapk.st.imageloader
 
 import android.content.Context
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.widget.ImageView
-import androidx.core.graphics.drawable.toBitmap
 import coil.imageLoader
 import coil.request.ImageRequest
+import coil.request.ImageResult
 import coil.transform.CircleCropTransformation
 import coil.transform.Transformation
 import coil.load as coilLoad
@@ -14,7 +15,6 @@ import coil.load as coilLoad
 interface ImageLoader {
 
     suspend fun load(url: String, transformation: Transformation? = null): Drawable?
-
 }
 
 interface IconLoader {
@@ -31,19 +31,24 @@ class CachedIcons(private val imageLoader: ImageLoader) : IconLoader {
 
     override suspend fun load(url: String): Icon? {
         return cache.getOrPut(url) {
-            imageLoader.load(url, transformation = circleCrop)?.toBitmap()?.let {
+            imageLoader.load(url, transformation = circleCrop)?.asBitmap()?.let {
                 Icon.createWithBitmap(it)
             }
         }
     }
 }
 
+private fun Drawable.asBitmap() = (this as? BitmapDrawable)?.bitmap
 
 internal class CoilImageLoader(private val context: Context) : ImageLoader {
 
     private val coil = context.imageLoader
 
     override suspend fun load(url: String, transformation: Transformation?): Drawable? {
+        return internalLoad(url, transformation).drawable
+    }
+
+    private suspend fun internalLoad(url: String, transformation: Transformation?): ImageResult {
         val request = ImageRequest.Builder(context)
             .data(url)
             .let {
@@ -53,7 +58,7 @@ internal class CoilImageLoader(private val context: Context) : ImageLoader {
                 }
             }
             .build()
-        return coil.execute(request).drawable
+        return coil.execute(request)
     }
 }
 

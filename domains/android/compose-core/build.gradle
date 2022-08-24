@@ -1,0 +1,7 @@
+applyAndroidComposeLibraryModule(project)
+
+dependencies {
+    implementation project(":core")
+    implementation project(":features:navigator")
+    api project(":domains:android:core")
+}

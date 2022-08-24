@@ -16,7 +16,7 @@ internal class EventLookupUseCase(
     }
 
     private fun DecryptedTimeline.lookup(id: EventId) = this.value
-        .filterIsInstance<ApiTimelineEvent.TimelineText>()
+        .filterIsInstance<ApiTimelineEvent.TimelineMessage>()
         .firstOrNull { it.id == id }
         ?.let { LookupResult(apiTimelineEvent = it, roomEvent = null) }
 

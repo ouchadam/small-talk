@@ -2,6 +2,7 @@ package app.dapk.st.messenger
 
 import app.dapk.st.core.Lce
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.navigator.MessageAttachment
 
 data class MessengerScreenState(
     val roomId: RoomId?,
@@ -15,6 +16,10 @@ sealed interface ComposerState {
 
     data class Text(
         val value: String,
+    ) : ComposerState
+
+    data class Attachments(
+        val values: List<MessageAttachment>,
     ) : ComposerState
 
 }

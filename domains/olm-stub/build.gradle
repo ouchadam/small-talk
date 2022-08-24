@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    compileOnly 'org.json:json:20211205'
+    compileOnly 'org.json:json:20220320'
 }

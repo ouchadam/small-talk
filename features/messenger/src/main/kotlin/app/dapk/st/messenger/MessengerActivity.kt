@@ -9,11 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
+import app.dapk.st.core.*
 import app.dapk.st.design.components.SmallTalkTheme
-import app.dapk.st.core.DapkActivity
-import app.dapk.st.core.module
-import app.dapk.st.core.viewModel
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.navigator.MessageAttachment
 import kotlinx.parcelize.Parcelize
 
 class MessengerActivity : DapkActivity() {
@@ -34,15 +33,22 @@ class MessengerActivity : DapkActivity() {
                 putExtra("shortcut_key", roomId.value)
             }
         }
+
+        fun newMessageAttachment(context: Context, roomId: RoomId, attachments: List<MessageAttachment>): Intent {
+            return Intent(context, MessengerActivity::class.java).apply {
+                putExtra("key", MessagerActivityPayload(roomId.value, attachments))
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val payload = readPayload<MessagerActivityPayload>()
+        log(AppLogTag.ERROR_NON_FATAL, payload)
         setContent {
             SmallTalkTheme {
                 Surface(Modifier.fillMaxSize()) {
-                    MessengerScreen(RoomId(payload.roomId), viewModel, navigator)
+                    MessengerScreen(RoomId(payload.roomId), payload.attachments, viewModel, navigator)
                 }
             }
         }
@@ -51,7 +57,10 @@ class MessengerActivity : DapkActivity() {
 
 @Parcelize
 data class MessagerActivityPayload(
-    val roomId: String
+    val roomId: String,
+    val attachments: List<MessageAttachment>? = null
 ) : Parcelable
 
-fun <T : Parcelable> Activity.readPayload(): T = intent.getParcelableExtra("key")!!
+fun <T : Parcelable> Activity.readPayload(): T = intent.getParcelableExtra("key") ?: intent.getStringExtra("shortcut_key")!!.let {
+    MessagerActivityPayload(it) as T
+}

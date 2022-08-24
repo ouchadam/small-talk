@@ -10,16 +10,24 @@ import app.dapk.st.matrix.common.UserCredentials
 private val SERVICE_KEY = AuthService::class
 
 interface AuthService : MatrixService {
-    suspend fun login(userName: String, password: String): UserCredentials
+    suspend fun login(request: LoginRequest): LoginResult
     suspend fun register(userName: String, password: String, homeServer: String): UserCredentials
+
+
+    sealed interface LoginResult {
+        data class Success(val userCredentials: UserCredentials) : LoginResult
+        object MissingWellKnown : LoginResult
+        data class Error(val cause: Throwable) : LoginResult
+    }
+
+    data class LoginRequest(val userName: String, val password: String, val serverUrl: String?)
 }
 
 fun MatrixServiceInstaller.installAuthService(
     credentialsStore: CredentialsStore,
-    authConfig: AuthConfig = AuthConfig(),
 ) {
     this.install { (httpClient, json) ->
-        SERVICE_KEY to DefaultAuthService(httpClient, credentialsStore, json, authConfig)
+        SERVICE_KEY to DefaultAuthService(httpClient, credentialsStore, json)
     }
 }
 

@@ -10,6 +10,13 @@ SELECT blob
 FROM dbRoomMember
 WHERE room_id = ? AND user_id IN ?;
 
+selectMembersByRoom:
+SELECT blob
+FROM dbRoomMember
+WHERE room_id = ?
+LIMIT ?;
+
+
 insert:
 INSERT OR REPLACE INTO dbRoomMember(user_id, room_id, blob)
 VALUES (?, ?, ?);

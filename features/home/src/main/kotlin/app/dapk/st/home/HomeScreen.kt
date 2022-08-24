@@ -1,6 +1,5 @@
 package app.dapk.st.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 homeViewModel.start()
             }
 
+
             when (val state = homeViewModel.state) {
                 Loading -> CenteredLoading()
                 is SignedIn -> {
@@ -38,8 +38,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                                 when (state.page) {
                                     Directory -> DirectoryScreen(homeViewModel.directory())
                                     Profile -> {
-                                        BackHandler { homeViewModel.changePage(Directory) }
-                                        ProfileScreen(homeViewModel.profile())
+                                        ProfileScreen(homeViewModel.profile()) {
+                                            homeViewModel.changePage(Directory)
+                                        }
                                     }
                                 }
                             }
@@ -66,7 +67,12 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                     Directory -> BottomNavigationItem(
                         icon = { Icon(page.icon, contentDescription = null) },
                         selected = state.page == page,
-                        onClick = { homeViewModel.changePage(page) },
+                        onClick = {
+                            when {
+                                state.page == page -> homeViewModel.scrollToTopOfMessages()
+                                else -> homeViewModel.changePage(page)
+                            }
+                        },
                     )
                     Profile -> BottomNavigationItem(
                         icon = {

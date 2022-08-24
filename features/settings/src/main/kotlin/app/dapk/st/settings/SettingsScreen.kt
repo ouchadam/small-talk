@@ -21,10 +21,12 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -45,6 +47,7 @@ import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit, navigator: Navigator) {
     viewModel.ObserveEvents(onSignOut)
@@ -65,6 +68,9 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
         item(Page.Routes.encryption) {
             Encryption(viewModel, it)
         }
+        item(Page.Routes.pushProviders) {
+            PushProviders(viewModel, it)
+        }
         item(Page.Routes.importRoomKeys) {
             when (it.importProgress) {
                 null -> {
@@ -80,7 +86,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                                     viewModel.fileSelected(it)
                                 }
                             }
-
+                            val keyboardController = LocalSoftwareKeyboardController.current
                             Button(modifier = Modifier.fillMaxWidth(), onClick = { launcher.launch("text/*") }) {
                                 Text(text = "SELECT FILE".uppercase())
                             }
@@ -92,7 +98,10 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
 
                                 var passphrase by rememberSaveable { mutableStateOf("") }
                                 var passwordVisibility by rememberSaveable { mutableStateOf(false) }
-                                val startImportAction = { viewModel.importFromFileKeys(it.selectedFile.uri, passphrase) }
+                                val startImportAction = {
+                                    keyboardController?.hide()
+                                    viewModel.importFromFileKeys(it.selectedFile.uri, passphrase)
+                                }
 
                                 TextField(
                                     modifier = Modifier.fillMaxWidth(),
@@ -126,6 +135,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                         }
                     }
                 }
+
                 is Lce.Content -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -136,6 +146,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                         }
                     }
                 }
+
                 is Lce.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -146,6 +157,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                         }
                     }
                 }
+
                 is Lce.Loading -> CenteredLoading()
             }
         }
@@ -170,6 +182,7 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
 
                             SettingsTextRow(item.content, item.subtitle, itemOnClick)
                         }
+
                         is SettingItem.AccessToken -> {
                             Row(
                                 Modifier
@@ -187,11 +200,20 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
                                 }
                             }
                         }
+
                         is SettingItem.Header -> Header(item.label)
                     }
                 }
                 item { Spacer(Modifier.height(12.dp)) }
             }
+        }
+
+        is Lce.Error -> {
+            // TODO
+        }
+
+        is Lce.Loading -> {
+            // TODO
         }
     }
 }
@@ -199,11 +221,35 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
 @Composable
 private fun Encryption(viewModel: SettingsViewModel, page: Page.Security) {
     Column {
-        TextRow("Import room keys", includeDivider = false) {
-            viewModel.goToImportRoom()
-        }
+        TextRow("Import room keys", includeDivider = false, onClick = { viewModel.goToImportRoom() })
     }
 }
+
+
+@Composable
+private fun PushProviders(viewModel: SettingsViewModel, state: Page.PushProviders) {
+    LaunchedEffect(true) {
+        viewModel.fetchPushProviders()
+    }
+
+    when (val lce = state.options) {
+        null -> {}
+        is Lce.Loading -> CenteredLoading()
+        is Lce.Content -> {
+            LazyColumn {
+                items(lce.value) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = it == state.selection, onClick = { viewModel.selectPushProvider(it) })
+                        Text(it.id)
+                    }
+                }
+            }
+        }
+
+        is Lce.Error -> TODO()
+    }
+}
+
 
 @Composable
 private fun SettingsViewModel.ObserveEvents(onSignOut: () -> Unit) {
@@ -217,10 +263,12 @@ private fun SettingsViewModel.ObserveEvents(onSignOut: () -> Unit) {
                     clipboard.setPrimaryClip(ClipData.newPlainText("dapk token", it.content))
                     Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 }
+
                 is SettingsEvent.Toast -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 OpenEventLog -> {
                     context.startActivity(Intent(context, EventLogActivity::class.java))
                 }
+
                 is OpenUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = it.url.toUri() })
                 }

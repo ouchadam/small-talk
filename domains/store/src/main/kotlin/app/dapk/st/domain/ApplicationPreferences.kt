@@ -1,0 +1,19 @@
+package app.dapk.st.domain
+
+class ApplicationPreferences(
+    private val preferences: Preferences,
+) {
+
+    suspend fun readVersion(): ApplicationVersion? {
+        return preferences.readString("version")?.let { ApplicationVersion(it.toInt()) }
+    }
+
+    suspend fun setVersion(version: ApplicationVersion) {
+        return preferences.store("version", version.value.toString())
+    }
+
+}
+
+@JvmInline
+value class ApplicationVersion(val value: Int)
+

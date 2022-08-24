@@ -4,7 +4,6 @@ import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.matrix.common.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -23,6 +22,8 @@ sealed class RoomEvent {
 
     abstract val eventId: EventId
     abstract val utcTimestamp: Long
+    abstract val author: RoomMember
+    abstract val meta: MessageMeta
 
     @Serializable
     @SerialName("message")
@@ -30,8 +31,8 @@ sealed class RoomEvent {
         @SerialName("event_id") override val eventId: EventId,
         @SerialName("timestamp") override val utcTimestamp: Long,
         @SerialName("content") val content: String,
-        @SerialName("author") val author: RoomMember,
-        @SerialName("meta") val meta: MessageMeta,
+        @SerialName("author") override val author: RoomMember,
+        @SerialName("meta") override val meta: MessageMeta,
         @SerialName("encrypted_content") val encryptedContent: MegOlmV1? = null,
         @SerialName("edited") val edited: Boolean = false,
     ) : RoomEvent() {
@@ -44,7 +45,6 @@ sealed class RoomEvent {
             @SerialName("session_id") val sessionId: SessionId,
         )
 
-        @Transient
         val time: String by unsafeLazy {
             val instant = Instant.ofEpochMilli(utcTimestamp)
             ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
@@ -54,19 +54,56 @@ sealed class RoomEvent {
     @Serializable
     @SerialName("reply")
     data class Reply(
-        @SerialName("message") val message: Message,
-        @SerialName("in_reply_to") val replyingTo: Message,
+        @SerialName("message") val message: RoomEvent,
+        @SerialName("in_reply_to") val replyingTo: RoomEvent,
     ) : RoomEvent() {
 
         override val eventId: EventId = message.eventId
         override val utcTimestamp: Long = message.utcTimestamp
+        override val author: RoomMember = message.author
+        override val meta: MessageMeta = message.meta
 
         val replyingToSelf = replyingTo.author == message.author
 
-        @Transient
         val time: String by unsafeLazy {
             val instant = Instant.ofEpochMilli(utcTimestamp)
             ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
+        }
+    }
+
+    @Serializable
+    @SerialName("image")
+    data class Image(
+        @SerialName("event_id") override val eventId: EventId,
+        @SerialName("timestamp") override val utcTimestamp: Long,
+        @SerialName("image_meta") val imageMeta: ImageMeta,
+        @SerialName("author") override val author: RoomMember,
+        @SerialName("meta") override val meta: MessageMeta,
+        @SerialName("encrypted_content") val encryptedContent: Message.MegOlmV1? = null,
+        @SerialName("edited") val edited: Boolean = false,
+    ) : RoomEvent() {
+
+        val time: String by unsafeLazy {
+            val instant = Instant.ofEpochMilli(utcTimestamp)
+            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
+        }
+
+        @Serializable
+        data class ImageMeta(
+            @SerialName("width") val width: Int?,
+            @SerialName("height") val height: Int?,
+            @SerialName("url") val url: String,
+            @SerialName("keys") val keys: Keys?,
+        ) {
+
+            @Serializable
+            data class Keys(
+                @SerialName("k") val k: String,
+                @SerialName("iv") val iv: String,
+                @SerialName("v") val v: String,
+                @SerialName("hashes") val hashes: Map<String, String>,
+            )
+
         }
     }
 

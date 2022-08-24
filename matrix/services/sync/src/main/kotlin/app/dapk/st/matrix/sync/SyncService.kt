@@ -8,7 +8,6 @@ import app.dapk.st.matrix.MatrixServiceInstaller
 import app.dapk.st.matrix.ServiceDepFactory
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.sync.internal.DefaultSyncService
-import app.dapk.st.matrix.sync.internal.SideEffectFlowIterator
 import app.dapk.st.matrix.sync.internal.request.*
 import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.matrix.sync.internal.room.MissingMessageDecrypter
@@ -19,11 +18,11 @@ private val SERVICE_KEY = SyncService::class
 
 interface SyncService : MatrixService {
 
-    suspend fun invites(): Flow<InviteState>
-    suspend fun overview(): Flow<OverviewState>
-    suspend fun room(roomId: RoomId): Flow<RoomState>
-    suspend fun startSyncing(): Flow<Unit>
-    suspend fun events(): Flow<List<SyncEvent>>
+    fun invites(): Flow<InviteState>
+    fun overview(): Flow<OverviewState>
+    fun room(roomId: RoomId): Flow<RoomState>
+    fun startSyncing(): Flow<Unit>
+    fun events(): Flow<List<SyncEvent>>
     suspend fun observeEvent(eventId: EventId): Flow<EventId>
     suspend fun forceManualRefresh(roomIds: List<RoomId>)
 
@@ -129,6 +128,7 @@ internal object NoOpKeySharer : KeySharer {
 
 interface RoomMembersService {
     suspend fun find(roomId: RoomId, userIds: List<UserId>): List<RoomMember>
+    suspend fun findSummary(roomId: RoomId): List<RoomMember>
     suspend fun insert(roomId: RoomId, members: List<RoomMember>)
 }
 

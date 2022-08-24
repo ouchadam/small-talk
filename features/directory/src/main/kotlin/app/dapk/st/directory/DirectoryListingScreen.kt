@@ -10,29 +10,34 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.design.components.CircleishAvatar
+import app.dapk.st.design.components.GenericEmpty
+import app.dapk.st.design.components.GenericError
+import app.dapk.st.design.components.Toolbar
 import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
 import app.dapk.st.directory.DirectoryScreenState.Content
 import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
-import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.matrix.sync.SyncService
@@ -44,36 +49,56 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.math.roundToInt
 
 @Composable
 fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     val state = directoryViewModel.state
-    directoryViewModel.ObserveEvents()
+
+    val listState: LazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = 0,
+    )
+
+    val toolbarHeight = 72.dp
+    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.roundToPx().toFloat() }
+    val toolbarOffsetHeightPx = remember { mutableStateOf(0f) }
+
+    directoryViewModel.ObserveEvents(listState, toolbarOffsetHeightPx)
+
     LifecycleEffect(
         onStart = { directoryViewModel.start() },
         onStop = { directoryViewModel.stop() }
     )
 
-    when (state) {
-        is Content -> {
-            Content(state)
-        }
-        EmptyLoading -> CenteredLoading()
-        is Error -> {
-            Box(contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Something went wrong...")
-                    Button(onClick = {}) {
-                        Text("Retry")
-                    }
-                }
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                val newOffset = toolbarOffsetHeightPx.value + delta
+                toolbarOffsetHeightPx.value = newOffset.coerceIn(-toolbarHeightPx, 0f)
+                return Offset.Zero
             }
         }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(nestedScrollConnection)
+    ) {
+        when (state) {
+            EmptyLoading -> CenteredLoading()
+            DirectoryScreenState.Empty -> GenericEmpty()
+            is Error -> GenericError {
+                // TODO
+            }
+            is Content -> Content(listState, state)
+        }
+        Toolbar(title = "Messages", offset = { IntOffset(x = 0, y = toolbarOffsetHeightPx.value.roundToInt()) })
     }
 }
 
 @Composable
-private fun DirectoryViewModel.ObserveEvents() {
+private fun DirectoryViewModel.ObserveEvents(listState: LazyListState, toolbarPosition: MutableState<Float>) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
@@ -81,21 +106,24 @@ private fun DirectoryViewModel.ObserveEvents() {
                 is OpenDownloadUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it.url)))
                 }
+                DirectoryEvent.ScrollToTop -> {
+                    toolbarPosition.value = 0f
+                    listState.scrollToItem(0)
+                }
             }
         }
     }
 }
 
+
+val clock = Clock.systemUTC()
+
 @Composable
-private fun Content(state: Content) {
+private fun Content(listState: LazyListState, state: Content) {
     val context = LocalContext.current
     val navigateToRoom = { roomId: RoomId ->
         context.startActivity(MessengerActivity.newInstance(context, roomId))
     }
-    val clock = Clock.systemUTC()
-    val listState: LazyListState = rememberLazyListState(
-        initialFirstVisibleItemIndex = 0,
-    )
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = state.overviewState) {
@@ -103,7 +131,7 @@ private fun Content(state: Content) {
             scope.launch { listState.scrollToItem(0) }
         }
     }
-    LazyColumn(Modifier.fillMaxSize(), state = listState) {
+    LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(top = 72.dp)) {
         items(
             items = state.overviewState,
             key = { it.overview.roomId.value },
@@ -119,9 +147,13 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
     val roomName = overview.roomName ?: "Empty room"
     val hasUnread = room.unreadCount.value > 0
 
-    Box(Modifier.height(IntrinsicSize.Min).fillMaxWidth().clickable {
-        onClick(overview.roomId)
-    }) {
+    Box(
+        Modifier
+            .height(IntrinsicSize.Min)
+            .fillMaxWidth()
+            .clickable {
+                onClick(overview.roomId)
+            }) {
         Row(Modifier.padding(20.dp)) {
             val secondaryText = MaterialTheme.colors.onBackground.copy(alpha = 0.5f)
 
@@ -164,13 +196,24 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                         Spacer(modifier = Modifier.width(6.dp))
                         Box(Modifier.align(Alignment.CenterVertically)) {
                             Box(
-                                Modifier.align(Alignment.Center).background(color = MaterialTheme.colors.primary, shape = CircleShape).size(22.dp),
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .background(color = MaterialTheme.colors.primary, shape = CircleShape)
+                                    .size(22.dp),
                                 contentAlignment = Alignment.Center
                             ) {
+                                val unreadTextSize = when (room.unreadCount.value > 99) {
+                                    true -> 9.sp
+                                    false -> 10.sp
+                                }
+                                val unreadLabelContent = when {
+                                    room.unreadCount.value > 99 -> "99+"
+                                    else -> room.unreadCount.value.toString()
+                                }
                                 Text(
-                                    fontSize = 10.sp,
+                                    fontSize = unreadTextSize,
                                     fontWeight = FontWeight.Medium,
-                                    text = room.unreadCount.value.toString(),
+                                    text = unreadLabelContent,
                                     color = MaterialTheme.colors.onPrimary
                                 )
                             }

@@ -4,6 +4,7 @@ import android.net.Uri
 import app.dapk.st.core.Lce
 import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.SpiderPage
+import app.dapk.st.push.Registrar
 
 internal data class SettingsScreenState(
     val page: SpiderPage<out Page>,
@@ -17,9 +18,15 @@ internal sealed interface Page {
         val importProgress: Lce<Unit>? = null,
     ) : Page
 
+    data class PushProviders(
+        val selection: Registrar? = null,
+        val options: Lce<List<Registrar>>? = Lce.Loading()
+    ) : Page
+
     object Routes {
         val root = Route<Root>("Settings")
         val encryption = Route<Page.Security>("Encryption")
+        val pushProviders = Route<Page.PushProviders>("PushProviders")
         val importRoomKeys = Route<Page.ImportRoomKey>("ImportRoomKey")
     }
 }
@@ -42,6 +49,7 @@ internal sealed interface SettingItem {
         AccessToken,
         ClearCache,
         EventLog,
+        PushProvider,
         Encryption,
         PrivacyPolicy,
         Ignored,

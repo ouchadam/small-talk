@@ -19,5 +19,7 @@ sealed interface HomeScreenState {
 
 }
 
-sealed interface HomeEvent
+sealed interface HomeEvent {
+    object Relaunch : HomeEvent
+}
 

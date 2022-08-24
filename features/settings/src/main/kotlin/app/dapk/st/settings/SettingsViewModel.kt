@@ -6,9 +6,10 @@ import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
-import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.push.PushTokenRegistrars
+import app.dapk.st.push.Registrar
 import app.dapk.st.settings.SettingItem.Id.*
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.viewmodel.DapkViewModel
@@ -19,13 +20,13 @@ import kotlinx.coroutines.launch
 private const val PRIVACY_POLICY_URL = "https://ouchadam.github.io/small-talk/privacy/"
 
 internal class SettingsViewModel(
-    private val credentialsStore: CredentialsStore,
     private val cacheCleaner: StoreCleaner,
     private val contentResolver: ContentResolver,
     private val cryptoService: CryptoService,
     private val syncService: SyncService,
     private val uriFilenameResolver: UriFilenameResolver,
     private val settingsItemFactory: SettingsItemFactory,
+    private val pushTokenRegistrars: PushTokenRegistrars,
     factory: MutableStateFactory<SettingsScreenState> = defaultStateFactory(),
 ) : DapkViewModel<SettingsScreenState, SettingsEvent>(
     initialState = SettingsScreenState(SpiderPage(Page.Routes.root, "Settings", null, Page.Root(Lce.Loading()))),
@@ -37,7 +38,6 @@ internal class SettingsViewModel(
             val root = Page.Root(Lce.Content(settingsItemFactory.root()))
             val rootPage = SpiderPage(Page.Routes.root, "Settings", null, root)
             updateState { copy(page = rootPage) }
-            println("state updated")
         }
     }
 
@@ -49,41 +49,73 @@ internal class SettingsViewModel(
         when (item.id) {
             SignOut -> {
                 viewModelScope.launch {
-                    credentialsStore.clear()
+                    cacheCleaner.cleanCache(removeCredentials = true)
                     _events.emit(SignedOut)
-                    println("emitted")
                 }
             }
+
             AccessToken -> {
                 viewModelScope.launch {
                     require(item is SettingItem.AccessToken)
                     _events.emit(CopyToClipboard("Token copied", item.accessToken))
                 }
             }
+
             ClearCache -> {
                 viewModelScope.launch {
                     cacheCleaner.cleanCache(removeCredentials = false)
                     _events.emit(Toast(message = "Cache deleted"))
                 }
             }
+
             EventLog -> {
                 viewModelScope.launch {
                     _events.emit(OpenEventLog)
                 }
             }
+
             Encryption -> {
                 updateState {
                     copy(page = SpiderPage(Page.Routes.encryption, "Encryption", Page.Routes.root, Page.Security))
                 }
             }
+
             PrivacyPolicy -> {
                 viewModelScope.launch {
                     _events.emit(OpenUrl(PRIVACY_POLICY_URL))
                 }
             }
+
+            PushProvider -> {
+                updateState {
+                    copy(page = SpiderPage(Page.Routes.pushProviders, "Push providers", Page.Routes.root, Page.PushProviders()))
+                }
+            }
+
             Ignored -> {
                 // do nothing
             }
+        }
+    }
+
+    fun fetchPushProviders() {
+        updatePageState<Page.PushProviders> { copy(options = Lce.Loading()) }
+        viewModelScope.launch {
+            val currentSelection = pushTokenRegistrars.currentSelection()
+            val options = pushTokenRegistrars.options()
+            updatePageState<Page.PushProviders> {
+                copy(
+                    selection = currentSelection,
+                    options = Lce.Content(options)
+                )
+            }
+        }
+    }
+
+    fun selectPushProvider(registrar: Registrar) {
+        viewModelScope.launch {
+            pushTokenRegistrars.makeSelection(registrar)
+            fetchPushProviders()
         }
     }
 

@@ -1,11 +1,10 @@
 package app.dapk.st.matrix.auth.internal
 
-import app.dapk.st.matrix.auth.AuthConfig
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ensureTrailingSlash
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import io.ktor.client.statement.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -16,7 +15,6 @@ class RegisterUseCase(
     private val credentialsProvider: CredentialsStore,
     private val json: Json,
     private val fetchWellKnownUseCase: FetchWellKnownUseCase,
-    private val authConfig: AuthConfig,
 ) {
 
     suspend fun register(userName: String, password: String, homeServer: String): UserCredentials {
@@ -28,7 +26,7 @@ class RegisterUseCase(
         } catch (error: ClientRequestException) {
             when (error.response.status.value) {
                 401 -> {
-                    val stage0 = json.decodeFromString(ApiUserInteractive.serializer(), error.response.readText())
+                    val stage0 = json.decodeFromString(ApiUserInteractive.serializer(), error.response.bodyAsText())
                     val supportsDummy = stage0.flows.any { it.stages.any { it == "m.login.dummy" } }
                     if (supportsDummy) {
                         registerAccount(userName, password, baseUrl, stage0.session)
@@ -46,7 +44,12 @@ class RegisterUseCase(
             registerRequest(userName, password, baseUrl, Auth(session, "m.login.dummy"))
         )
         val homeServerUrl = when (authResponse.wellKnown == null) {
-            true -> fetchWellKnownUseCase(baseUrl).homeServer.baseUrl
+            true -> when (val wellKnownResult = fetchWellKnownUseCase(baseUrl)) {
+                is WellKnownResult.Error, -> TODO()
+                WellKnownResult.InvalidWellKnown -> TODO()
+                WellKnownResult.MissingWellKnown -> TODO()
+                is WellKnownResult.Success -> wellKnownResult.wellKnown.homeServer.baseUrl
+            }
             false -> authResponse.wellKnown.homeServer.baseUrl
         }
         return UserCredentials(

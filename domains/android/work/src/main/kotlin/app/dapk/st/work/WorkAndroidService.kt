@@ -3,6 +3,7 @@ package app.dapk.st.work
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.app.job.JobWorkItem
+import android.os.Build
 import app.dapk.st.core.extensions.Scope
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.core.module
@@ -24,11 +25,15 @@ class WorkAndroidService : JobService() {
                 when (it) {
                     is TaskRunner.TaskResult.Failure -> {
                         if (!it.canRetry) {
-                            params.completeWork(it.source)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                params.completeWork(it.source!!)
+                            }
                         }
                     }
                     is TaskRunner.TaskResult.Success -> {
-                        params.completeWork(it.source)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            params.completeWork(it.source!!)
+                        }
                     }
                 }
             }
@@ -40,24 +45,37 @@ class WorkAndroidService : JobService() {
     }
 
     private fun JobParameters.collectAllTasks(): List<RunnableWorkTask> {
-        var work: JobWorkItem?
-        val tasks = mutableListOf<RunnableWorkTask>()
-        do {
-            work = this.dequeueWork()
-            work?.intent?.also { intent ->
-                tasks.add(
-                    RunnableWorkTask(
-                        source = work,
-                        task = WorkTask(
-                            jobId = this.jobId,
-                            type = intent.getStringExtra("task-type")!!,
-                            jsonPayload = intent.getStringExtra("task-payload")!!,
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            var work: JobWorkItem?
+            val tasks = mutableListOf<RunnableWorkTask>()
+            do {
+                work = this.dequeueWork()
+                work?.intent?.also { intent ->
+                    tasks.add(
+                        RunnableWorkTask(
+                            source = work,
+                            task = WorkTask(
+                                jobId = this.jobId,
+                                type = intent.getStringExtra("task-type")!!,
+                                jsonPayload = intent.getStringExtra("task-payload")!!,
+                            )
                         )
                     )
+                }
+            } while (work != null)
+            return tasks
+        } else {
+            return listOf(
+                RunnableWorkTask(
+                    source = null,
+                    task = WorkTask(
+                        jobId = this.jobId,
+                        type = this.extras.getString("task-type")!!,
+                        jsonPayload = this.extras.getString("task-payload")!!,
+                    )
                 )
-            }
-        } while (work != null)
-        return tasks
+            )
+        }
     }
 
     override fun onStopJob(params: JobParameters): Boolean {

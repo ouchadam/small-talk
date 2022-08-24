@@ -27,14 +27,13 @@ fun <T : Any> Spider(currentPage: SpiderPage<T>, onNavigate: (SpiderPage<out T>?
     }
 
     Column {
-        Toolbar(
-            onNavigate = navigateAndPopStack,
-            title = currentPage.label
-        )
-
-        currentPage.parent?.let {
-            BackHandler(onBack = navigateAndPopStack)
+        if (currentPage.hasToolbar) {
+            Toolbar(
+                onNavigate = navigateAndPopStack,
+                title = currentPage.label
+            )
         }
+        BackHandler(onBack = navigateAndPopStack)
         computedWeb[currentPage.route]!!.invoke(currentPage.state)
     }
 }

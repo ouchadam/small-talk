@@ -33,7 +33,7 @@ internal class SharedPreferencesDelegate(
 
     override suspend fun clear() {
         coroutineDispatchers.withIoContext {
-            preferences.edit().clear().apply()
+            preferences.edit().clear().commit()
         }
     }
 }

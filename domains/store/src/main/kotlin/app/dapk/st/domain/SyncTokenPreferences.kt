@@ -1,5 +1,7 @@
 package app.dapk.st.domain
 
+import app.dapk.st.core.AppLogTag
+import app.dapk.st.core.log
 import app.dapk.st.matrix.common.SyncToken
 import app.dapk.st.matrix.sync.SyncStore
 import app.dapk.st.matrix.sync.SyncStore.SyncKey

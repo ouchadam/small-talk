@@ -4,10 +4,9 @@ import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.internal.KtorMatrixHttpClient
 import io.ktor.client.*
-import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
-import io.ktor.client.features.logging.*
-import io.ktor.http.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 class KtorMatrixHttpClientFactory(
@@ -15,12 +14,12 @@ class KtorMatrixHttpClientFactory(
     private val includeLogging: Boolean,
 ) : MatrixHttpClient.Factory {
 
-    override fun create(json: Json): MatrixHttpClient {
+    override fun create(jsonInstance: Json): MatrixHttpClient {
         val client = HttpClient {
-            install(JsonFeature) {
-                serializer = KotlinxSerializer(json)
+            install(ContentNegotiation) {
+                json(jsonInstance)
             }
-
+            expectSuccess = true
             if (includeLogging) {
                 install(Logging) {
                     logger = Logger.SIMPLE

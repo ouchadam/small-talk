@@ -6,15 +6,16 @@ import app.dapk.st.matrix.common.matrixLog
 import kotlinx.coroutines.*
 
 internal class SideEffectFlowIterator(private val logger: MatrixLogger) {
-    suspend fun <T> loop(initial: T?, action: suspend (T?) -> T?) {
+    suspend fun <T> loop(initial: T?, onPost: suspend () -> Unit, onIteration: suspend (T?) -> T?) {
         var previousState = initial
 
         while (currentCoroutineContext().isActive) {
             logger.matrixLog(SYNC, "loop iteration")
             try {
                 previousState = withContext(NonCancellable) {
-                    action(previousState)
+                    onIteration(previousState)
                 }
+                onPost()
             } catch (error: Throwable) {
                 logger.matrixLog(SYNC, "on loop error: ${error.message}")
                 error.printStackTrace()

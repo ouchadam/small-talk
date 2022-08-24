@@ -10,6 +10,7 @@ import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.internal.DefaultRoomService
 import app.dapk.st.matrix.room.internal.RoomMembers
+import app.dapk.st.matrix.room.internal.RoomMembersCache
 
 private val SERVICE_KEY = RoomService::class
 
@@ -20,15 +21,17 @@ interface RoomService : MatrixService {
 
     suspend fun findMember(roomId: RoomId, userId: UserId): RoomMember?
     suspend fun findMembers(roomId: RoomId, userIds: List<UserId>): List<RoomMember>
+    suspend fun findMembersSummary(roomId: RoomId): List<RoomMember>
     suspend fun insertMembers(roomId: RoomId, members: List<RoomMember>)
 
     suspend fun createDm(userId: UserId, encrypted: Boolean): RoomId
 
     suspend fun joinRoom(roomId: RoomId)
+    suspend fun rejectJoinRoom(roomId: RoomId)
 
     data class JoinedMember(
         val userId: UserId,
-        val displayName: String,
+        val displayName: String?,
         val avatarUrl: String?,
     )
 
@@ -39,7 +42,7 @@ fun MatrixServiceInstaller.installRoomService(
     roomMessenger: ServiceDepFactory<RoomMessenger>,
 ) {
     this.install { (httpClient, _, services, logger) ->
-        SERVICE_KEY to DefaultRoomService(httpClient, logger, RoomMembers(memberStore), roomMessenger.create(services))
+        SERVICE_KEY to DefaultRoomService(httpClient, logger, RoomMembers(memberStore, RoomMembersCache()), roomMessenger.create(services))
     }
 }
 
@@ -48,6 +51,7 @@ fun MatrixServiceProvider.roomService(): RoomService = this.getService(key = SER
 interface MemberStore {
     suspend fun insert(roomId: RoomId, members: List<RoomMember>)
     suspend fun query(roomId: RoomId, userIds: List<UserId>): List<RoomMember>
+    suspend fun query(roomId: RoomId, limit: Int): List<RoomMember>
 }
 
 interface RoomMessenger {

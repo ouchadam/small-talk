@@ -1,0 +1,45 @@
+name: Check Size
+
+on:
+  pull_request:
+
+jobs:
+  check-size:
+    name: Check Size
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - uses: gradle/gradle-build-action@v2
+
+      - name: Fetch bundletool
+        run: |
+          curl -s -L https://github.com/google/bundletool/releases/download/1.9.0/bundletool-all-1.9.0.jar --create-dirs -o bin/bundletool.jar
+          chmod +x bin/bundletool.jar
+          echo "#!/bin/bash" >> bin/bundletool
+          echo 'java -jar $(dirname "$0")/bundletool.jar "$@"' >> bin/bundletool
+          chmod +x bin/bundletool
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+
+      - name: Save Size
+        env:
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          mkdir -p ./apk_size
+          echo $(./tools/check-size.sh | tail -1 | cut -d ',' -f2-) > ./apk_size/size.txt
+          echo $PULL_REQUEST_NUMBER > ./apk_size/pr_number.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: apk-size
+          path: |
+            apk_size/size.txt
+            apk_size/pr_number.txt
+          retention-days: 5

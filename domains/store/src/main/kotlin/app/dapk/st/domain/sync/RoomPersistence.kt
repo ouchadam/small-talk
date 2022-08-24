@@ -37,6 +37,13 @@ internal class RoomPersistence(
         }
     }
 
+    override suspend fun remove(rooms: List<RoomId>) {
+        coroutineDispatchers
+        database.roomEventQueries.transaction {
+            rooms.forEach { database.roomEventQueries.remove(it.value) }
+        }
+    }
+
     override fun latest(roomId: RoomId): Flow<RoomState> {
         val overviewFlow = database.overviewStateQueries.selectRoom(roomId.value).asFlow().mapToOneNotNull().map {
             json.decodeFromString(RoomOverview.serializer(), it)
@@ -75,7 +82,7 @@ internal class RoomPersistence(
         }
     }
 
-    override suspend fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>> {
+    override fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>> {
         return database.roomEventQueries.selectAllUnread()
             .asFlow()
             .mapToList()
@@ -91,7 +98,7 @@ internal class RoomPersistence(
             }
     }
 
-    override suspend fun observeUnreadCountById(): Flow<Map<RoomId, Int>> {
+    override fun observeUnreadCountById(): Flow<Map<RoomId, Int>> {
         return database.roomEventQueries.selectAllUnread()
             .asFlow()
             .mapToList()
@@ -107,7 +114,7 @@ internal class RoomPersistence(
         }
     }
 
-    override suspend fun observeEvent(eventId: EventId): Flow<EventId> {
+    override fun observeEvent(eventId: EventId): Flow<EventId> {
         return database.roomEventQueries.selectEvent(event_id = eventId.value)
             .asFlow()
             .mapToOneNotNull()

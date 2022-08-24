@@ -10,12 +10,14 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
-import coil.compose.rememberImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 
 @OptIn(ExperimentalUnitApi::class)
@@ -25,7 +27,8 @@ fun BoxScope.CircleishAvatar(avatarUrl: String?, fallbackLabel: String, size: Dp
         null -> {
             val colors = SmallTalkTheme.extendedColors.getMissingImageColor(fallbackLabel)
             Box(
-                Modifier.align(Alignment.Center)
+                Modifier
+                    .align(Alignment.Center)
                     .background(color = colors.first, shape = CircleShape)
                     .size(size),
                 contentAlignment = Alignment.Center
@@ -40,14 +43,16 @@ fun BoxScope.CircleishAvatar(avatarUrl: String?, fallbackLabel: String, size: Dp
         }
         else -> {
             Image(
-                painter = rememberImagePainter(
-                    data = avatarUrl,
-                    builder = {
-                        transformations(CircleCropTransformation())
-                    }
+                painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(avatarUrl)
+                        .transformations(CircleCropTransformation())
+                        .build()
                 ),
                 contentDescription = null,
-                modifier = Modifier.size(size).align(Alignment.Center)
+                modifier = Modifier
+                    .size(size)
+                    .align(Alignment.Center)
             )
         }
     }
@@ -56,7 +61,11 @@ fun BoxScope.CircleishAvatar(avatarUrl: String?, fallbackLabel: String, size: Dp
 @Composable
 fun MissingAvatarIcon(displayName: String, displayImageSize: Dp) {
     val colors = SmallTalkTheme.extendedColors.getMissingImageColor(displayName)
-    Box(Modifier.background(color = colors.first, shape = CircleShape).size(displayImageSize), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier
+            .background(color = colors.first, shape = CircleShape)
+            .size(displayImageSize), contentAlignment = Alignment.Center
+    ) {
         Text(
             text = (displayName).first().toString().uppercase(),
             color = colors.second
@@ -67,11 +76,11 @@ fun MissingAvatarIcon(displayName: String, displayImageSize: Dp) {
 @Composable
 fun MessengerUrlIcon(avatarUrl: String, displayImageSize: Dp) {
     Image(
-        painter = rememberImagePainter(
-            data = avatarUrl,
-            builder = {
-                transformations(CircleCropTransformation())
-            }
+        painter = rememberAsyncImagePainter(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(avatarUrl)
+                .transformations(CircleCropTransformation())
+                .build()
         ),
         contentDescription = null,
         modifier = Modifier.size(displayImageSize)

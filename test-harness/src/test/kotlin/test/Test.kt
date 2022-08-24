@@ -3,18 +3,34 @@
 package test
 
 import TestMessage
+import TestUser
 import app.dapk.st.core.extensions.ifNull
+import app.dapk.st.matrix.common.MxUrl
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.RoomMember
+import app.dapk.st.matrix.common.convertMxUrToUrl
+import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.syncService
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.util.cio.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.fail
 import org.amshove.kluent.shouldBeEqualTo
+import java.io.File
+import java.math.BigInteger
+import java.net.URL
+import java.security.MessageDigest
+import java.util.*
 
 fun flowTest(block: suspend MatrixTestScope.() -> Unit) {
     runTest {
@@ -30,6 +46,8 @@ fun restoreLoginAndInitialSync(m1: TestMatrix, m2: TestMatrix, testBody: suspend
         println("restore login 2")
         m2.restoreLogin()
         val testHelper = MatrixTestScope(this)
+        testHelper.testMatrix(m1)
+        testHelper.testMatrix(m2)
         with(testHelper) {
             combine(m1.client.syncService().startSyncing(), m2.client.syncService().startSyncing()) { _, _ -> }.collectAsync {
                 m1.client.syncService().overview().first()
@@ -37,6 +55,7 @@ fun restoreLoginAndInitialSync(m1: TestMatrix, m2: TestMatrix, testBody: suspend
                 testBody(testHelper, m1, m2)
             }
         }
+        testHelper.release()
     }
 }
 
@@ -53,6 +72,7 @@ suspend fun <T> Flow<T>.collectAsync(scope: CoroutineScope, block: suspend () ->
 class MatrixTestScope(private val testScope: TestScope) {
 
     private val inProgressExpects = mutableListOf<Deferred<*>>()
+    private val inProgressInstances = mutableListOf<TestMatrix>()
 
     suspend fun <T> Flow<T>.collectAsync(block: suspend () -> Unit) {
         collectAsync(testScope, block)
@@ -98,6 +118,7 @@ class MatrixTestScope(private val testScope: TestScope) {
         val collected = mutableListOf<T>()
         val work = testScope.async {
             flow.onEach {
+                println("found: $it")
                 collected.add(it)
             }.first { it == expected }
         }
@@ -117,18 +138,51 @@ class MatrixTestScope(private val testScope: TestScope) {
             .expect { it.any { it.roomId == roomId } }
     }
 
-    suspend fun TestMatrix.expectMessage(roomId: RoomId, message: TestMessage) {
+    suspend fun TestMatrix.expectTextMessage(roomId: RoomId, message: TestMessage) {
+        println("expecting ${message.content}")
         this.client.syncService().room(roomId)
             .map { it.events.filterIsInstance<RoomEvent.Message>().map { TestMessage(it.content, it.author) }.firstOrNull() }
             .assert(message)
     }
 
-    suspend fun TestMatrix.sendEncryptedMessage(roomId: RoomId, content: String) {
+    suspend fun TestMatrix.expectImageMessage(roomId: RoomId, image: File, author: RoomMember) {
+        println("expecting ${image.absolutePath} from ${author.displayName}")
+        this.client.syncService().room(roomId)
+            .map {
+                it.events.filterIsInstance<RoomEvent.Image>().map {
+                    println("found: ${it.imageMeta.url}")
+                    val output = File(image.parentFile.absolutePath, "output.png")
+                    HttpClient().request(it.imageMeta.url).bodyAsChannel().copyAndClose(output.writeChannel())
+                    output.readBytes().md5Hash() to it.author
+                }.firstOrNull()
+            }
+            .assert(image.readBytes().md5Hash() to author)
+    }
+
+    suspend fun TestMatrix.sendTextMessage(roomId: RoomId, content: String, isEncrypted: Boolean) {
+        println("sending $content")
         this.client.messageService().scheduleMessage(
             MessageService.Message.TextMessage(
                 content = MessageService.Message.Content.TextContent(body = content),
                 roomId = roomId,
-                sendEncrypted = true,
+                sendEncrypted = isEncrypted,
+                localId = "local.${UUID.randomUUID()}",
+                timestampUtc = System.currentTimeMillis(),
+            )
+        )
+    }
+
+    suspend fun TestMatrix.sendImageMessage(roomId: RoomId, file: File, isEncrypted: Boolean) {
+        println("sending ${file.name}")
+        this.client.messageService().scheduleMessage(
+            MessageService.Message.ImageMessage(
+                content = MessageService.Message.Content.ApiImageContent(
+                    uri = file.absolutePath,
+                ),
+                roomId = roomId,
+                sendEncrypted = isEncrypted,
+                localId = "local.${UUID.randomUUID()}",
+                timestampUtc = System.currentTimeMillis(),
             )
         )
     }
@@ -140,4 +194,21 @@ class MatrixTestScope(private val testScope: TestScope) {
         }
     }
 
+    fun testMatrix(user: TestUser, isTemp: Boolean, withLogging: Boolean = false) = TestMatrix(
+        user,
+        temporaryDatabase = isTemp,
+        includeLogging = withLogging
+    ).also { inProgressInstances.add(it) }
+
+    fun testMatrix(testMatrix: TestMatrix) = inProgressInstances.add(testMatrix)
+
+    suspend fun release() {
+        inProgressInstances.forEach { it.release() }
+    }
+}
+
+private fun ByteArray.md5Hash(): String {
+    val md = MessageDigest.getInstance("MD5")
+    val bigInt = BigInteger(1, md.digest(this))
+    return String.format("%032x", bigInt)
 }

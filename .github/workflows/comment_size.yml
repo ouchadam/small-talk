@@ -1,0 +1,44 @@
+name: Comment APK Size
+
+on:
+  workflow_run:
+    workflows: [ "Check Size" ]
+    types:
+      - completed
+
+jobs:
+  comment-size:
+    name: Comment Size
+    runs-on: ubuntu-latest
+    if: >
+      ${{ github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: dawidd6/action-download-artifact@v2
+        with:
+          name: apk-size
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+
+      - name: Check release size
+        run: |
+          ls -R
+          echo "::set-output name=APK_SIZE::$(cat size.txt)"
+          echo "::set-output name=PR_NUMBER::$(cat pr_number.txt)"
+        id: size
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ steps.size.outputs.PR_NUMBER }}
+          comment-author: 'github-actions[bot]'
+          body-includes: APK Size
+      - name: Publish size to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ steps.size.outputs.PR_NUMBER }}
+          body: |
+            APK Size: ${{ steps.size.outputs.APK_SIZE }}
+          edit-mode: replace

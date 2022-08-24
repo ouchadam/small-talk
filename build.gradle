@@ -9,7 +9,7 @@ buildscript {
         classpath Dependencies.mavenCentral.kotlinGradlePlugin
         classpath Dependencies.mavenCentral.sqldelightGradlePlugin
         classpath Dependencies.mavenCentral.kotlinSerializationGradlePlugin
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.8.1'
+        classpath Dependencies.google.firebaseCrashlyticsPlugin
     }
 }
 
@@ -18,14 +18,16 @@ def launchTask = getGradle()
         .getTaskRequests()
         .toString()
         .toLowerCase()
+def isReleaseBuild = launchTask.contains("release")
+ext.isDebugBuild = !isReleaseBuild
 
 subprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             jvmTarget = "1.8"
             freeCompilerArgs = [
-                    '-Xopt-in=kotlin.contracts.ExperimentalContracts',
-                    '-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                    '-opt-in=kotlin.contracts.ExperimentalContracts',
+                    '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
             ]
         }
     }
@@ -52,7 +54,7 @@ ext.applyLibraryPlugins = { project ->
     project.apply plugin: 'kotlin-android'
 }
 
-ext.androidSdkVersion = 31
+ext.androidSdkVersion = 32
 
 ext.applyCommonAndroidParameters = { project ->
     def android = project.android
@@ -63,13 +65,8 @@ ext.applyCommonAndroidParameters = { project ->
         incremental = true
     }
     android.defaultConfig {
-        minSdkVersion 29
+        minSdkVersion 24
         targetSdkVersion androidSdkVersion
-    }
-
-    android.buildFeatures.compose = true
-    android.composeOptions {
-        kotlinCompilerExtensionVersion = Dependencies.google.kotlinCompilerExtensionVersion
     }
 }
 
@@ -101,17 +98,26 @@ ext.applyCompose = { project ->
     dependencies.implementation Dependencies.google.androidxComposeMaterial
     dependencies.implementation Dependencies.google.androidxComposeIconsExtended
     dependencies.implementation Dependencies.google.androidxActivityCompose
+
+    def android = project.android
+    android.buildFeatures.compose = true
+    android.composeOptions {
+        kotlinCompilerExtensionVersion = Dependencies.google.kotlinCompilerExtensionVersion
+    }
+}
+
+ext.applyAndroidComposeLibraryModule = { project ->
+    applyAndroidLibraryModule(project)
+    applyCompose(project)
 }
 
 ext.applyAndroidLibraryModule = { project ->
     applyLibraryPlugins(project)
     applyCommonAndroidParameters(project)
     applyLibraryModuleOptimisations(project)
-    applyCompose(project)
 }
 
 ext.applyCrashlyticsIfRelease = { project ->
-    def isReleaseBuild = launchTask.contains("release")
     if (isReleaseBuild) {
         project.apply plugin: 'com.google.firebase.crashlytics'
         project.afterEvaluate {
@@ -126,16 +132,17 @@ ext.kotlinTest = { dependencies ->
     dependencies.testImplementation Dependencies.mavenCentral.kluent
     dependencies.testImplementation Dependencies.mavenCentral.kotlinTest
     dependencies.testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.6.10"
-    dependencies.testImplementation 'io.mockk:mockk:1.12.2'
-    dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0'
+    dependencies.testImplementation 'io.mockk:mockk:1.12.7'
+    dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
 
-    dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    dependencies.testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    dependencies.testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
 }
 
 ext.kotlinFixtures = { dependencies ->
-    dependencies.testFixturesImplementation 'io.mockk:mockk:1.12.2'
+    dependencies.testFixturesImplementation 'io.mockk:mockk:1.12.7'
     dependencies.testFixturesImplementation Dependencies.mavenCentral.kluent
+    dependencies.testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
 }
 
 ext.androidImportFixturesWorkaround = { project, fixtures ->

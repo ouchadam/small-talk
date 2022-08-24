@@ -1,16 +1,17 @@
 package app.dapk.st.graph
 
-import android.app.Activity
 import android.app.Application
+import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
 import app.dapk.st.SharedPreferencesDelegate
-import app.dapk.st.core.BuildMeta
-import app.dapk.st.core.CoreAndroidModule
-import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.core.SingletonFlows
+import app.dapk.st.core.*
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
@@ -20,8 +21,6 @@ import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.matrix.MatrixClient
-import app.dapk.st.matrix.MatrixTaskRunner
-import app.dapk.st.matrix.MatrixTaskRunner.MatrixTask
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
@@ -34,7 +33,11 @@ import app.dapk.st.matrix.device.installEncryptionService
 import app.dapk.st.matrix.device.internal.ApiMessage
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
-import app.dapk.st.matrix.message.*
+import app.dapk.st.matrix.message.MessageEncrypter
+import app.dapk.st.matrix.message.MessageService
+import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.internal.ImageContentReader
+import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
@@ -44,6 +47,8 @@ import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.messenger.MessengerActivity
 import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.navigator.IntentFactory
+import app.dapk.st.navigator.MessageAttachment
+import app.dapk.st.notifications.MatrixPushHandler
 import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
@@ -51,18 +56,17 @@ import app.dapk.st.olm.OlmWrapper
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushModule
 import app.dapk.st.settings.SettingsModule
+import app.dapk.st.share.ShareEntryModule
 import app.dapk.st.tracking.TrackingModule
-import app.dapk.st.work.TaskRunner
 import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
-import app.dapk.st.work.WorkScheduler
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import kotlinx.coroutines.Dispatchers
 import java.time.Clock
 
 internal class AppModule(context: Application, logger: MatrixLogger) {
 
-    private val buildMeta = BuildMeta(BuildConfig.VERSION_NAME)
+    private val buildMeta = BuildMeta(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
     private val trackingModule by unsafeLazy {
         TrackingModule(
             isCrashTrackingEnabled = !BuildConfig.DEBUG
@@ -71,8 +75,8 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
 
     private val driver = AndroidSqliteDriver(DapkDb.Schema, context, "dapk.db")
     private val database = DapkDb(driver)
-
-    private val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
+    private val clock = Clock.systemUTC()
+    val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
 
     val storeModule = unsafeLazy {
         StoreModule(
@@ -80,31 +84,41 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
             preferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", coroutineDispatchers),
             errorTracker = trackingModule.errorTracker,
             credentialPreferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-credentials-preferences", coroutineDispatchers),
-            databaseDropper = { includeCryptoAccount ->
-                val cursor = driver.executeQuery(
-                    identifier = null,
-                    sql = "SELECT name FROM sqlite_master WHERE type = 'table' ${if (includeCryptoAccount) "" else "AND name != 'dbCryptoAccount'"}",
-                    parameters = 0
-                )
-                while (cursor.next()) {
-                    cursor.getString(0)?.let {
-                        driver.execute(null, "DELETE FROM $it", 0)
-                    }
-                }
-            },
+            databaseDropper = DefaultDatabaseDropper(coroutineDispatchers, driver),
             coroutineDispatchers = coroutineDispatchers
         )
     }
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
-    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers)
-    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker)
+    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
+    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
-        override fun home(activity: Activity) = Intent(activity, MainActivity::class.java)
-        override fun messenger(activity: Activity, roomId: RoomId) = MessengerActivity.newInstance(activity, roomId)
-        override fun messengerShortcut(activity: Activity, roomId: RoomId) = MessengerActivity.newShortcutInstance(activity, roomId)
+        override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
+            context,
+            1000,
+            home(context)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        override fun notificationOpenMessage(context: Context, roomId: RoomId) = PendingIntent.getActivity(
+            context,
+            roomId.hashCode(),
+            messenger(context, roomId)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        override fun home(context: Context) = Intent(context, MainActivity::class.java)
+        override fun messenger(context: Context, roomId: RoomId) = MessengerActivity.newInstance(context, roomId)
+        override fun messengerShortcut(context: Context, roomId: RoomId) = MessengerActivity.newShortcutInstance(context, roomId)
+        override fun messengerAttachments(context: Context, roomId: RoomId, attachments: List<MessageAttachment>) = MessengerActivity.newMessageAttachment(
+            context,
+            roomId,
+            attachments
+        )
     })
 
     val featureModules = FeatureModules(
@@ -112,10 +126,12 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         matrixModules,
         domainModules,
         trackingModule,
+        coreAndroidModule,
         imageLoaderModule,
         context,
         buildMeta,
         coroutineDispatchers,
+        clock,
     )
 }
 
@@ -124,10 +140,12 @@ internal class FeatureModules internal constructor(
     private val matrixModules: MatrixModules,
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
+    private val coreAndroidModule: CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
     coroutineDispatchers: CoroutineDispatchers,
+    clock: Clock,
 ) {
 
     val directoryModule by unsafeLazy {
@@ -155,12 +173,14 @@ internal class FeatureModules internal constructor(
             matrixModules.room,
             storeModule.value.credentialsStore(),
             storeModule.value.roomStore(),
+            clock
         )
     }
-    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile) }
+    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, buildMeta) }
     val settingsModule by unsafeLazy {
         SettingsModule(
             storeModule.value,
+            pushModule,
             matrixModules.crypto,
             matrixModules.sync,
             context.contentResolver,
@@ -168,17 +188,24 @@ internal class FeatureModules internal constructor(
             coroutineDispatchers
         )
     }
-    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync) }
+    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
-            matrixModules.push,
-            matrixModules.sync,
-            storeModule.value.credentialsStore(),
-            domainModules.pushModule.registerFirebasePushTokenUseCase(),
             imageLoaderModule.iconLoader(),
             storeModule.value.roomStore(),
             context,
+            intentFactory = coreAndroidModule.intentFactory(),
+            dispatchers = coroutineDispatchers,
+            deviceMeta = DeviceMeta(Build.VERSION.SDK_INT)
         )
+    }
+
+    val shareEntryModule by unsafeLazy {
+        ShareEntryModule(matrixModules.sync, matrixModules.room)
+    }
+
+    val pushModule by unsafeLazy {
+        domainModules.pushModule
     }
 
 }
@@ -189,6 +216,7 @@ internal class MatrixModules(
     private val workModule: WorkModule,
     private val logger: MatrixLogger,
     private val coroutineDispatchers: CoroutineDispatchers,
+    private val contentResolver: ContentResolver,
 ) {
 
     val matrix by unsafeLazy {
@@ -205,7 +233,8 @@ internal class MatrixModules(
                 installAuthService(credentialsStore)
                 installEncryptionService(store.knownDevicesStore())
 
-                val olmAccountStore = OlmPersistenceWrapper(store.olmStore())
+                val base64 = AndroidBase64()
+                val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), base64)
                 val singletonFlows = SingletonFlows(coroutineDispatchers)
                 val olm = OlmWrapper(
                     olmStore = olmAccountStore,
@@ -225,13 +254,16 @@ internal class MatrixModules(
                             services.roomService().joinedMembers(it).map { it.userId }
                         }
                     },
+                    base64 = base64,
                     coroutineDispatchers = coroutineDispatchers,
                 )
-                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler())) { serviceProvider ->
+                val imageContentReader = AndroidImageContentReader(contentResolver)
+                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader) { serviceProvider ->
                     MessageEncrypter { message ->
                         val result = serviceProvider.cryptoService().encrypt(
                             roomId = when (message) {
                                 is MessageService.Message.TextMessage -> message.roomId
+                                is MessageService.Message.ImageMessage -> message.roomId
                             },
                             credentials = credentialsStore.credentials()!!,
                             when (message) {
@@ -246,6 +278,8 @@ internal class MatrixModules(
                                         )
                                     )
                                 )
+
+                                is MessageService.Message.ImageMessage -> TODO()
                             }
                         )
 
@@ -283,6 +317,14 @@ internal class MatrixModules(
                     store.roomStore(),
                     store.syncStore(),
                     store.filterStore(),
+                    deviceNotifier = { services ->
+                        val encryption = services.deviceService()
+                        val crypto = services.cryptoService()
+                        DeviceNotifier { userIds, syncToken ->
+                            encryption.updateStaleDevices(userIds)
+                            crypto.updateOlmSession(userIds, syncToken)
+                        }
+                    },
                     messageDecrypter = { serviceProvider ->
                         val cryptoService = serviceProvider.cryptoService()
                         MessageDecrypter {
@@ -296,9 +338,9 @@ internal class MatrixModules(
                         }
                     },
                     verificationHandler = { services ->
-                        logger.matrixLog(MatrixLogTag.VERIFICATION, "got a verification request $it")
                         val cryptoService = services.cryptoService()
                         VerificationHandler { apiEvent ->
+                            logger.matrixLog(MatrixLogTag.VERIFICATION, "got a verification request $it")
                             cryptoService.onVerificationEvent(
                                 when (apiEvent) {
                                     is ApiToDeviceEvent.VerificationRequest -> Verification.Event.Requested(
@@ -308,12 +350,14 @@ internal class MatrixModules(
                                         apiEvent.content.methods,
                                         apiEvent.content.timestampPosix,
                                     )
+
                                     is ApiToDeviceEvent.VerificationReady -> Verification.Event.Ready(
                                         apiEvent.sender,
                                         apiEvent.content.fromDevice,
                                         apiEvent.content.transactionId,
                                         apiEvent.content.methods,
                                     )
+
                                     is ApiToDeviceEvent.VerificationStart -> Verification.Event.Started(
                                         apiEvent.sender,
                                         apiEvent.content.fromDevice,
@@ -324,6 +368,7 @@ internal class MatrixModules(
                                         apiEvent.content.short,
                                         apiEvent.content.transactionId,
                                     )
+
                                     is ApiToDeviceEvent.VerificationCancel -> TODO()
                                     is ApiToDeviceEvent.VerificationAccept -> TODO()
                                     is ApiToDeviceEvent.VerificationKey -> Verification.Event.Key(
@@ -331,6 +376,7 @@ internal class MatrixModules(
                                         apiEvent.content.transactionId,
                                         apiEvent.content.key
                                     )
+
                                     is ApiToDeviceEvent.VerificationMac -> Verification.Event.Mac(
                                         apiEvent.sender,
                                         apiEvent.content.transactionId,
@@ -339,14 +385,6 @@ internal class MatrixModules(
                                     )
                                 }
                             )
-                        }
-                    },
-                    deviceNotifier = { services ->
-                        val encryption = services.deviceService()
-                        val crypto = services.cryptoService()
-                        DeviceNotifier { userIds, syncToken ->
-                            encryption.updateStaleDevices(userIds)
-                            crypto.updateOlmSession(userIds, syncToken)
                         }
                     },
                     oneTimeKeyProducer = { services ->
@@ -359,6 +397,7 @@ internal class MatrixModules(
                         val roomService = services.roomService()
                         object : RoomMembersService {
                             override suspend fun find(roomId: RoomId, userIds: List<UserId>) = roomService.findMembers(roomId, userIds)
+                            override suspend fun findSummary(roomId: RoomId) = roomService.findMembersSummary(roomId)
                             override suspend fun insert(roomId: RoomId, members: List<RoomMember>) = roomService.insertMembers(roomId, members)
                         }
                     },
@@ -367,8 +406,6 @@ internal class MatrixModules(
                 )
 
                 installPushService(credentialsStore)
-
-
             }
         }
     }
@@ -385,32 +422,49 @@ internal class MatrixModules(
 internal class DomainModules(
     private val matrixModules: MatrixModules,
     private val errorTracker: ErrorTracker,
+    private val workModule: WorkModule,
+    private val storeModule: Lazy<StoreModule>,
+    private val context: Application,
+    private val dispatchers: CoroutineDispatchers,
 ) {
 
-    val pushModule by unsafeLazy { PushModule(matrixModules.push, errorTracker) }
-    val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run)) }
-}
-
-class BackgroundWorkAdapter(private val workScheduler: WorkScheduler) : BackgroundScheduler {
-    override fun schedule(key: String, task: BackgroundScheduler.Task) {
-        workScheduler.schedule(
-            WorkScheduler.WorkTask(
-                jobId = 1,
-                type = task.type,
-                jsonPayload = task.jsonPayload,
-            )
+    val pushModule by unsafeLazy {
+        val store = storeModule.value
+        val pushHandler = MatrixPushHandler(
+            workScheduler = workModule.workScheduler(),
+            credentialsStore = store.credentialsStore(),
+            matrixModules.sync,
+            store.roomStore(),
+        )
+        PushModule(
+            errorTracker,
+            pushHandler,
+            context,
+            dispatchers,
+            SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", dispatchers)
         )
     }
+    val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
 }
 
-class TaskRunnerAdapter(private val matrixTaskRunner: suspend (MatrixTask) -> MatrixTaskRunner.TaskResult) : TaskRunner {
+internal class AndroidImageContentReader(private val contentResolver: ContentResolver) : ImageContentReader {
+    override fun read(uri: String): ImageContentReader.ImageContent {
+        val androidUri = Uri.parse(uri)
+        val fileStream = contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")
 
-    override suspend fun run(tasks: List<TaskRunner.RunnableWorkTask>): List<TaskRunner.TaskResult> {
-        return tasks.map {
-            when (val result = matrixTaskRunner(MatrixTask(it.task.type, it.task.jsonPayload))) {
-                is MatrixTaskRunner.TaskResult.Failure -> TaskRunner.TaskResult.Failure(it.source, canRetry = result.canRetry)
-                MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success(it.source)
-            }
-        }
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeStream(fileStream, null, options)
+
+        return contentResolver.openInputStream(androidUri)?.use { stream ->
+            val output = stream.readBytes()
+            ImageContentReader.ImageContent(
+                height = options.outHeight,
+                width = options.outWidth,
+                size = output.size.toLong(),
+                mimeType = options.outMimeType,
+                fileName = androidUri.lastPathSegment ?: "file",
+                content = output
+            )
+        } ?: throw IllegalArgumentException("Could not process $uri")
     }
 }

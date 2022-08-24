@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.sync.internal.sync
 
+import app.dapk.st.matrix.common.UserCredentials
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
 import app.dapk.st.matrix.sync.internal.room.RoomEventsDecrypter
@@ -22,13 +23,13 @@ internal class TimelineEventsProcessor(
 
     private suspend fun processNewEvents(roomToProcess: RoomToProcess, previousEvents: List<RoomEvent>): List<RoomEvent> {
         val decryptedTimeline = roomToProcess.apiSyncRoom.timeline.apiTimelineEvents.decryptEvents()
-        val decryptedPreviousEvents = previousEvents.decryptEvents()
+        val decryptedPreviousEvents = previousEvents.decryptEvents(roomToProcess.userCredentials)
 
         val newEvents = with(roomEventCreator) {
             decryptedTimeline.value.mapNotNull { event ->
                 val roomEvent = when (event) {
                     is ApiTimelineEvent.Encrypted -> event.toRoomEvent(roomToProcess.roomId)
-                    is ApiTimelineEvent.TimelineText -> event.toRoomEvent(roomToProcess.roomId) { eventId ->
+                    is ApiTimelineEvent.TimelineMessage -> event.toRoomEvent(roomToProcess.userCredentials, roomToProcess.roomId) { eventId ->
                         eventLookupUseCase.lookup(eventId, decryptedTimeline, decryptedPreviousEvents)
                     }
                     is ApiTimelineEvent.Encryption -> null
@@ -46,7 +47,8 @@ internal class TimelineEventsProcessor(
     }
 
     private suspend fun List<ApiTimelineEvent>.decryptEvents() = DecryptedTimeline(eventDecrypter.decryptTimelineEvents(this))
-    private suspend fun List<RoomEvent>.decryptEvents() = DecryptedRoomEvents(roomEventsDecrypter.decryptRoomEvents(this))
+    private suspend fun List<RoomEvent>.decryptEvents(userCredentials: UserCredentials) =
+        DecryptedRoomEvents(roomEventsDecrypter.decryptRoomEvents(userCredentials, this))
 
 }
 

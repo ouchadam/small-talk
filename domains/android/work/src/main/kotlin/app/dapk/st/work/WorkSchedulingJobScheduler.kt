@@ -6,6 +6,7 @@ import android.app.job.JobWorkItem
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 
 internal class WorkSchedulingJobScheduler(
     private val context: Context,
@@ -23,12 +24,17 @@ internal class WorkSchedulingJobScheduler(
             .setRequiresDeviceIdle(false)
             .build()
 
-        val item = JobWorkItem(
-            Intent()
-                .putExtra("task-type", task.type)
-                .putExtra("task-payload", task.jsonPayload)
-        )
-
-        jobScheduler.enqueue(job, item)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val item = JobWorkItem(
+                Intent()
+                    .putExtra("task-type", task.type)
+                    .putExtra("task-payload", task.jsonPayload)
+            )
+            jobScheduler.enqueue(job, item)
+        } else {
+            job.extras.putString("task-type", task.type)
+            job.extras.putString("task-payload", task.jsonPayload)
+            jobScheduler.schedule(job)
+        }
     }
 }
