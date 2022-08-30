@@ -1,9 +1,12 @@
+import { release } from './release.js'
+
 const config = {
     owner: "ouchadam",
     repo: "small-talk",
     pathToVersionFile: "version.json",
     rcBranchesFrom: "main",
     rcMergesTo: "release",
+    packageName: "app.dapk.st"
 }
 
 const rcBranchName = "release-candidate"
@@ -18,10 +21,16 @@ export const startReleaseProcess = async ({ github, context, core }) => {
     return ""
 }
 
-export const publishRelease  = async (github, artifact) => {
-
+export const publishRelease = async (github, artifacts) => {
+    const versionFile = await readVersionFile(github)
+    await release(
+        github,
+        versionFile.content,
+        config.packageName,
+        artifacts,
+        config,
+    ).catch((error) => console.log(error))
 }
-
 
 const isWorkingBranchAhead = async (github) => {
     const result = await github.rest.repos.compareCommitsWithBasehead({
