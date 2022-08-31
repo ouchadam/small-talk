@@ -173,12 +173,12 @@ const downloadToFile = async (url, options, outputFile) => {
     })
 }
 
-const promoteDraftToLive = async () => {
-    const fappEditId = await startPlayRelease(applicationId)
+const promoteDraftToLive = async (applicationId) => {
+    const editId = await startPlayRelease(applicationId)
 
     await androidPublisher.edits.tracks
         .update({
-            editId: fappEditId,
+            editId: editId,
             packageName: applicationId,
             track: "beta",
             requestBody: {
@@ -194,7 +194,7 @@ const promoteDraftToLive = async () => {
 
 
     await androidPublisher.edits.commit({
-        editId: fappEditId,
+        editId: editId,
         packageName: applicationId,
     }).catch((error) => Promise.reject(error.response.data))
 }
