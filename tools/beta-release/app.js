@@ -6,7 +6,8 @@ const config = {
     pathToVersionFile: "version.json",
     rcBranchesFrom: "main",
     rcMergesTo: "release",
-    packageName: "app.dapk.st"
+    packageName: "app.dapk.st",
+    matrixRoomId: "!jgNenzNPtSpJLjjsxe:matrix.org"
 }
 
 const rcBranchName = "release-candidate"

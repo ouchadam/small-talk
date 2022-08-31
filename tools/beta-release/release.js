@@ -1,8 +1,13 @@
-import * as google from '@googleapis/androidpublisher';
-import * as fs from "fs";
-import * as http from 'https';
-import * as url from 'url';
+import * as google from '@googleapis/androidpublisher'
+import * as fs from "fs"
+import * as http from 'https'
+import matrixcs, * as matrix from 'matrix-js-sdk'
+import request from 'request'
+import * as url from 'url'
+matrixcs.request(request)
 
+const matrixAuth = JSON.parse(fs.readFileSync('.secrets/matrix.json'))
+const client = matrix.createClient(matrixAuth)
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const auth = new google.auth.GoogleAuth({
@@ -63,6 +68,14 @@ export const release = async (github, version, applicationId, artifacts, config)
 
     console.log("Promoting beta draft release to live...")
     await promoteDraftToLive(applicationId)
+
+    const content = {
+        "body": `New release`,
+        "format": "org.matrix.custom.html",
+        "formatted_body": `New release rolling out <a href="${releaseResult.data.url}">${releaseResult.data.tag_name}</a>`,
+        "msgtype": "m.text"
+    }
+    await client.sendEvent(config.matrixRoomId, "m.room.message", content, "")
 }
 
 const startPlayRelease = async (applicationId) => {
@@ -192,4 +205,3 @@ const promoteDraftToLive = async (applicationId) => {
         packageName: applicationId,
     }).catch((error) => Promise.reject(error.response.data))
 }
-
