@@ -56,7 +56,7 @@ import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushModule
-import app.dapk.st.push.firebase.MessagingServiceAdapter
+import app.dapk.st.push.messaging.MessagingServiceAdapter
 import app.dapk.st.settings.SettingsModule
 import app.dapk.st.share.ShareEntryModule
 import app.dapk.st.tracking.TrackingModule

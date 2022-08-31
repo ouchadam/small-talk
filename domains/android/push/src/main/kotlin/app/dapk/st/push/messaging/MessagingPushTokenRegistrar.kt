@@ -1,4 +1,4 @@
-package app.dapk.st.push.firebase
+package app.dapk.st.push.messaging
 
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.extensions.CrashScope
@@ -11,7 +11,7 @@ import app.dapk.st.push.PushTokenRegistrar
 
 private const val SYGNAL_GATEWAY = "https://sygnal.dapk.app/_matrix/push/v1/notify"
 
-class FirebasePushTokenRegistrar(
+class MessagingPushTokenRegistrar(
     override val errorTracker: ErrorTracker,
     private val pushHandler: PushHandler,
     private val messaging: Messaging,
@@ -42,5 +42,7 @@ class FirebasePushTokenRegistrar(
         messaging.deleteToken()
         messaging.disable()
     }
+
+    fun isAvailable() = messaging.isAvailable()
 
 }

@@ -2,6 +2,8 @@ package app.dapk.st.firebase.messaging
 
 class Messaging {
 
+    fun isAvailable() = false
+
     fun enable() {
         // do nothing
     }

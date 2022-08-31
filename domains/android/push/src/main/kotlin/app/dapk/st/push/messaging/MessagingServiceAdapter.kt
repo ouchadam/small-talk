@@ -1,4 +1,4 @@
-package app.dapk.st.push.firebase
+package app.dapk.st.push.messaging
 
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.log
