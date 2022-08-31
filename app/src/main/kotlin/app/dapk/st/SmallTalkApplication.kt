@@ -1,7 +1,6 @@
 package app.dapk.st
 
 import android.app.Application
-import android.content.Intent
 import android.util.Log
 import app.dapk.st.core.CoreAndroidModule
 import app.dapk.st.core.ModuleProvider
@@ -11,13 +10,13 @@ import app.dapk.st.core.extensions.ResettableUnsafeLazy
 import app.dapk.st.core.extensions.Scope
 import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
+import app.dapk.st.firebase.messaging.MessagingModule
 import app.dapk.st.graph.AppModule
 import app.dapk.st.home.HomeModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.profile.ProfileModule
-import app.dapk.st.push.firebase.FirebasePushService
 import app.dapk.st.push.PushModule
 import app.dapk.st.settings.SettingsModule
 import app.dapk.st.share.ShareEntryModule
@@ -75,6 +74,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
             ProfileModule::class -> featureModules.profileModule
             NotificationsModule::class -> featureModules.notificationsModule
             PushModule::class -> featureModules.pushModule
+            MessagingModule::class -> featureModules.messagingModule
             MessengerModule::class -> featureModules.messengerModule
             TaskRunnerModule::class -> appModule.domainModules.taskRunnerModule
             CoreAndroidModule::class -> appModule.coreAndroidModule

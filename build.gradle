@@ -118,7 +118,7 @@ ext.applyAndroidLibraryModule = { project ->
 }
 
 ext.applyCrashlyticsIfRelease = { project ->
-    if (isReleaseBuild) {
+    if (isReleaseBuild && !isFoss()) {
         project.apply plugin: 'com.google.firebase.crashlytics'
         project.afterEvaluate {
             project.tasks.withType(com.google.firebase.crashlytics.buildtools.gradle.tasks.UploadMappingFileTask).configureEach {
@@ -150,6 +150,19 @@ ext.androidImportFixturesWorkaround = { project, fixtures ->
     project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}-test-fixtures.jar")
     project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}.jar")
 }
+
+ext.isFoss = {
+    return rootProject.hasProperty("foss")
+}
+
+ext.firebase = { dependencies, name ->
+    if (isFoss()) {
+        dependencies.implementation(project(":domains:firebase:$name-noop"))
+    } else {
+        dependencies.implementation(project(":domains:firebase:$name"))
+    }
+}
+
 
 if (launchTask.contains("codeCoverageReport".toLowerCase())) {
     apply from: 'tools/coverage.gradle'

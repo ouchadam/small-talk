@@ -2,15 +2,6 @@
 <manifest package="app.dapk.st.push" xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-
-        <service
-            android:name=".firebase.FirebasePushService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
-
         <receiver android:exported="true" android:enabled="true" android:name=".unifiedpush.UnifiedPushMessageReceiver">
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.MESSAGE"/>
