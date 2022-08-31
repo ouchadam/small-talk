@@ -133,12 +133,6 @@ const dowloadSignedUniversalApk = async (version, applicationId, authToken, outp
     })
 
     const apks = apkRes.data.generatedApks
-
-    console.log(`found ${apks.length} apks`)
-    apks.forEach((apk) => {
-        console.log(apk)
-    })
-
     const id = apks[0].generatedUniversalApk.downloadId
 
     console.log(`downloading: ${id}`)
