@@ -24,6 +24,10 @@ android {
         } else {
             resConfigs "en"
         }
+
+        if (isFoss()) {
+            archivesBaseName = "$archivesBaseName-foss"
+        }
     }
 
     bundle {
