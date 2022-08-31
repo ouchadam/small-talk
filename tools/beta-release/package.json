@@ -1,0 +1,11 @@
+{
+  "name": "beta-release",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@googleapis/androidpublisher": "^3.0.0"
+  }
+}

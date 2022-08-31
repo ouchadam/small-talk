@@ -24,6 +24,10 @@ android {
         } else {
             resConfigs "en"
         }
+
+        if (isFoss()) {
+            archivesBaseName = "$archivesBaseName-foss"
+        }
     }
 
     bundle {
@@ -46,8 +50,11 @@ android {
                     "proguard/serializationx.pro",
                     "proguard/olm.pro"
 
-            // actual releases are signed with a different config
-            signingConfig = buildTypes.debug.signingConfig
+            if (project.hasProperty("unsigned")) {
+                // releases are signed externally
+            } else {
+                signingConfig = buildTypes.debug.signingConfig
+            }
         }
     }
 
@@ -81,6 +88,8 @@ dependencies {
     implementation project(":domains:android:work")
     implementation project(":domains:android:imageloader")
     implementation project(":domains:olm")
+
+    firebase(it, "messaging")
 
     implementation project(":matrix:matrix")
     implementation project(":matrix:matrix-http-ktor")

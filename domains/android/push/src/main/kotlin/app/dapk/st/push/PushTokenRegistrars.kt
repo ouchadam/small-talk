@@ -2,7 +2,7 @@ package app.dapk.st.push
 
 import android.content.Context
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
-import app.dapk.st.push.firebase.FirebasePushTokenRegistrar
+import app.dapk.st.push.messaging.MessagingPushTokenRegistrar
 import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
 import org.unifiedpush.android.connector.UnifiedPush
 
@@ -11,7 +11,7 @@ private val NONE = Registrar("None")
 
 class PushTokenRegistrars(
     private val context: Context,
-    private val firebasePushTokenRegistrar: FirebasePushTokenRegistrar,
+    private val messagingPushTokenRegistrar: MessagingPushTokenRegistrar,
     private val unifiedPushRegistrar: UnifiedPushRegistrar,
     private val pushTokenStore: PushTokenRegistrarPreferences,
 ) : PushTokenRegistrar {
@@ -19,27 +19,36 @@ class PushTokenRegistrars(
     private var selection: Registrar? = null
 
     fun options(): List<Registrar> {
-        return listOf(NONE, FIREBASE_OPTION) + UnifiedPush.getDistributors(context).map { Registrar(it) }
+        val messagingOption = when (messagingPushTokenRegistrar.isAvailable()) {
+            true -> FIREBASE_OPTION
+            else -> null
+        }
+        return listOfNotNull(NONE, messagingOption) + UnifiedPush.getDistributors(context).map { Registrar(it) }
     }
 
-    suspend fun currentSelection() = selection ?: (pushTokenStore.currentSelection()?.let { Registrar(it) } ?: FIREBASE_OPTION).also { selection = it }
+    suspend fun currentSelection() = selection ?: (pushTokenStore.currentSelection()?.let { Registrar(it) } ?: defaultSelection()).also { selection = it }
+
+    private fun defaultSelection() = when (messagingPushTokenRegistrar.isAvailable()) {
+        true -> FIREBASE_OPTION
+        else -> NONE
+    }
 
     suspend fun makeSelection(option: Registrar) {
         selection = option
         pushTokenStore.store(option.id)
         when (option) {
             NONE -> {
-                firebasePushTokenRegistrar.unregister()
+                messagingPushTokenRegistrar.unregister()
                 unifiedPushRegistrar.unregister()
             }
 
             FIREBASE_OPTION -> {
                 unifiedPushRegistrar.unregister()
-                firebasePushTokenRegistrar.registerCurrentToken()
+                messagingPushTokenRegistrar.registerCurrentToken()
             }
 
             else -> {
-                firebasePushTokenRegistrar.unregister()
+                messagingPushTokenRegistrar.unregister()
                 unifiedPushRegistrar.registerSelection(option)
             }
         }
@@ -47,7 +56,7 @@ class PushTokenRegistrars(
 
     override suspend fun registerCurrentToken() {
         when (selection) {
-            FIREBASE_OPTION -> firebasePushTokenRegistrar.registerCurrentToken()
+            FIREBASE_OPTION -> messagingPushTokenRegistrar.registerCurrentToken()
             NONE -> {
                 // do nothing
             }
@@ -58,10 +67,10 @@ class PushTokenRegistrars(
 
     override fun unregister() {
         when (selection) {
-            FIREBASE_OPTION -> firebasePushTokenRegistrar.unregister()
+            FIREBASE_OPTION -> messagingPushTokenRegistrar.unregister()
             NONE -> {
                 runCatching {
-                    firebasePushTokenRegistrar.unregister()
+                    messagingPushTokenRegistrar.unregister()
                     unifiedPushRegistrar.unregister()
                 }
             }

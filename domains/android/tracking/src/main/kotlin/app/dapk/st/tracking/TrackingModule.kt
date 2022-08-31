@@ -1,9 +1,8 @@
 package app.dapk.st.tracking
 
-import android.util.Log
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import app.dapk.st.firebase.crashlytics.CrashlyticsModule
 
 class TrackingModule(
     private val isCrashTrackingEnabled: Boolean,
@@ -11,13 +10,18 @@ class TrackingModule(
 
     val errorTracker: ErrorTracker by unsafeLazy {
         when (isCrashTrackingEnabled) {
-            true -> CrashlyticsCrashTracker(FirebaseCrashlytics.getInstance())
-            false -> object : ErrorTracker {
-                override fun track(throwable: Throwable, extra: String) {
-                    Log.e("error", throwable.message, throwable)
-                }
-            }
+            true -> compositeTracker(
+                CrashTrackerLogger(),
+                CrashlyticsModule().errorTracker,
+            )
+            false -> CrashTrackerLogger()
         }
     }
 
+}
+
+private fun compositeTracker(vararg loggers: ErrorTracker) = object : ErrorTracker {
+    override fun track(throwable: Throwable, extra: String) {
+        loggers.forEach { it.track(throwable, extra) }
+    }
 }

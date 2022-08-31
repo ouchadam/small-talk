@@ -16,8 +16,6 @@
 - Focused on reliability and stability.
 - Bare-bones feature set.
 
-##### _*Google play only with automatic crash reporting enabled_
-
 ---
 
 ### Feature list
@@ -28,7 +26,8 @@
 - Message bubbles, supporting text, replies and edits
 - Push notifications (DMs always notify, Rooms notify once)
 - Importing of E2E room keys from Element clients
-- [UnifiedPush](https://unifiedpush.org/) 
+- [UnifiedPush](https://unifiedpush.org/)
+- FOSS variant
 
 ### Planned
 
@@ -54,6 +53,36 @@
 - Heavily optimised build script, clean _cacheless_ builds are sub 10 seconds with a warmed up gradle daemon.
 - Avoids code generation where possible in favour of build speed, this mainly means manual DI.
 - A pure kotlin test harness to allow for critical flow assertions [Smoke Tests](https://github.com/ouchadam/small-talk/blob/main/test-harness/src/test/kotlin/SmokeTest.kt), currently Linux x86-64 only.
+
+---
+
+
+### Building
+
+
+##### Debug `.apk`
+
+```bash
+./gradlew assembleDebug
+```
+
+##### Release (signed with debug key) `.apk`
+
+```bash
+./gradlew assembleRelease
+```
+
+##### Unsigned release `.apk`
+
+```bash
+./gradlew assembleRelease -Punsigned
+```
+
+##### Unsigned release (FOSS) `.apk`
+
+```bash
+./gradlew assembleRelease -Punsigned -Pfoss
+```
 
 ---
 

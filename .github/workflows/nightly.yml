@@ -1,0 +1,31 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron:  '0 19 * * *'
+
+jobs:
+  check-develop-beta-changes:
+    name: Check if develop is ahead of beta release
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version:
+            16
+      - run: npm ci
+        working-directory: ./tools/beta-release/
+
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const { startReleaseProcess } = await import('${{ github.workspace }}/tools/beta-release/app.js')
+            await startReleaseProcess({github, context, core})
+
