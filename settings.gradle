@@ -34,6 +34,11 @@ include ':domains:store'
 include ':domains:olm-stub'
 include ':domains:olm'
 
+include ':domains:firebase:crashlytics'
+include ':domains:firebase:crashlytics-noop'
+include ':domains:firebase:messaging'
+include ':domains:firebase:messaging-noop'
+
 include ':matrix:matrix'
 include ':matrix:common'
 include ':matrix:matrix-http'

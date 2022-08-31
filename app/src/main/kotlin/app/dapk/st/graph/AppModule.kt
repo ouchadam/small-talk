@@ -16,6 +16,7 @@ import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
+import app.dapk.st.firebase.messaging.MessagingModule
 import app.dapk.st.home.HomeModule
 import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
@@ -55,6 +56,7 @@ import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushModule
+import app.dapk.st.push.firebase.MessagingServiceAdapter
 import app.dapk.st.settings.SettingsModule
 import app.dapk.st.share.ShareEntryModule
 import app.dapk.st.tracking.TrackingModule
@@ -206,6 +208,10 @@ internal class FeatureModules internal constructor(
 
     val pushModule by unsafeLazy {
         domainModules.pushModule
+    }
+
+    val messagingModule by unsafeLazy {
+        domainModules.messaging
     }
 
 }
@@ -428,23 +434,30 @@ internal class DomainModules(
     private val dispatchers: CoroutineDispatchers,
 ) {
 
-    val pushModule by unsafeLazy {
+    val pushHandler by unsafeLazy {
         val store = storeModule.value
-        val pushHandler = MatrixPushHandler(
+        MatrixPushHandler(
             workScheduler = workModule.workScheduler(),
             credentialsStore = store.credentialsStore(),
             matrixModules.sync,
             store.roomStore(),
         )
+    }
+
+    val messaging by unsafeLazy { MessagingModule(MessagingServiceAdapter(pushHandler), context) }
+
+    val pushModule by unsafeLazy {
         PushModule(
             errorTracker,
             pushHandler,
             context,
             dispatchers,
-            SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", dispatchers)
+            SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", dispatchers),
+            messaging.messaging,
         )
     }
     val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
+
 }
 
 internal class AndroidImageContentReader(private val contentResolver: ContentResolver) : ImageContentReader {
