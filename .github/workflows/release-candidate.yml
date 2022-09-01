@@ -42,6 +42,7 @@ jobs:
 
       - uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.MY_PAT }}
           script: |
             const { publishRelease } = await import('${{ github.workspace }}/tools/beta-release/app.js')
             const artifacts = {
