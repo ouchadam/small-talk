@@ -6,7 +6,8 @@ const config = {
     pathToVersionFile: "version.json",
     rcBranchesFrom: "main",
     rcMergesTo: "release",
-    packageName: "app.dapk.st"
+    packageName: "app.dapk.st",
+    matrixRoomId: "!jgNenzNPtSpJLjjsxe:matrix.org"
 }
 
 const rcBranchName = "release-candidate"
@@ -22,14 +23,25 @@ export const startReleaseProcess = async ({ github, context, core }) => {
 }
 
 export const publishRelease = async (github, artifacts) => {
-    const versionFile = await readVersionFile(github, "release")
+    const versionFile = await readVersionFile(github, config.rcMergesTo)
     await release(
         github,
         versionFile.content,
         config.packageName,
         artifacts,
         config,
-    ).catch((error) => console.log(error))
+    )
+
+    const createdPr = await github.rest.pulls.create({
+        owner: config.owner,
+        repo: config.repo,
+        title: "[Auto] Sync Release",
+        head: config.rcMergesTo,
+        base: config.rcBranchesFrom,
+        body: "Syncing changes from release",
+    })
+
+    await enablePrAutoMerge(github, createdPr.data.node_id)
 }
 
 const isWorkingBranchAhead = async (github) => {
@@ -77,7 +89,11 @@ const startRelease = async (github) => {
         body: "todo",
     })
 
-    github.graphql(
+    await enablePrAutoMerge(github, createdPr.data.node_id)
+}
+
+const enablePrAutoMerge = async (github, prNodeId) => {
+    await github.graphql(
         `
         mutation ($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
             enablePullRequestAutoMerge(input: {
@@ -96,7 +112,7 @@ const startRelease = async (github) => {
           }
         `,
         {
-            pullRequestId: createdPr.data.node_id,
+            pullRequestId: prNodeId,
             mergeMethod: "MERGE"
         }
     )

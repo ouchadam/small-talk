@@ -1,7 +1,10 @@
-import * as google from '@googleapis/androidpublisher';
-import * as fs from "fs";
-import * as http from 'https';
-import * as url from 'url';
+import * as google from '@googleapis/androidpublisher'
+import * as fs from "fs"
+import * as http from 'https'
+import matrixcs, * as matrix from 'matrix-js-sdk'
+import request from 'request'
+import * as url from 'url'
+matrixcs.request(request)
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -63,6 +66,9 @@ export const release = async (github, version, applicationId, artifacts, config)
 
     console.log("Promoting beta draft release to live...")
     await promoteDraftToLive(applicationId)
+
+    console.log("Sending message to room...")
+    await sendReleaseMessage(releaseResult.data, config)
 }
 
 const startPlayRelease = async (applicationId) => {
@@ -133,12 +139,6 @@ const dowloadSignedUniversalApk = async (version, applicationId, authToken, outp
     })
 
     const apks = apkRes.data.generatedApks
-
-    console.log(`found ${apks.length} apks`)
-    apks.forEach((apk) => {
-        console.log(apk)
-    })
-
     const id = apks[0].generatedUniversalApk.downloadId
 
     console.log(`downloading: ${id}`)
@@ -173,12 +173,12 @@ const downloadToFile = async (url, options, outputFile) => {
     })
 }
 
-const promoteDraftToLive = async () => {
-    const fappEditId = await startPlayRelease(applicationId)
+const promoteDraftToLive = async (applicationId) => {
+    const editId = await startPlayRelease(applicationId)
 
     await androidPublisher.edits.tracks
         .update({
-            editId: fappEditId,
+            editId: editId,
             packageName: applicationId,
             track: "beta",
             requestBody: {
@@ -194,8 +194,19 @@ const promoteDraftToLive = async () => {
 
 
     await androidPublisher.edits.commit({
-        editId: fappEditId,
+        editId: editId,
         packageName: applicationId,
     }).catch((error) => Promise.reject(error.response.data))
 }
 
+const sendReleaseMessage = async (release, config) => {
+    const matrixAuth = JSON.parse(fs.readFileSync('.secrets/matrix.json'))
+    const client = matrix.createClient(matrixAuth)
+    const content = {
+        "body": `New release`,
+        "format": "org.matrix.custom.html",
+        "formatted_body": `New release rolling out <a href="${release.url}">${release.tag_name}</a>`,
+        "msgtype": "m.text"
+    }
+    await client.sendEvent(config.matrixRoomId, "m.room.message", content, "")
+}

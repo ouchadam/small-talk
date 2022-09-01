@@ -32,8 +32,10 @@ jobs:
           mkdir .secrets
           touch .secrets/upload-key.jks
           touch .secrets/service-account.json
+          touch .secrets/matrix.json
           echo -n '${{ secrets.UPLOAD_KEY }}' | base64 --decode  >> .secrets/upload-key.jks
           echo -n '${{ secrets.SERVICE_ACCOUNT }}' | base64 --decode  >> .secrets/service-account.json
+          echo -n '${{ secrets.MATRIX }}' | base64 --decode  >> .secrets/matrix.json
 
       - name: Assemble release variant
         run: ./tools/generate-release.sh ${{ secrets.STORE_PASS }}
