@@ -41,7 +41,7 @@ export const publishRelease = async (github, artifacts) => {
         body: "Syncing changes from release",
     })
 
-    await enablePrAutoMerge(createdPr.data.node_id)
+    await enablePrAutoMerge(github, createdPr.data.node_id)
 }
 
 const isWorkingBranchAhead = async (github) => {
@@ -89,10 +89,10 @@ const startRelease = async (github) => {
         body: "todo",
     })
 
-    await enablePrAutoMerge(createdPr.data.node_id)
+    await enablePrAutoMerge(github, createdPr.data.node_id)
 }
 
-const enablePrAutoMerge = async (prNodeId) => {
+const enablePrAutoMerge = async (github, prNodeId) => {
     await github.graphql(
         `
         mutation ($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
