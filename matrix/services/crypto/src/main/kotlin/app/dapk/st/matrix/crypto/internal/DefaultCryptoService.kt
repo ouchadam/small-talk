@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.crypto.internal
 
+import app.dapk.st.core.logP
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.crypto.Crypto
 import app.dapk.st.matrix.crypto.CryptoService
@@ -48,8 +49,12 @@ internal class DefaultCryptoService(
     }
 
     override suspend fun InputStream.importRoomKeys(password: String): List<RoomId> {
-        return with(roomKeyImporter) {
-            importRoomKeys(password) { importRoomKeys(it) }
+        return logP("import room keys") {
+            with(roomKeyImporter) {
+                importRoomKeys(password) {
+                    importRoomKeys(it)
+                }
+            }
         }
     }
 }

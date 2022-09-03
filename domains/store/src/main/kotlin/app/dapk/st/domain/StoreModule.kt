@@ -39,7 +39,7 @@ class StoreModule(
 
     fun applicationStore() = ApplicationPreferences(preferences)
 
-    fun olmStore() = OlmPersistence(database, credentialsStore())
+    fun olmStore() = OlmPersistence(database, credentialsStore(), coroutineDispatchers)
     fun knownDevicesStore() = DevicePersistence(database, KnownDevicesCache(), coroutineDispatchers)
 
     fun profileStore(): ProfileStore = ProfilePersistence(preferences)

@@ -47,6 +47,10 @@ class OlmPersistenceWrapper(
         olmPersistence.persist(sessionId, SerializedObject(inboundGroupSession.serialize()))
     }
 
+    override suspend fun transaction(action: suspend () -> Unit) {
+        olmPersistence.startTransaction { action() }
+    }
+
     override suspend fun readInbound(sessionId: SessionId): OlmInboundGroupSession? {
         return olmPersistence.readInbound(sessionId)?.value?.deserialize()
     }
