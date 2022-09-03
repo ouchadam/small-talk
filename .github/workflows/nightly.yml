@@ -26,6 +26,7 @@ jobs:
 
       - uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.MY_PAT }}
           script: |
             const { startReleaseProcess } = await import('${{ github.workspace }}/tools/beta-release/app.js')
             await startReleaseProcess({github, context, core})
