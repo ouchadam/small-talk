@@ -135,11 +135,22 @@ const createBranch = async (github, branchName, fromBranch) => {
 
 const incrementVersionFile = async (github, branchName) => {
     const versionFile = await readVersionFile(github, branchName)
+    const [date, rc] = versionFile.content.name.split("-V")
+    const today = new Date().toLocaleDateString("en-GB")
+
+    let updatedVersionName = undefined
+    if (today == date) {
+        updatedVersionName = `${date}-V${rc + 1}`
+    } else {
+        updatedVersionName = `${today}-V1`
+    }
 
     const updatedVersionFile = {
-        ...versionFile.content,
         code: versionFile.content.code + 1,
+        name: updatedVersionName,
     }
+
+
     const encodedContentUpdate = Buffer.from(JSON.stringify(updatedVersionFile, null, 2)).toString('base64')
     await github.rest.repos.createOrUpdateFileContents({
         owner: config.owner,
