@@ -86,7 +86,7 @@ class RoomKeyImporter(
                                 isExported = true,
                             )
                         }
-                        .chunked(50)
+                        .chunked(500)
                         .forEach { onChunk(it) }
                 }
                 roomIds.toList().ifEmpty {
