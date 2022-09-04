@@ -2,11 +2,14 @@ package app.dapk.st.settings
 
 import android.content.ContentResolver
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
+import app.dapk.st.core.LceWithProgress
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.matrix.crypto.CryptoService
+import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.push.PushTokenRegistrars
 import app.dapk.st.push.Registrar
@@ -15,6 +18,8 @@ import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
 import app.dapk.st.viewmodel.defaultStateFactory
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 private const val PRIVACY_POLICY_URL = "https://ouchadam.github.io/small-talk/privacy/"
@@ -120,17 +125,26 @@ internal class SettingsViewModel(
     }
 
     fun importFromFileKeys(file: Uri, passphrase: String) {
-        updatePageState<Page.ImportRoomKey> { copy(importProgress = Lce.Loading()) }
+        updatePageState<Page.ImportRoomKey> { copy(importProgress = LceWithProgress.Loading(0L)) }
         viewModelScope.launch {
-            kotlin.runCatching {
-                with(cryptoService) {
-                    val roomsToRefresh = contentResolver.openInputStream(file)?.importRoomKeys(passphrase)
-                    roomsToRefresh?.let { syncService.forceManualRefresh(roomsToRefresh) }
-                }
-            }.fold(
-                onSuccess = { updatePageState<Page.ImportRoomKey> { copy(importProgress = Lce.Content(Unit)) } },
-                onFailure = { updatePageState<Page.ImportRoomKey> { copy(importProgress = Lce.Error(it)) } }
-            )
+            with(cryptoService) {
+                contentResolver.openInputStream(file)?.importRoomKeys(passphrase)
+                    ?.onEach {
+                        when (it) {
+                            is ImportResult.Error -> {
+                                updatePageState<Page.ImportRoomKey> { copy(importProgress = LceWithProgress.Error(it.cause)) }
+                            }
+                            is ImportResult.Update -> {
+                                updatePageState<Page.ImportRoomKey> { copy(importProgress = LceWithProgress.Loading(it.importedKeysCount)) }
+                            }
+                            is ImportResult.Success -> {
+                                syncService.forceManualRefresh(it.roomIds.toList())
+                                updatePageState<Page.ImportRoomKey> { copy(importProgress = LceWithProgress.Content(it.totalImportedKeysCount)) }
+                            }
+                        }
+                    }
+                    ?.launchIn(viewModelScope)
+            }
         }
     }
 

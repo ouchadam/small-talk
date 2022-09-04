@@ -7,6 +7,8 @@ import app.dapk.st.matrix.common.AlgorithmName
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.SessionId
 import app.dapk.st.matrix.common.SharedRoomKey
+import app.dapk.st.matrix.crypto.ImportResult
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -28,8 +30,10 @@ class RoomKeyImporter(
     private val dispatchers: CoroutineDispatchers,
 ) {
 
-    suspend fun InputStream.importRoomKeys(password: String, onChunk: suspend (List<SharedRoomKey>) -> Unit): List<RoomId> {
-        return dispatchers.withIoContext {
+    suspend fun InputStream.importRoomKeys(password: String, onChunk: suspend (List<SharedRoomKey>) -> Unit): Flow<ImportResult> {
+        return flow {
+            var importedKeysCount = 0L
+
             val decryptCipher = Cipher.getInstance("AES/CTR/NoPadding")
             var jsonSegment = ""
 
@@ -87,13 +91,20 @@ class RoomKeyImporter(
                             )
                         }
                         .chunked(500)
-                        .forEach { onChunk(it) }
+                        .forEach {
+                            onChunk(it)
+                            importedKeysCount += it.size
+                            emit(ImportResult.Update(importedKeysCount))
+                        }
                 }
-                roomIds.toList().ifEmpty {
-                    throw IOException("Found no rooms to import in the file")
+
+                if (roomIds.isEmpty()) {
+                    emit(ImportResult.Error(IOException("Found no rooms to import in the file")))
+                } else {
+                    emit(ImportResult.Success(roomIds, importedKeysCount))
                 }
             }
-        }
+        }.flowOn(dispatchers.io)
     }
 
     private fun Cipher.initialize(payload: ByteArray, passphrase: String) {

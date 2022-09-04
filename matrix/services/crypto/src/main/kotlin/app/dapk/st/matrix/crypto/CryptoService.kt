@@ -18,7 +18,7 @@ interface CryptoService : MatrixService {
     suspend fun encrypt(roomId: RoomId, credentials: DeviceCredentials, messageJson: JsonString): Crypto.EncryptionResult
     suspend fun decrypt(encryptedPayload: EncryptedMessageContent): DecryptionResult
     suspend fun importRoomKeys(keys: List<SharedRoomKey>)
-    suspend fun InputStream.importRoomKeys(password: String): List<RoomId>
+    suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult>
 
     suspend fun maybeCreateMoreKeys(serverKeyCount: ServerKeyCount)
     suspend fun updateOlmSession(userIds: List<UserId>, syncToken: SyncToken?)
@@ -159,4 +159,10 @@ fun MatrixServiceProvider.cryptoService(): CryptoService = this.getService(key =
 
 fun interface RoomMembersProvider {
     suspend fun userIdsForRoom(roomId: RoomId): List<UserId>
+}
+
+sealed interface ImportResult {
+    data class Success(val roomIds: Set<RoomId>, val totalImportedKeysCount: Long) : ImportResult
+    data class Error(val cause: Throwable) : ImportResult
+    data class Update(val importedKeysCount: Long) : ImportResult
 }

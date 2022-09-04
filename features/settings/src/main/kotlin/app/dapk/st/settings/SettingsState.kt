@@ -2,6 +2,7 @@ package app.dapk.st.settings
 
 import android.net.Uri
 import app.dapk.st.core.Lce
+import app.dapk.st.core.LceWithProgress
 import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.push.Registrar
@@ -15,7 +16,7 @@ internal sealed interface Page {
     object Security : Page
     data class ImportRoomKey(
         val selectedFile: NamedUri? = null,
-        val importProgress: Lce<Unit>? = null,
+        val importProgress: LceWithProgress<Long>? = null,
     ) : Page
 
     data class PushProviders(

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import app.dapk.st.core.Lce
+import app.dapk.st.core.LceWithProgress
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
@@ -136,10 +137,11 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is Lce.Content -> {
+                is LceWithProgress.Content -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Import success")
+                            Text(text = "Successfully imported ${it.importProgress.value} keys")
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = { navigator.navigate.upToHome() }) {
                                 Text(text = "Close".uppercase())
                             }
@@ -147,7 +149,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is Lce.Error -> {
+                is LceWithProgress.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = "Import failed")
@@ -158,7 +160,15 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is Lce.Loading -> CenteredLoading()
+                is LceWithProgress.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Imported ${it.importProgress.progress} keys")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            CircularProgressIndicator(Modifier.wrapContentSize())
+                        }
+                    }
+                }
             }
         }
     }
