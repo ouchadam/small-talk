@@ -13,12 +13,14 @@ FROM dbEventLog;
 selectLatestByLog:
 SELECT id, tag, content, time(utcEpochSeconds,'unixepoch')
 FROM dbEventLog
-WHERE logParent = ?;
+WHERE logParent = ?
+ORDER BY utcEpochSeconds DESC;
 
 selectLatestByLogFiltered:
 SELECT id, tag, content, time(utcEpochSeconds,'unixepoch')
 FROM dbEventLog
-WHERE logParent = ? AND tag = ?;
+WHERE logParent = ? AND tag = ?
+ORDER BY utcEpochSeconds DESC;
 
 insert:
 INSERT INTO dbEventLog(tag, content, utcEpochSeconds, logParent)

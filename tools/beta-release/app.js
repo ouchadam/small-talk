@@ -140,7 +140,7 @@ const incrementVersionFile = async (github, branchName) => {
 
     let updatedVersionName = undefined
     if (today == date) {
-        updatedVersionName = `${date}-V${rc + 1}`
+        updatedVersionName = `${date}-V${parseInt(rc) + 1}`
     } else {
         updatedVersionName = `${today}-V1`
     }
@@ -149,7 +149,6 @@ const incrementVersionFile = async (github, branchName) => {
         code: versionFile.content.code + 1,
         name: updatedVersionName,
     }
-
 
     const encodedContentUpdate = Buffer.from(JSON.stringify(updatedVersionFile, null, 2)).toString('base64')
     await github.rest.repos.createOrUpdateFileContents({

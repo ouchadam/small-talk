@@ -1,8 +1,10 @@
 package app.dapk.st.matrix.crypto.internal
 
+import app.dapk.st.core.logP
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.crypto.Crypto
 import app.dapk.st.matrix.crypto.CryptoService
+import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.matrix.crypto.Verification
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
@@ -47,9 +49,11 @@ internal class DefaultCryptoService(
         verificationHandler.onUserVerificationAction(verificationAction)
     }
 
-    override suspend fun InputStream.importRoomKeys(password: String): List<RoomId> {
+    override suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult> {
         return with(roomKeyImporter) {
-            importRoomKeys(password) { importRoomKeys(it) }
+            importRoomKeys(password) {
+                importRoomKeys(it)
+            }.logP("import room keys")
         }
     }
 }

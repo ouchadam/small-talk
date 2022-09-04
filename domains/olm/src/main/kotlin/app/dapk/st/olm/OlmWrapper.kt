@@ -46,13 +46,15 @@ class OlmWrapper(
 
     override suspend fun import(keys: List<SharedRoomKey>) {
         interactWithOlm()
-        keys.forEach {
-            val inBound = when (it.isExported) {
-                true -> OlmInboundGroupSession.importSession(it.sessionKey)
-                false -> OlmInboundGroupSession(it.sessionKey)
+
+        olmStore.transaction {
+            keys.forEach {
+                val inBound = when (it.isExported) {
+                    true -> OlmInboundGroupSession.importSession(it.sessionKey)
+                    false -> OlmInboundGroupSession(it.sessionKey)
+                }
+                olmStore.persist(it.sessionId, inBound)
             }
-            logger.crypto("import megolm ${it.sessionKey}")
-            olmStore.persist(it.sessionId, inBound)
         }
     }
 

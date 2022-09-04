@@ -31,11 +31,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import app.dapk.st.core.Lce
+import app.dapk.st.core.LceWithProgress
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
@@ -43,6 +45,7 @@ import app.dapk.st.design.components.SettingsTextRow
 import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.design.components.TextRow
+import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
@@ -72,7 +75,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
             PushProviders(viewModel, it)
         }
         item(Page.Routes.importRoomKeys) {
-            when (it.importProgress) {
+            when (val result = it.importProgress) {
                 null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -136,10 +139,11 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is Lce.Content -> {
+                is ImportResult.Success -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Import success")
+                            Text(text = "Successfully imported ${result.totalImportedKeysCount} keys")
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = { navigator.navigate.upToHome() }) {
                                 Text(text = "Close".uppercase())
                             }
@@ -147,10 +151,18 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is Lce.Error -> {
+                is ImportResult.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Import failed")
+                            val message = when(val type = result.cause) {
+                                ImportResult.Error.Type.NoKeysFound -> "No keys found in the file"
+                                ImportResult.Error.Type.UnexpectedDecryptionOutput -> "Unable to decrypt file, double check your passphrase"
+                                is ImportResult.Error.Type.Unknown -> "${type.cause::class.java.simpleName}: ${type.cause.message}"
+                                ImportResult.Error.Type.UnableToOpenFile -> "Unable to open file"
+                            }
+
+                            Text(text = "Import failed\n$message", textAlign = TextAlign.Center)
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = { navigator.navigate.upToHome() }) {
                                 Text(text = "Close".uppercase())
                             }
@@ -158,7 +170,15 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is Lce.Loading -> CenteredLoading()
+                is ImportResult.Update -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Importing ${result.importedKeysCount} keys...")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            CircularProgressIndicator(Modifier.wrapContentSize())
+                        }
+                    }
+                }
             }
         }
     }
