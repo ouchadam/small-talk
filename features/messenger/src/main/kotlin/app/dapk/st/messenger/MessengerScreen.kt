@@ -10,7 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -64,9 +64,7 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
     Column {
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
             OverflowMenu {
-                DropdownMenuItem(onClick = {}) {
-                    Text("Settings")
-                }
+                DropdownMenuItem(text = { Text("Settings") }, onClick = {}) 
             }
         })
         when (state.composerState) {
@@ -126,7 +124,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>) {
                                 "$name is typing..."
                             },
                             maxLines = 1,
-                            color = MaterialTheme.colors.primary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -251,7 +249,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                         fontSize = 11.sp,
                         text = content.message.author.displayName ?: content.message.author.id.value,
                         maxLines = 1,
-                        color = MaterialTheme.colors.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
 
@@ -274,7 +272,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                         fontSize = 9.sp,
                         text = "${editedPrefix ?: ""}${content.message.time}",
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colors.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.wrapContentSize()
                     )
                     SendStatus(content.message)
@@ -359,12 +357,12 @@ private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
                         fontSize = 11.sp,
                         text = content.message.author.displayName ?: content.message.author.id.value,
                         maxLines = 1,
-                        color = MaterialTheme.colors.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 Text(
                     text = content.message.content,
-                    color = MaterialTheme.colors.onPrimary,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 15.sp,
                     modifier = Modifier.wrapContentSize(),
                     textAlign = TextAlign.Start,
@@ -377,7 +375,7 @@ private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
                         fontSize = 9.sp,
                         text = "${editedPrefix ?: ""}${content.message.time}",
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colors.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.wrapContentSize()
                     )
                     SendStatus(content.message)
@@ -416,13 +414,13 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         fontSize = 11.sp,
                         text = replyName,
                         maxLines = 1,
-                        color = MaterialTheme.colors.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                     when (val replyingTo = content.message.replyingTo) {
                         is Message -> {
                             Text(
                                 text = replyingTo.content,
-                                color = MaterialTheme.colors.onPrimary,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 fontSize = 15.sp,
                                 modifier = Modifier.wrapContentSize(),
                                 textAlign = TextAlign.Start,
@@ -457,14 +455,14 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         fontSize = 11.sp,
                         text = content.message.message.author.displayName ?: content.message.message.author.id.value,
                         maxLines = 1,
-                        color = MaterialTheme.colors.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 when (val message = content.message.message) {
                     is Message -> {
                         Text(
                             text = message.content,
-                            color = MaterialTheme.colors.onPrimary,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 15.sp,
                             modifier = Modifier.wrapContentSize(),
                             textAlign = TextAlign.Start,
@@ -497,7 +495,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         fontSize = 9.sp,
                         text = content.message.time,
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colors.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.wrapContentSize()
                     )
                     SendStatus(content.message.message)
@@ -522,12 +520,12 @@ private fun RowScope.SendStatus(message: RoomEvent) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Box(
                         modifier = Modifier
-                            .border(0.5.dp, MaterialTheme.colors.onPrimary, CircleShape)
+                            .border(0.5.dp, MaterialTheme.colorScheme.onPrimary, CircleShape)
                             .size(10.dp)
                             .padding(2.dp)
                     ) {
                         if (isSent) {
-                            Icon(imageVector = Icons.Filled.Check, "", tint = MaterialTheme.colors.onPrimary)
+                            Icon(imageVector = Icons.Filled.Check, "", tint = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
                 }
@@ -536,11 +534,11 @@ private fun RowScope.SendStatus(message: RoomEvent) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Box(
                         modifier = Modifier
-                            .border(0.5.dp, MaterialTheme.colors.error, CircleShape)
+                            .border(0.5.dp, MaterialTheme.colorScheme.error, CircleShape)
                             .size(10.dp)
                             .padding(2.dp)
                     ) {
-                        Icon(imageVector = Icons.Filled.Close, "", tint = MaterialTheme.colors.error)
+                        Icon(imageVector = Icons.Filled.Close, "", tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -548,6 +546,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit) {
     Row(
@@ -562,7 +561,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                 .align(Alignment.Bottom)
                 .weight(1f)
                 .fillMaxHeight()
-                .background(MaterialTheme.colors.onSurface.copy(alpha = TextFieldDefaults.BackgroundOpacity), RoundedCornerShape(24.dp)),
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 1.0f), RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.TopStart,
         ) {
             Box(Modifier.padding(14.dp)) {
@@ -573,8 +572,8 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                     modifier = Modifier.fillMaxWidth(),
                     value = state.value,
                     onValueChange = { onTextChange(it) },
-                    cursorBrush = SolidColor(MaterialTheme.colors.primary),
-                    textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(LocalContentAlpha.current)),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+//                    textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(LocalContentAlpha.current)),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true)
                 )
             }
@@ -585,7 +584,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             enabled = state.value.isNotEmpty(),
             modifier = Modifier
                 .clip(CircleShape)
-                .background(if (state.value.isEmpty()) Color.DarkGray else MaterialTheme.colors.primary)
+                .background(if (state.value.isEmpty()) Color.DarkGray else MaterialTheme.colorScheme.primary)
                 .run {
                     if (size.height == 0 || size.width == 0) {
                         this
@@ -604,7 +603,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             Icon(
                 imageVector = Icons.Filled.Send,
                 contentDescription = "",
-                tint = MaterialTheme.colors.onPrimary,
+                tint = MaterialTheme.colorScheme.onPrimary,
             )
         }
     }
@@ -615,7 +614,10 @@ private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> U
     Box(modifier = Modifier.fillMaxSize()) {
         val context = LocalContext.current
         Image(
-            modifier = Modifier.fillMaxHeight().wrapContentWidth().align(Alignment.Center),
+            modifier = Modifier
+                .fillMaxHeight()
+                .wrapContentWidth()
+                .align(Alignment.Center),
             painter = rememberAsyncImagePainter(
                 model = ImageRequest.Builder(context)
                     .data(state.values.first().uri.value.toUri())
@@ -624,18 +626,21 @@ private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> U
             contentDescription = null,
         )
 
-        Box(Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
+        Box(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(12.dp)) {
             IconButton(
                 enabled = true,
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(MaterialTheme.colors.primary),
+                    .background(MaterialTheme.colorScheme.primary),
                 onClick = onSend,
             ) {
                 Icon(
                     imageVector = Icons.Filled.Send,
                     contentDescription = "",
-                    tint = MaterialTheme.colors.onPrimary,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                 )
             }
         }

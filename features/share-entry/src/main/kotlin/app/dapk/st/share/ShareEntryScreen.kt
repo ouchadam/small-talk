@@ -6,8 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -93,7 +93,7 @@ private fun DirectoryItem(item: Item, onClick: (Item) -> Unit) {
             .clickable { onClick(item) }
     ) {
         Row(Modifier.padding(20.dp)) {
-            val secondaryText = MaterialTheme.colors.onBackground.copy(alpha = 0.5f)
+            val secondaryText = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
 
             Box(Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
                 CircleishAvatar(item.roomAvatarUrl?.value, roomName, size = 50.dp)
@@ -109,7 +109,7 @@ private fun DirectoryItem(item: Item, onClick: (Item) -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                         fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colors.onBackground
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                 }

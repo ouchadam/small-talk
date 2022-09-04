@@ -5,9 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Text
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -85,13 +85,12 @@ private fun Events(selectedPageContent: SelectedState, onExit: () -> Unit, onSel
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             filterItems.forEachIndexed { index, item ->
                                 DropdownMenuItem(
+                                    text = { Text(item ?: "all") },
                                     onClick = {
                                         expanded = false
                                         onSelectTag(filterItems[index])
                                     }
-                                ) {
-                                    Text(item ?: "all")
-                                }
+                                )
                             }
                         }
                     }

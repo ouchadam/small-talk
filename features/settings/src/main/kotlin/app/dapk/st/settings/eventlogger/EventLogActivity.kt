@@ -3,7 +3,7 @@ package app.dapk.st.settings.eventlogger
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Surface
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import app.dapk.st.core.DapkActivity
 import app.dapk.st.core.module
