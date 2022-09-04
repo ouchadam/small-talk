@@ -12,6 +12,7 @@ interface OlmStore {
     suspend fun read(): OlmAccount?
     suspend fun persist(olmAccount: OlmAccount)
 
+    suspend fun transaction(action: suspend () -> Unit)
     suspend fun readOutbound(roomId: RoomId): Pair<Long, OlmOutboundGroupSession>?
     suspend fun persistOutbound(roomId: RoomId, creationTimestampUtc: Long, outboundGroupSession: OlmOutboundGroupSession)
     suspend fun persistSession(identity: Curve25519, sessionId: SessionId, olmSession: OlmSession)

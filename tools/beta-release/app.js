@@ -150,7 +150,6 @@ const incrementVersionFile = async (github, branchName) => {
         name: updatedVersionName,
     }
 
-
     const encodedContentUpdate = Buffer.from(JSON.stringify(updatedVersionFile, null, 2)).toString('base64')
     await github.rest.repos.createOrUpdateFileContents({
         owner: config.owner,
