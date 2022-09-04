@@ -140,7 +140,7 @@ const incrementVersionFile = async (github, branchName) => {
 
     let updatedVersionName = undefined
     if (today == date) {
-        updatedVersionName = `${date}-V${rc + 1}`
+        updatedVersionName = `${date}-V${parseInt(rc) + 1}`
     } else {
         updatedVersionName = `${today}-V1`
     }
