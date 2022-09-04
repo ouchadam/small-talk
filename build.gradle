@@ -54,7 +54,7 @@ ext.applyLibraryPlugins = { project ->
     project.apply plugin: 'kotlin-android'
 }
 
-ext.androidSdkVersion = 32
+ext.androidSdkVersion = 33
 
 ext.applyCommonAndroidParameters = { project ->
     def android = project.android
