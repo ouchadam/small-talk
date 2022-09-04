@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -50,7 +50,7 @@ import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit, navigator: Navigator) {
     viewModel.ObserveEvents(onSignOut)

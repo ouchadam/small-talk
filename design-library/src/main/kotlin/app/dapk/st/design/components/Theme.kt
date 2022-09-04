@@ -1,8 +1,8 @@
 package app.dapk.st.design.components
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -12,7 +12,7 @@ private object Palette {
     val brandPrimary = Color(0xFFb41cca)
 }
 
-private val DARK_COLOURS = darkColors(
+private val DARK_COLOURS = darkColorScheme(
     primary = Palette.brandPrimary,
     onPrimary = Color(0xDDFFFFFF),
 )
@@ -56,9 +56,9 @@ fun SmallTalkTheme(content: @Composable () -> Unit) {
     val systemUiController = rememberSystemUiController()
     val systemInDarkTheme = isSystemInDarkTheme()
     MaterialTheme(
-        colors = if (systemInDarkTheme) DARK_COLOURS else LIGHT_COLOURS,
+//        colorScheme = if (systemInDarkTheme) DARK_COLOURS else LIGHT_COLOURS,
     ) {
-        val backgroundColor = MaterialTheme.colors.background
+        val backgroundColor = MaterialTheme.colorScheme.background
         SideEffect {
             systemUiController.setSystemBarsColor(backgroundColor)
         }
