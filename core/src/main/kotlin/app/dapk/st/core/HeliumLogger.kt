@@ -1,5 +1,9 @@
 package app.dapk.st.core
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
+
 enum class AppLogTag(val key: String) {
     NOTIFICATION("notification"),
     PERFORMANCE("performance"),
@@ -25,4 +29,14 @@ suspend fun <T> logP(area: String, block: suspend () -> T): T {
         val timeTaken = System.currentTimeMillis() - start
         log(AppLogTag.PERFORMANCE, "$area: took $timeTaken ms")
     }
+}
+
+fun <T> Flow<T>.logP(area: String): Flow<T> {
+    var start = -1L
+    return this
+        .onStart { start = System.currentTimeMillis() }
+        .onCompletion {
+            val timeTaken = System.currentTimeMillis() - start
+            log(AppLogTag.PERFORMANCE, "$area: took $timeTaken ms")
+        }
 }

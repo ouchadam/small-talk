@@ -50,12 +50,10 @@ internal class DefaultCryptoService(
     }
 
     override suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult> {
-        return logP("import room keys") {
-            with(roomKeyImporter) {
-                importRoomKeys(password) {
-                    importRoomKeys(it)
-                }
-            }
+        return with(roomKeyImporter) {
+            importRoomKeys(password) {
+                importRoomKeys(it)
+            }.logP("import room keys")
         }
     }
 }

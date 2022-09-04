@@ -14,7 +14,6 @@ internal class OlmCrypto(
 ) {
 
     suspend fun importRoomKeys(keys: List<SharedRoomKey>) {
-        logger.crypto("import room keys : ${keys.size}")
         olm.import(keys)
     }
 
