@@ -26,7 +26,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 homeViewModel.start()
             }
 
-
             when (val state = homeViewModel.state) {
                 Loading -> CenteredLoading()
                 is SignedIn -> {
@@ -76,8 +75,9 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                         },
                     )
                     Profile -> NavigationBarItem(
+
                         icon = {
-                            Box(modifier = Modifier.fillMaxHeight()) {
+                            Box {
                                 CircleishAvatar(state.me.avatarUrl?.value, state.me.displayName ?: state.me.userId.value, size = 25.dp)
                             }
                         },

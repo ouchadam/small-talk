@@ -3,8 +3,10 @@ package app.dapk.st.design.components
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlin.math.absoluteValue
 
@@ -56,6 +58,7 @@ fun SmallTalkTheme(content: @Composable () -> Unit) {
     val systemUiController = rememberSystemUiController()
     val systemInDarkTheme = isSystemInDarkTheme()
     MaterialTheme(
+        colorScheme = dynamicDarkColorScheme(LocalContext.current)
 //        colorScheme = if (systemInDarkTheme) DARK_COLOURS else LIGHT_COLOURS,
     ) {
         val backgroundColor = MaterialTheme.colorScheme.background
