@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +75,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
             PushProviders(viewModel, it)
         }
         item(Page.Routes.importRoomKeys) {
-            when (it.importProgress) {
+            when (val result = it.importProgress) {
                 null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -141,7 +142,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                 is ImportResult.Success -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Successfully imported ${it.importProgress.totalImportedKeysCount} keys")
+                            Text(text = "Successfully imported ${result.totalImportedKeysCount} keys")
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = { navigator.navigate.upToHome() }) {
                                 Text(text = "Close".uppercase())
@@ -153,7 +154,14 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                 is ImportResult.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Import failed")
+                            val message = when(val type = result.cause) {
+                                ImportResult.Error.Type.NoKeysFound -> "No keys found in the file"
+                                ImportResult.Error.Type.UnexpectedDecryptionOutput -> "Unable to decrypt file, double check your passphrase"
+                                is ImportResult.Error.Type.Unknown -> "${type.cause::class.java.simpleName}: ${type.cause.message}"
+                            }
+
+                            Text(text = "Import failed\n$message", textAlign = TextAlign.Center)
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = { navigator.navigate.upToHome() }) {
                                 Text(text = "Close".uppercase())
                             }
@@ -164,7 +172,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                 is ImportResult.Update -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Imported ${it.importProgress.importedKeysCount} keys")
+                            Text(text = "Importing ${result.importedKeysCount} keys...")
                             Spacer(modifier = Modifier.height(12.dp))
                             CircularProgressIndicator(Modifier.wrapContentSize())
                         }
