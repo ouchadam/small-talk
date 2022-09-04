@@ -11,9 +11,9 @@ import app.dapk.st.matrix.common.Curve25519
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.SessionId
 import com.squareup.sqldelight.TransactionWithoutReturn
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class OlmPersistence(
     private val database: DapkDb,
@@ -83,13 +83,9 @@ class OlmPersistence(
     }
 
     suspend fun startTransaction(action: suspend TransactionWithoutReturn.() -> Unit) {
-        val transaction = suspendCoroutine {
-            database.cryptoQueries.transaction(false) {
-                it.resume(this)
-            }
-        }
-        dispatchers.withIoContext {
-            action(transaction)
+        val scope = CoroutineScope(dispatchers.io)
+        database.cryptoQueries.transaction {
+            scope.launch { action() }
         }
     }
 

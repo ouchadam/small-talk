@@ -53,7 +53,6 @@ class OlmWrapper(
                     true -> OlmInboundGroupSession.importSession(it.sessionKey)
                     false -> OlmInboundGroupSession(it.sessionKey)
                 }
-                logger.crypto("import megolm ${it.sessionKey}")
                 olmStore.persist(it.sessionId, inBound)
             }
         }
