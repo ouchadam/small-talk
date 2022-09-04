@@ -33,71 +33,48 @@ class RoomKeyImporter(
     suspend fun InputStream.importRoomKeys(password: String, onChunk: suspend (List<SharedRoomKey>) -> Unit): Flow<ImportResult> {
         return flow {
             var importedKeysCount = 0L
-
+            val roomIds = mutableSetOf<RoomId>()
             val decryptCipher = Cipher.getInstance("AES/CTR/NoPadding")
-            var jsonSegment = ""
-
-            fun <T> Sequence<T>.accumulateJson() = this.mapNotNull {
-                val withLatest = jsonSegment + it
-                try {
-                    when (val objectRange = withLatest.findClosingIndex()) {
-                        null -> {
-                            jsonSegment = withLatest
-                            null
-                        }
-                        else -> {
-                            val string = withLatest.substring(objectRange)
-                            importJson.decodeFromString(ElementMegolmExportObject.serializer(), string).also {
-                                jsonSegment = withLatest.replace(string, "").removePrefix(",")
-                            }
-                        }
-                    }
-                } catch (error: Throwable) {
-                    jsonSegment = withLatest
-                    null
-                }
-            }
-
             this@importRoomKeys.bufferedReader().use {
-                val roomIds = mutableSetOf<RoomId>()
-                it.useLines { sequence ->
-                    sequence
-                        .filterNot { it == HEADER_LINE || it == TRAILER_LINE || it.isEmpty() }
-                        .chunked(2)
-                        .withIndex()
-                        .map { (index, it) ->
-                            val line = it.joinToString(separator = "").replace("\n", "")
-                            val toByteArray = base64.decode(line)
-                            if (index == 0) {
-                                decryptCipher.initialize(toByteArray, password)
-                                toByteArray.copyOfRange(37, toByteArray.size).decrypt(decryptCipher).also {
-                                    if (!it.startsWith("[{")) {
-                                        throw  IllegalArgumentException("Unable to decrypt, assumed invalid password")
+                with(JsonAccumulator()) {
+                    it.useLines { sequence ->
+                        sequence
+                            .filterNot { it == HEADER_LINE || it == TRAILER_LINE || it.isEmpty() }
+                            .chunked(2)
+                            .withIndex()
+                            .map { (index, it) ->
+                                val line = it.joinToString(separator = "").replace("\n", "")
+                                val toByteArray = base64.decode(line)
+                                if (index == 0) {
+                                    decryptCipher.initialize(toByteArray, password)
+                                    toByteArray.copyOfRange(37, toByteArray.size).decrypt(decryptCipher).also {
+                                        if (!it.startsWith("[{")) {
+                                            throw  IllegalArgumentException("Unable to decrypt, assumed invalid password")
+                                        }
                                     }
+                                } else {
+                                    toByteArray.decrypt(decryptCipher)
                                 }
-                            } else {
-                                toByteArray.decrypt(decryptCipher)
                             }
-                        }
-                        .accumulateJson()
-                        .map { decoded ->
-                            roomIds.add(decoded.roomId)
-                            SharedRoomKey(
-                                decoded.algorithmName,
-                                decoded.roomId,
-                                decoded.sessionId,
-                                decoded.sessionKey,
-                                isExported = true,
-                            )
-                        }
-                        .chunked(500)
-                        .forEach {
-                            onChunk(it)
-                            importedKeysCount += it.size
-                            emit(ImportResult.Update(importedKeysCount))
-                        }
+                            .accumulateJson()
+                            .map { decoded ->
+                                roomIds.add(decoded.roomId)
+                                SharedRoomKey(
+                                    decoded.algorithmName,
+                                    decoded.roomId,
+                                    decoded.sessionId,
+                                    decoded.sessionKey,
+                                    isExported = true,
+                                )
+                            }
+                            .chunked(500)
+                            .forEach {
+                                onChunk(it)
+                                importedKeysCount += it.size
+                                emit(ImportResult.Update(importedKeysCount))
+                            }
+                    }
                 }
-
                 if (roomIds.isEmpty()) {
                     emit(ImportResult.Error(IOException("Found no rooms to import in the file")))
                 } else {
@@ -160,28 +137,6 @@ class RoomKeyImporter(
 
 private fun Byte.toUnsignedInt() = toInt() and 0xff
 
-private fun String.findClosingIndex(): IntRange? {
-    var opens = 0
-    var openIndex = -1
-    this.forEachIndexed { index, c ->
-        when {
-            c == '{' -> {
-                if (opens == 0) {
-                    openIndex = index
-                }
-                opens++
-            }
-            c == '}' -> {
-                opens--
-                if (opens == 0) {
-                    return IntRange(openIndex, index)
-                }
-            }
-        }
-    }
-    return null
-}
-
 @Serializable
 private data class ElementMegolmExportObject(
     @SerialName("room_id") val roomId: RoomId,
@@ -189,3 +144,51 @@ private data class ElementMegolmExportObject(
     @SerialName("session_id") val sessionId: SessionId,
     @SerialName("algorithm") val algorithmName: AlgorithmName,
 )
+
+private class JsonAccumulator {
+
+    private var jsonSegment = ""
+
+    fun <T> Sequence<T>.accumulateJson() = this.mapNotNull {
+        val withLatest = jsonSegment + it
+        try {
+            when (val objectRange = withLatest.findClosingIndex()) {
+                null -> {
+                    jsonSegment = withLatest
+                    null
+                }
+                else -> {
+                    val string = withLatest.substring(objectRange)
+                    importJson.decodeFromString(ElementMegolmExportObject.serializer(), string).also {
+                        jsonSegment = withLatest.replace(string, "").removePrefix(",")
+                    }
+                }
+            }
+        } catch (error: Throwable) {
+            jsonSegment = withLatest
+            null
+        }
+    }
+
+    private fun String.findClosingIndex(): IntRange? {
+        var opens = 0
+        var openIndex = -1
+        this.forEachIndexed { index, c ->
+            when {
+                c == '{' -> {
+                    if (opens == 0) {
+                        openIndex = index
+                    }
+                    opens++
+                }
+                c == '}' -> {
+                    opens--
+                    if (opens == 0) {
+                        return IntRange(openIndex, index)
+                    }
+                }
+            }
+        }
+        return null
+    }
+}
