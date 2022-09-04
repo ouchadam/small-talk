@@ -4,11 +4,13 @@ import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
+import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.matrix.crypto.Verification
 import app.dapk.st.matrix.crypto.cryptoService
 import app.dapk.st.matrix.room.roomService
 import app.dapk.st.matrix.sync.syncService
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -97,10 +99,13 @@ class SmokeTest {
         val stream = loadResourceStream("element-keys.txt")
 
         val result = with(cryptoService) {
-            stream.importRoomKeys(password = "aaaaaa")
+            stream.importRoomKeys(password = "aaaaaa").first { it is ImportResult.Success }
         }
 
-        result shouldBeEqualTo listOf(RoomId(value = "!qOSENTtFUuCEKJSVzl:matrix.org"))
+        result shouldBeEqualTo ImportResult.Success(
+            roomIds = setOf(RoomId(value = "!qOSENTtFUuCEKJSVzl:matrix.org")),
+            totalImportedKeysCount = 28,
+        )
     }
 
     private fun testTextMessaging(isEncrypted: Boolean) = testAfterInitialSync { alice, bob ->
