@@ -169,6 +169,7 @@ sealed interface ImportResult {
             data class Unknown(val cause: Throwable): Type
             object NoKeysFound: Type
             object UnexpectedDecryptionOutput: Type
+            object UnableToOpenFile: Type
         }
 
     }

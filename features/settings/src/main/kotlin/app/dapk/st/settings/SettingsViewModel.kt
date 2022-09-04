@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
-import app.dapk.st.core.LceWithProgress
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.matrix.crypto.CryptoService
@@ -127,22 +126,30 @@ internal class SettingsViewModel(
         updatePageState<Page.ImportRoomKey> { copy(importProgress = ImportResult.Update(0)) }
         viewModelScope.launch {
             with(cryptoService) {
-                contentResolver.openInputStream(file)?.importRoomKeys(passphrase)
-                    ?.onEach {
-                        updatePageState<Page.ImportRoomKey> { copy(importProgress = it) }
-                        when (it) {
-                            is ImportResult.Error -> {
-                                // do nothing
-                            }
-                            is ImportResult.Update -> {
-                                // do nothing
-                            }
-                            is ImportResult.Success -> {
-                                syncService.forceManualRefresh(it.roomIds.toList())
-                            }
+                runCatching { contentResolver.openInputStream(file)!! }
+                    .fold(
+                        onSuccess = { fileStream ->
+                            fileStream.importRoomKeys(passphrase)
+                                .onEach {
+                                    updatePageState<Page.ImportRoomKey> { copy(importProgress = it) }
+                                    when (it) {
+                                        is ImportResult.Error -> {
+                                            // do nothing
+                                        }
+                                        is ImportResult.Update -> {
+                                            // do nothing
+                                        }
+                                        is ImportResult.Success -> {
+                                            syncService.forceManualRefresh(it.roomIds.toList())
+                                        }
+                                    }
+                                }
+                                .launchIn(viewModelScope)
+                        },
+                        onFailure = {
+                            updatePageState<Page.ImportRoomKey> { copy(importProgress = ImportResult.Error(ImportResult.Error.Type.UnableToOpenFile)) }
                         }
-                    }
-                    ?.launchIn(viewModelScope)
+                    )
             }
         }
     }

@@ -158,6 +158,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                                 ImportResult.Error.Type.NoKeysFound -> "No keys found in the file"
                                 ImportResult.Error.Type.UnexpectedDecryptionOutput -> "Unable to decrypt file, double check your passphrase"
                                 is ImportResult.Error.Type.Unknown -> "${type.cause::class.java.simpleName}: ${type.cause.message}"
+                                ImportResult.Error.Type.UnableToOpenFile -> "Unable to open file"
                             }
 
                             Text(text = "Import failed\n$message", textAlign = TextAlign.Center)

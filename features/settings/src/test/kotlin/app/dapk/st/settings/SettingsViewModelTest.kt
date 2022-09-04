@@ -3,6 +3,7 @@ package app.dapk.st.settings
 import ViewModelTest
 import app.dapk.st.core.Lce
 import app.dapk.st.design.components.SpiderPage
+import app.dapk.st.matrix.crypto.ImportResult
 import fake.*
 import fixture.FakeStoreCleaner
 import fixture.aRoomId
@@ -10,6 +11,7 @@ import internalfake.FakeSettingsItemFactory
 import internalfake.FakeUriFilenameResolver
 import internalfixture.aImportRoomKeysPage
 import internalfixture.aSettingTextItem
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 
 private const val APP_PRIVACY_POLICY_URL = "https://ouchadam.github.io/small-talk/privacy/"
@@ -21,6 +23,8 @@ private val A_IMPORT_ROOM_KEYS_PAGE_WITH_SELECTION = aImportRoomKeysPage(
     state = Page.ImportRoomKey(selectedFile = NamedUri(A_FILENAME, A_URI.instance))
 )
 private val A_LIST_OF_ROOM_IDS = listOf(aRoomId())
+private val AN_IMPORT_SUCCESS = ImportResult.Success(A_LIST_OF_ROOM_IDS.toSet(), totalImportedKeysCount = 5)
+private val AN_IMPORT_FILE_ERROR = ImportResult.Error(ImportResult.Error.Type.UnableToOpenFile)
 private val AN_INPUT_STREAM = FakeInputStream()
 private const val A_PASSPHRASE = "passphrase"
 private val AN_ERROR = RuntimeException()
@@ -166,15 +170,15 @@ internal class SettingsViewModelTest {
     fun `given success when importing room keys, then emits progress`() = runViewModelTest {
         fakeSyncService.expectUnit { it.forceManualRefresh(A_LIST_OF_ROOM_IDS) }
         fakeContentResolver.givenFile(A_URI.instance).returns(AN_INPUT_STREAM.instance)
-        fakeCryptoService.givenImportKeys(AN_INPUT_STREAM.instance, A_PASSPHRASE).returns(A_LIST_OF_ROOM_IDS)
+        fakeCryptoService.givenImportKeys(AN_INPUT_STREAM.instance, A_PASSPHRASE).returns(flowOf(AN_IMPORT_SUCCESS))
 
         viewModel
             .test(initialState = SettingsScreenState(A_IMPORT_ROOM_KEYS_PAGE_WITH_SELECTION))
             .importFromFileKeys(A_URI.instance, A_PASSPHRASE)
 
         assertStates<SettingsScreenState>(
-            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = Lce.Loading()) }) },
-            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = Lce.Content(Unit)) }) },
+            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = ImportResult.Update(0L)) }) },
+            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = AN_IMPORT_SUCCESS) }) },
         )
         assertNoEvents<SettingsEvent>()
         verifyExpects()
@@ -189,8 +193,8 @@ internal class SettingsViewModelTest {
             .importFromFileKeys(A_URI.instance, A_PASSPHRASE)
 
         assertStates<SettingsScreenState>(
-            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = Lce.Loading()) }) },
-            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = Lce.Error(AN_ERROR)) }) },
+            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = ImportResult.Update(0L)) }) },
+            { copy(page = page.updateState<Page.ImportRoomKey> { copy(importProgress = AN_IMPORT_FILE_ERROR) }) },
         )
         assertNoEvents<SettingsEvent>()
     }
