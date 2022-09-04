@@ -163,6 +163,14 @@ fun interface RoomMembersProvider {
 
 sealed interface ImportResult {
     data class Success(val roomIds: Set<RoomId>, val totalImportedKeysCount: Long) : ImportResult
-    data class Error(val cause: Throwable) : ImportResult
+    data class Error(val cause: Type) : ImportResult {
+
+        sealed interface Type {
+            data class Unknown(val cause: Throwable): Type
+            object NoKeysFound: Type
+            object UnexpectedDecryptionOutput: Type
+        }
+
+    }
     data class Update(val importedKeysCount: Long) : ImportResult
 }

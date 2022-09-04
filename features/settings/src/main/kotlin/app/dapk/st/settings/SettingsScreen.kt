@@ -44,6 +44,7 @@ import app.dapk.st.design.components.SettingsTextRow
 import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.design.components.TextRow
+import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
@@ -137,10 +138,10 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is LceWithProgress.Content -> {
+                is ImportResult.Success -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Successfully imported ${it.importProgress.value} keys")
+                            Text(text = "Successfully imported ${it.importProgress.totalImportedKeysCount} keys")
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = { navigator.navigate.upToHome() }) {
                                 Text(text = "Close".uppercase())
@@ -149,7 +150,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is LceWithProgress.Error -> {
+                is ImportResult.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = "Import failed")
@@ -160,10 +161,10 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     }
                 }
 
-                is LceWithProgress.Loading -> {
+                is ImportResult.Update -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Imported ${it.importProgress.progress} keys")
+                            Text(text = "Imported ${it.importProgress.importedKeysCount} keys")
                             Spacer(modifier = Modifier.height(12.dp))
                             CircularProgressIndicator(Modifier.wrapContentSize())
                         }

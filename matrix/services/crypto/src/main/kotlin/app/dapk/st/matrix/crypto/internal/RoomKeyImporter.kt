@@ -2,17 +2,18 @@ package app.dapk.st.matrix.crypto.internal
 
 import app.dapk.st.core.Base64
 import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.core.withIoContext
 import app.dapk.st.matrix.common.AlgorithmName
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.SessionId
 import app.dapk.st.matrix.common.SharedRoomKey
 import app.dapk.st.matrix.crypto.ImportResult
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
 import javax.crypto.Cipher
@@ -32,56 +33,72 @@ class RoomKeyImporter(
 
     suspend fun InputStream.importRoomKeys(password: String, onChunk: suspend (List<SharedRoomKey>) -> Unit): Flow<ImportResult> {
         return flow {
-            var importedKeysCount = 0L
-            val roomIds = mutableSetOf<RoomId>()
-            val decryptCipher = Cipher.getInstance("AES/CTR/NoPadding")
-            this@importRoomKeys.bufferedReader().use {
-                with(JsonAccumulator()) {
-                    it.useLines { sequence ->
-                        sequence
-                            .filterNot { it == HEADER_LINE || it == TRAILER_LINE || it.isEmpty() }
-                            .chunked(2)
-                            .withIndex()
-                            .map { (index, it) ->
-                                val line = it.joinToString(separator = "").replace("\n", "")
-                                val toByteArray = base64.decode(line)
-                                if (index == 0) {
-                                    decryptCipher.initialize(toByteArray, password)
-                                    toByteArray.copyOfRange(37, toByteArray.size).decrypt(decryptCipher).also {
-                                        if (!it.startsWith("[{")) {
-                                            throw  IllegalArgumentException("Unable to decrypt, assumed invalid password")
-                                        }
-                                    }
-                                } else {
-                                    toByteArray.decrypt(decryptCipher)
-                                }
-                            }
-                            .accumulateJson()
-                            .map { decoded ->
-                                roomIds.add(decoded.roomId)
-                                SharedRoomKey(
-                                    decoded.algorithmName,
-                                    decoded.roomId,
-                                    decoded.sessionId,
-                                    decoded.sessionKey,
-                                    isExported = true,
-                                )
-                            }
-                            .chunked(500)
-                            .forEach {
-                                onChunk(it)
-                                importedKeysCount += it.size
-                                emit(ImportResult.Update(importedKeysCount))
-                            }
+            runCatching { this@importRoomKeys.import(password, onChunk, this) }
+                .onFailure {
+                    when (it) {
+                        is ImportException -> emit(ImportResult.Error(it.type))
+                        else -> emit(ImportResult.Error(ImportResult.Error.Type.Unknown(it)))
                     }
                 }
-                if (roomIds.isEmpty()) {
-                    emit(ImportResult.Error(IOException("Found no rooms to import in the file")))
-                } else {
-                    emit(ImportResult.Success(roomIds, importedKeysCount))
+        }.flowOn(dispatchers.io)
+    }
+
+    private suspend fun InputStream.import(password: String, onChunk: suspend (List<SharedRoomKey>) -> Unit, collector: FlowCollector<ImportResult>) {
+        var importedKeysCount = 0L
+        val roomIds = mutableSetOf<RoomId>()
+
+        this.bufferedReader().use {
+            with(JsonAccumulator()) {
+                it.useLines { sequence ->
+                    sequence
+                        .filterNot { it == HEADER_LINE || it == TRAILER_LINE || it.isEmpty() }
+                        .chunked(5)
+                        .decrypt(password)
+                        .accumulateJson()
+                        .map { decoded ->
+                            roomIds.add(decoded.roomId)
+                            SharedRoomKey(
+                                decoded.algorithmName,
+                                decoded.roomId,
+                                decoded.sessionId,
+                                decoded.sessionKey,
+                                isExported = true,
+                            )
+                        }
+                        .chunked(500)
+                        .forEach {
+                            onChunk(it)
+                            importedKeysCount += it.size
+                            collector.emit(ImportResult.Update(importedKeysCount))
+                        }
                 }
             }
-        }.flowOn(dispatchers.io)
+            when {
+                roomIds.isEmpty() -> collector.emit(ImportResult.Error(ImportResult.Error.Type.NoKeysFound))
+                else -> collector.emit(ImportResult.Success(roomIds, importedKeysCount))
+            }
+        }
+    }
+
+    private fun Sequence<List<String>>.decrypt(password: String): Sequence<String> {
+        val decryptCipher = Cipher.getInstance("AES/CTR/NoPadding")
+        return this.withIndex().map { (index, it) ->
+            val line = it.joinToString(separator = "").replace("\n", "")
+            val toByteArray = base64.decode(line)
+            if (index == 0) {
+                decryptCipher.initialize(toByteArray, password)
+                toByteArray
+                    .copyOfRange(37, toByteArray.size)
+                    .decrypt(decryptCipher)
+                    .also {
+                        if (!it.startsWith("[{")) {
+                            throw ImportException(ImportResult.Error.Type.UnexpectedDecryptionOutput)
+                        }
+                    }
+            } else {
+                toByteArray.decrypt(decryptCipher)
+            }
+        }
     }
 
     private fun Cipher.initialize(payload: ByteArray, passphrase: String) {
@@ -144,6 +161,8 @@ private data class ElementMegolmExportObject(
     @SerialName("session_id") val sessionId: SessionId,
     @SerialName("algorithm") val algorithmName: AlgorithmName,
 )
+
+private class ImportException(val type: ImportResult.Error.Type) : Throwable()
 
 private class JsonAccumulator {
 
