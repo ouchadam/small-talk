@@ -249,7 +249,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                         fontSize = 11.sp,
                         text = content.message.author.displayName ?: content.message.author.id.value,
                         maxLines = 1,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = content.textColor()
                     )
                 }
 
@@ -272,7 +272,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                         fontSize = 9.sp,
                         text = "${editedPrefix ?: ""}${content.message.time}",
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = content.textColor(),
                         modifier = Modifier.wrapContentSize()
                     )
                     SendStatus(content.message)
@@ -337,6 +337,11 @@ private fun Bubble(
 }
 
 @Composable
+private fun BubbleContent<*>.textColor(): Color {
+    return if (this.isNotSelf) SmallTalkTheme.extendedColors.onOthersBubble else SmallTalkTheme.extendedColors.onSelfBubble
+}
+
+@Composable
 private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
@@ -357,12 +362,12 @@ private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
                         fontSize = 11.sp,
                         text = content.message.author.displayName ?: content.message.author.id.value,
                         maxLines = 1,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = content.textColor()
                     )
                 }
                 Text(
                     text = content.message.content,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = content.textColor(),
                     fontSize = 15.sp,
                     modifier = Modifier.wrapContentSize(),
                     textAlign = TextAlign.Start,
@@ -375,7 +380,7 @@ private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
                         fontSize = 9.sp,
                         text = "${editedPrefix ?: ""}${content.message.time}",
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = content.textColor(),
                         modifier = Modifier.wrapContentSize()
                     )
                     SendStatus(content.message)
@@ -455,14 +460,14 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         fontSize = 11.sp,
                         text = content.message.message.author.displayName ?: content.message.message.author.id.value,
                         maxLines = 1,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = content.textColor()
                     )
                 }
                 when (val message = content.message.message) {
                     is Message -> {
                         Text(
                             text = message.content,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = content.textColor(),
                             fontSize = 15.sp,
                             modifier = Modifier.wrapContentSize(),
                             textAlign = TextAlign.Start,
@@ -495,7 +500,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         fontSize = 9.sp,
                         text = content.message.time,
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = content.textColor(),
                         modifier = Modifier.wrapContentSize()
                     )
                     SendStatus(content.message.message)
@@ -546,7 +551,6 @@ private fun RowScope.SendStatus(message: RoomEvent) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit) {
     Row(
@@ -561,19 +565,19 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                 .align(Alignment.Bottom)
                 .weight(1f)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 1.0f), RoundedCornerShape(24.dp)),
+                .background(Color.DarkGray, RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.TopStart,
         ) {
             Box(Modifier.padding(14.dp)) {
                 if (state.value.isEmpty()) {
-                    Text("Message")
+                    Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.4f))
                 }
                 BasicTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = state.value,
                     onValueChange = { onTextChange(it) },
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-//                    textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(LocalContentAlpha.current)),
+                    textStyle = LocalTextStyle.current.copy(color = SmallTalkTheme.extendedColors.onOthersBubble),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true)
                 )
             }
