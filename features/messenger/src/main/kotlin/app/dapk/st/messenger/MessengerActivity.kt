@@ -46,11 +46,9 @@ class MessengerActivity : DapkActivity() {
         val payload = readPayload<MessagerActivityPayload>()
         log(AppLogTag.ERROR_NON_FATAL, payload)
         setContent {
-            SmallTalkTheme {
                 Surface(Modifier.fillMaxSize()) {
                     MessengerScreen(RoomId(payload.roomId), payload.attachments, viewModel, navigator)
                 }
-            }
         }
     }
 }

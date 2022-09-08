@@ -1,7 +1,8 @@
 package app.dapk.st.domain
 
-import app.dapk.st.matrix.common.UserCredentials
+import app.dapk.st.core.Preferences
 import app.dapk.st.matrix.common.CredentialsStore
+import app.dapk.st.matrix.common.UserCredentials
 
 internal class CredentialsPreferences(
     private val preferences: Preferences,

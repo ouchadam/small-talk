@@ -1,5 +1,6 @@
 package app.dapk.st.domain
 
+import app.dapk.st.core.Preferences
 import app.dapk.st.matrix.sync.FilterStore
 
 internal class FilterPreferences(

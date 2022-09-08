@@ -1,5 +1,7 @@
 package app.dapk.st.domain
 
+import app.dapk.st.core.Preferences
+
 class ApplicationPreferences(
     private val preferences: Preferences,
 ) {

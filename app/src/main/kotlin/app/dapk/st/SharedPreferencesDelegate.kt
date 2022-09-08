@@ -2,8 +2,8 @@ package app.dapk.st
 
 import android.content.Context
 import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.Preferences
 import app.dapk.st.core.withIoContext
-import app.dapk.st.domain.Preferences
 
 internal class SharedPreferencesDelegate(
     context: Context,

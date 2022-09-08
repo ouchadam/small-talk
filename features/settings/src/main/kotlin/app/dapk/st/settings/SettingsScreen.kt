@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -13,11 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -37,10 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import app.dapk.st.core.Lce
-import app.dapk.st.core.LceWithProgress
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
+import app.dapk.st.core.getActivity
 import app.dapk.st.design.components.SettingsTextRow
 import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
@@ -154,7 +155,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                 is ImportResult.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            val message = when(val type = result.cause) {
+                            val message = when (val type = result.cause) {
                                 ImportResult.Error.Type.NoKeysFound -> "No keys found in the file"
                                 ImportResult.Error.Type.UnexpectedDecryptionOutput -> "Unable to decrypt file, double check your passphrase"
                                 is ImportResult.Error.Type.Unknown -> "${type.cause::class.java.simpleName}: ${type.cause.message}"
@@ -222,6 +223,9 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
                         }
 
                         is SettingItem.Header -> Header(item.label)
+                        is SettingItem.Toggle -> Toggle(item, onToggle = {
+                            onClick(item)
+                        })
                     }
                 }
                 item { Spacer(Modifier.height(12.dp)) }
@@ -235,6 +239,23 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
         is Lce.Loading -> {
             // TODO
         }
+    }
+}
+
+@Composable
+private fun Toggle(item: SettingItem.Toggle, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = item.content)
+        Switch(
+            checked = item.state,
+            onCheckedChange = { onToggle() }
+        )
     }
 }
 
@@ -291,6 +312,9 @@ private fun SettingsViewModel.ObserveEvents(onSignOut: () -> Unit) {
 
                 is OpenUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = it.url.toUri() })
+                }
+                RecreateActivity -> {
+                    context.getActivity()?.recreate()
                 }
             }
         }

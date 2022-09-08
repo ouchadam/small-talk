@@ -1,5 +1,8 @@
 package app.dapk.st.core
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -53,4 +56,10 @@ fun LifecycleEffect(onStart: () -> Unit = {}, onStop: () -> Unit = {}) {
             lifecycleOwner.value.lifecycle.removeObserver(lifecycleObserver)
         }
     }
+}
+
+fun Context.getActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> null
 }
