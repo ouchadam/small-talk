@@ -113,7 +113,7 @@ const enablePrAutoMerge = async (github, prNodeId) => {
         `,
         {
             pullRequestId: prNodeId,
-            mergeMethod: "MERGE"
+            mergeMethod: "REBASE"
         }
     )
 }
