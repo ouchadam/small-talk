@@ -1,7 +1,7 @@
 package app.dapk.st.home
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -17,14 +17,13 @@ import app.dapk.st.home.HomeScreenState.Page.Profile
 import app.dapk.st.login.LoginScreen
 import app.dapk.st.profile.ProfileScreen
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel) {
-    SmallTalkTheme {
         Surface(Modifier.fillMaxSize()) {
             LaunchedEffect(true) {
                 homeViewModel.start()
             }
-
 
             when (val state = homeViewModel.state) {
                 Loading -> CenteredLoading()
@@ -54,17 +53,16 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
             }
         }
-    }
 }
 
 @Composable
 private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
     Column {
         Divider(modifier = Modifier.fillMaxWidth(), color = Color.Black.copy(alpha = 0.2f), thickness = 0.5.dp)
-        BottomNavigation(elevation = 0.dp, backgroundColor = Color.Transparent, modifier = Modifier.height(IntrinsicSize.Min)) {
+        NavigationBar(containerColor = Color.Transparent, modifier = Modifier.height(IntrinsicSize.Min)) {
             Page.values().forEach { page ->
                 when (page) {
-                    Directory -> BottomNavigationItem(
+                    Directory -> NavigationBarItem(
                         icon = { Icon(page.icon, contentDescription = null) },
                         selected = state.page == page,
                         onClick = {
@@ -74,9 +72,10 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                             }
                         },
                     )
-                    Profile -> BottomNavigationItem(
+                    Profile -> NavigationBarItem(
+
                         icon = {
-                            Box(modifier = Modifier.fillMaxHeight()) {
+                            Box {
                                 CircleishAvatar(state.me.avatarUrl?.value, state.me.displayName ?: state.me.userId.value, size = 25.dp)
                             }
                         },

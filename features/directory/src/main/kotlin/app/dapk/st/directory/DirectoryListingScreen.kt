@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -155,7 +155,7 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                 onClick(overview.roomId)
             }) {
         Row(Modifier.padding(20.dp)) {
-            val secondaryText = MaterialTheme.colors.onBackground.copy(alpha = 0.5f)
+            val secondaryText = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
 
             Box(Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
                 CircleishAvatar(overview.roomAvatarUrl?.value, roomName, size = 50.dp)
@@ -171,7 +171,7 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                         overflow = TextOverflow.Ellipsis,
                         fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colors.onBackground
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.width(6.dp))
 
@@ -184,7 +184,7 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                         fontSize = 12.sp,
                         maxLines = 1,
                         text = formattedTimestamp,
-                        color = if (hasUnread) MaterialTheme.colors.primary else secondaryText
+                        color = if (hasUnread) MaterialTheme.colorScheme.primary else secondaryText
                     )
                 }
 
@@ -198,7 +198,7 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                             Box(
                                 Modifier
                                     .align(Alignment.Center)
-                                    .background(color = MaterialTheme.colors.primary, shape = CircleShape)
+                                    .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
                                     .size(22.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -214,7 +214,7 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
                                     fontSize = unreadTextSize,
                                     fontWeight = FontWeight.Medium,
                                     text = unreadLabelContent,
-                                    color = MaterialTheme.colors.onPrimary
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
@@ -244,7 +244,7 @@ private fun body(overview: RoomOverview, secondaryText: Color, typing: SyncServi
                     "$name is typing..."
                 },
                 maxLines = 1,
-                color = MaterialTheme.colors.primary
+                color = MaterialTheme.colorScheme.primary
             )
         }
         else -> when (val lastMessage = overview.lastMessage) {

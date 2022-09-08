@@ -2,9 +2,9 @@ package app.dapk.st.home
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.DapkActivity

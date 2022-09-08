@@ -1,10 +1,11 @@
 package app.dapk.st.design.components
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlin.math.absoluteValue
 
@@ -12,18 +13,18 @@ private object Palette {
     val brandPrimary = Color(0xFFb41cca)
 }
 
-private val DARK_COLOURS = darkColors(
+private val DARK_COLOURS = darkColorScheme(
     primary = Palette.brandPrimary,
     onPrimary = Color(0xDDFFFFFF),
 )
 
-private val LIGHT_COLOURS = DARK_COLOURS
+private val DARK_EXTENDED = createExtended(DARK_COLOURS.primary, DARK_COLOURS.onPrimary)
 
-private val DARK_EXTENDED = ExtendedColors(
-    selfBubble = DARK_COLOURS.primary,
-    onSelfBubble = DARK_COLOURS.onPrimary,
+private fun createExtended(primary: Color, onPrimary: Color) = ExtendedColors(
+    selfBubble = primary,
+    onSelfBubble = onPrimary,
     othersBubble = Color(0x20EDEDED),
-    onOthersBubble = Color(0xFF000000),
+    onOthersBubble = DARK_COLOURS.onPrimary,
     selfBubbleReplyBackground = Color(0x40EAEAEA),
     otherBubbleReplyBackground = Color(0x20EAEAEA),
     missingImageColors = listOf(
@@ -32,7 +33,6 @@ private val DARK_EXTENDED = ExtendedColors(
         Color(0xFFf6c8cb) to Color(0xFFda2535),
     )
 )
-private val LIGHT_EXTENDED = DARK_EXTENDED
 
 @Immutable
 data class ExtendedColors(
@@ -49,20 +49,22 @@ data class ExtendedColors(
     }
 }
 
-private val LocalExtendedColors = staticCompositionLocalOf { LIGHT_EXTENDED }
+private val LocalExtendedColors = staticCompositionLocalOf { DARK_EXTENDED }
 
 @Composable
-fun SmallTalkTheme(content: @Composable () -> Unit) {
+fun SmallTalkTheme(themeConfig: ThemeConfig, content: @Composable () -> Unit) {
     val systemUiController = rememberSystemUiController()
-    val systemInDarkTheme = isSystemInDarkTheme()
-    MaterialTheme(
-        colors = if (systemInDarkTheme) DARK_COLOURS else LIGHT_COLOURS,
-    ) {
-        val backgroundColor = MaterialTheme.colors.background
+    val colorScheme = if (themeConfig.useDynamicTheme) {
+        dynamicDarkColorScheme(LocalContext.current)
+    } else {
+        DARK_COLOURS
+    }
+    MaterialTheme(colorScheme = colorScheme) {
+        val backgroundColor = MaterialTheme.colorScheme.background
         SideEffect {
             systemUiController.setSystemBarsColor(backgroundColor)
         }
-        CompositionLocalProvider(LocalExtendedColors provides if (systemInDarkTheme) DARK_EXTENDED else LIGHT_EXTENDED) {
+        CompositionLocalProvider(LocalExtendedColors provides createExtended(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)) {
             content()
         }
     }
@@ -73,3 +75,7 @@ object SmallTalkTheme {
         @Composable
         get() = LocalExtendedColors.current
 }
+
+data class ThemeConfig(
+    val useDynamicTheme: Boolean,
+)

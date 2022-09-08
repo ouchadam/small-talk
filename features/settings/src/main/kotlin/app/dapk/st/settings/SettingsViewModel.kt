@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
+import app.dapk.st.core.ThemeStore
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.matrix.crypto.CryptoService
@@ -30,6 +31,7 @@ internal class SettingsViewModel(
     private val uriFilenameResolver: UriFilenameResolver,
     private val settingsItemFactory: SettingsItemFactory,
     private val pushTokenRegistrars: PushTokenRegistrars,
+    private val themeStore: ThemeStore,
     factory: MutableStateFactory<SettingsScreenState> = defaultStateFactory(),
 ) : DapkViewModel<SettingsScreenState, SettingsEvent>(
     initialState = SettingsScreenState(SpiderPage(Page.Routes.root, "Settings", null, Page.Root(Lce.Loading()))),
@@ -98,8 +100,16 @@ internal class SettingsViewModel(
             Ignored -> {
                 // do nothing
             }
+            ToggleDynamicTheme -> {
+                viewModelScope.launch {
+                    themeStore.storeMaterialYouEnabled(!themeStore.isMaterialYouEnabled())
+                    start()
+                    _events.emit(RecreateActivity)
+                }
+            }
         }
     }
+
 
     fun fetchPushProviders() {
         updatePageState<Page.PushProviders> { copy(options = Lce.Loading()) }

@@ -2,6 +2,7 @@ package app.dapk.st.domain
 
 import app.dapk.db.DapkDb
 import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.Preferences
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.domain.eventlog.EventLogPersistence
@@ -22,7 +23,7 @@ import app.dapk.st.matrix.sync.SyncStore
 class StoreModule(
     private val database: DapkDb,
     private val databaseDropper: DatabaseDropper,
-    private val preferences: Preferences,
+    val preferences: Preferences,
     private val credentialPreferences: Preferences,
     private val errorTracker: ErrorTracker,
     private val coroutineDispatchers: CoroutineDispatchers,

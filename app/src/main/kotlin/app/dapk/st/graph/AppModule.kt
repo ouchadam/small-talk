@@ -96,32 +96,35 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
-    val coreAndroidModule = CoreAndroidModule(intentFactory = object : IntentFactory {
-        override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
-            context,
-            1000,
-            home(context)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
+    val coreAndroidModule = CoreAndroidModule(
+        intentFactory = object : IntentFactory {
+            override fun notificationOpenApp(context: Context) = PendingIntent.getActivity(
+                context,
+                1000,
+                home(context)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        override fun notificationOpenMessage(context: Context, roomId: RoomId) = PendingIntent.getActivity(
-            context,
-            roomId.hashCode(),
-            messenger(context, roomId)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
+            override fun notificationOpenMessage(context: Context, roomId: RoomId) = PendingIntent.getActivity(
+                context,
+                roomId.hashCode(),
+                messenger(context, roomId)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        override fun home(context: Context) = Intent(context, MainActivity::class.java)
-        override fun messenger(context: Context, roomId: RoomId) = MessengerActivity.newInstance(context, roomId)
-        override fun messengerShortcut(context: Context, roomId: RoomId) = MessengerActivity.newShortcutInstance(context, roomId)
-        override fun messengerAttachments(context: Context, roomId: RoomId, attachments: List<MessageAttachment>) = MessengerActivity.newMessageAttachment(
-            context,
-            roomId,
-            attachments
-        )
-    })
+            override fun home(context: Context) = Intent(context, MainActivity::class.java)
+            override fun messenger(context: Context, roomId: RoomId) = MessengerActivity.newInstance(context, roomId)
+            override fun messengerShortcut(context: Context, roomId: RoomId) = MessengerActivity.newShortcutInstance(context, roomId)
+            override fun messengerAttachments(context: Context, roomId: RoomId, attachments: List<MessageAttachment>) = MessengerActivity.newMessageAttachment(
+                context,
+                roomId,
+                attachments
+            )
+        },
+        unsafeLazy { storeModule.value.preferences }
+    )
 
     val featureModules = FeatureModules(
         storeModule,
@@ -187,7 +190,8 @@ internal class FeatureModules internal constructor(
             matrixModules.sync,
             context.contentResolver,
             buildMeta,
-            coroutineDispatchers
+            coroutineDispatchers,
+            coreAndroidModule.themeStore(),
         )
     }
     val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }
