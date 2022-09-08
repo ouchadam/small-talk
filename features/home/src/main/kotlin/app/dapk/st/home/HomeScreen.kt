@@ -20,7 +20,6 @@ import app.dapk.st.profile.ProfileScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel) {
-    SmallTalkTheme {
         Surface(Modifier.fillMaxSize()) {
             LaunchedEffect(true) {
                 homeViewModel.start()
@@ -54,7 +53,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
             }
         }
-    }
 }
 
 @Composable

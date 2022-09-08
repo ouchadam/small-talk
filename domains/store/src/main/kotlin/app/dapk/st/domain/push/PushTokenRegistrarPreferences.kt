@@ -1,6 +1,6 @@
 package app.dapk.st.domain.push
 
-import app.dapk.st.domain.Preferences
+import app.dapk.st.core.Preferences
 
 private const val SELECTION_KEY = "push_token_selection"
 

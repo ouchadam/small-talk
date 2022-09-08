@@ -40,6 +40,7 @@ internal class SettingsViewModelTest {
     private val fakeUriFilenameResolver = FakeUriFilenameResolver()
     private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeSettingsItemFactory = FakeSettingsItemFactory()
+    private val fakeThemeStore = FakeThemeStore()
 
     private val viewModel = SettingsViewModel(
         fakeStoreCleaner,
@@ -49,6 +50,7 @@ internal class SettingsViewModelTest {
         fakeUriFilenameResolver.instance,
         fakeSettingsItemFactory.instance,
         fakePushTokenRegistrars.instance,
+        fakeThemeStore.instance,
         runViewModelTest.testMutableStateFactory(),
     )
 

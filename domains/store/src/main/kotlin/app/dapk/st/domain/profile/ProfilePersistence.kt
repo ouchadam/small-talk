@@ -1,6 +1,6 @@
 package app.dapk.st.domain.profile
 
-import app.dapk.st.domain.Preferences
+import app.dapk.st.core.Preferences
 import app.dapk.st.matrix.common.AvatarUrl
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.UserId

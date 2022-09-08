@@ -44,6 +44,7 @@ internal sealed interface SettingItem {
 
     data class Header(val label: String, override val id: Id = Id.Ignored) : SettingItem
     data class Text(override val id: Id, val content: String, val subtitle: String? = null) : SettingItem
+    data class Toggle(override val id: Id, val content: String, val state: Boolean) : SettingItem
     data class AccessToken(override val id: Id, val content: String, val accessToken: String) : SettingItem
 
     enum class Id {
@@ -55,6 +56,7 @@ internal sealed interface SettingItem {
         Encryption,
         PrivacyPolicy,
         Ignored,
+        ToggleDynamicTheme,
     }
 }
 
@@ -65,5 +67,6 @@ sealed interface SettingsEvent {
     object OpenEventLog : SettingsEvent
     data class OpenUrl(val url: String) : SettingsEvent
     data class CopyToClipboard(val message: String, val content: String) : SettingsEvent
+    object RecreateActivity : SettingsEvent
 }
 

@@ -1,6 +1,6 @@
 package test.impl
 
-import app.dapk.st.domain.Preferences
+import app.dapk.st.core.Preferences
 import test.unit
 
 class InMemoryPreferences : Preferences {

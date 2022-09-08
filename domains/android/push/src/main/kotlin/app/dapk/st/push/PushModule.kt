@@ -2,10 +2,10 @@ package app.dapk.st.push
 
 import android.content.Context
 import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.Preferences
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
-import app.dapk.st.domain.Preferences
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.firebase.messaging.Messaging
 import app.dapk.st.push.messaging.MessagingPushTokenRegistrar

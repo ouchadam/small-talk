@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import app.dapk.st.core.BuildMeta
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.ProvidableModule
+import app.dapk.st.core.ThemeStore
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.sync.SyncService
@@ -18,17 +19,21 @@ class SettingsModule(
     private val contentResolver: ContentResolver,
     private val buildMeta: BuildMeta,
     private val coroutineDispatchers: CoroutineDispatchers,
+    private val themeStore: ThemeStore,
 ) : ProvidableModule {
 
-    internal fun settingsViewModel() = SettingsViewModel(
-        storeModule.cacheCleaner(),
-        contentResolver,
-        cryptoService,
-        syncService,
-        UriFilenameResolver(contentResolver, coroutineDispatchers),
-        SettingsItemFactory(buildMeta, pushModule.pushTokenRegistrars()),
-        pushModule.pushTokenRegistrars(),
-    )
+    internal fun settingsViewModel(): SettingsViewModel {
+        return SettingsViewModel(
+            storeModule.cacheCleaner(),
+            contentResolver,
+            cryptoService,
+            syncService,
+            UriFilenameResolver(contentResolver, coroutineDispatchers),
+            SettingsItemFactory(buildMeta, pushModule.pushTokenRegistrars(), themeStore),
+            pushModule.pushTokenRegistrars(),
+            themeStore,
+        )
+    }
 
     internal fun eventLogViewModel(): EventLoggerViewModel {
         return EventLoggerViewModel(storeModule.eventLogStore())
