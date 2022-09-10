@@ -3,13 +3,12 @@ package app.dapk.st.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
-import app.dapk.st.design.components.SmallTalkTheme
 import app.dapk.st.directory.DirectoryScreen
 import app.dapk.st.home.HomeScreenState.*
 import app.dapk.st.home.HomeScreenState.Page.Directory
@@ -20,41 +19,42 @@ import app.dapk.st.profile.ProfileScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel) {
-        Surface(Modifier.fillMaxSize()) {
-            LaunchedEffect(true) {
-                homeViewModel.start()
-            }
+    LifecycleEffect(
+        onStart = { homeViewModel.start() },
+        onStop = { homeViewModel.stop() }
+    )
 
-            when (val state = homeViewModel.state) {
-                Loading -> CenteredLoading()
-                is SignedIn -> {
-                    Scaffold(
-                        bottomBar = {
-                            BottomBar(state, homeViewModel)
-                        },
-                        content = { innerPadding ->
-                            Box(modifier = Modifier.padding(innerPadding)) {
-                                when (state.page) {
-                                    Directory -> DirectoryScreen(homeViewModel.directory())
-                                    Profile -> {
-                                        ProfileScreen(homeViewModel.profile()) {
-                                            homeViewModel.changePage(Directory)
-                                        }
-                                    }
+    when (val state = homeViewModel.state) {
+        Loading -> CenteredLoading()
+        is SignedIn -> {
+            Scaffold(
+                bottomBar = {
+                    BottomBar(state, homeViewModel)
+                },
+                content = { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        when (state.page) {
+                            Directory -> DirectoryScreen(homeViewModel.directory())
+                            Profile -> {
+                                ProfileScreen(homeViewModel.profile()) {
+                                    homeViewModel.changePage(Directory)
                                 }
                             }
                         }
-                    )
-                }
-                SignedOut -> {
-                    LoginScreen(homeViewModel.login()) {
-                        homeViewModel.loggedIn()
                     }
                 }
+            )
+        }
+
+        SignedOut -> {
+            LoginScreen(homeViewModel.login()) {
+                homeViewModel.loggedIn()
             }
         }
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
     Column {
@@ -72,11 +72,17 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                             }
                         },
                     )
-                    Profile -> NavigationBarItem(
 
+                    Profile -> NavigationBarItem(
                         icon = {
-                            Box {
-                                CircleishAvatar(state.me.avatarUrl?.value, state.me.displayName ?: state.me.userId.value, size = 25.dp)
+                            BadgedBox(badge = {
+                                if (state.invites > 0) {
+                                    Badge(containerColor = MaterialTheme.colorScheme.primary) { Text("!", color = MaterialTheme.colorScheme.onPrimary) }
+                                }
+                            }) {
+                                Box {
+                                    CircleishAvatar(state.me.avatarUrl?.value, state.me.displayName ?: state.me.userId.value, size = 25.dp)
+                                }
                             }
                         },
                         selected = state.page == page,

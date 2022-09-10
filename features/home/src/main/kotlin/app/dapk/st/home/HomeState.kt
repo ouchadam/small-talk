@@ -10,7 +10,7 @@ sealed interface HomeScreenState {
 
     object Loading : HomeScreenState
     object SignedOut : HomeScreenState
-    data class SignedIn(val page: Page, val me: ProfileService.Me) : HomeScreenState
+    data class SignedIn(val page: Page, val me: ProfileService.Me, val invites: Int) : HomeScreenState
 
     enum class Page(val icon: ImageVector) {
         Directory(Icons.Filled.Menu),
