@@ -2,8 +2,6 @@ package app.dapk.st.notifications
 
 import android.app.Notification
 import android.graphics.drawable.Icon
-import android.os.Build
-import androidx.annotation.RequiresApi
 
 sealed interface AndroidNotificationStyle {
 
@@ -20,7 +18,6 @@ sealed interface AndroidNotificationStyle {
         val content: List<AndroidMessage>,
     ) : AndroidNotificationStyle {
 
-        @RequiresApi(Build.VERSION_CODES.P)
         override fun build(builder: AndroidNotificationStyleBuilder) = builder.build(this)
 
         data class AndroidPerson(val name: String, val key: String, val icon: Icon? = null)

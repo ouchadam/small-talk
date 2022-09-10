@@ -5,8 +5,6 @@ import android.app.Notification
 import android.app.Notification.InboxStyle
 import android.app.Notification.MessagingStyle
 import android.app.Person
-import android.os.Build
-import androidx.annotation.RequiresApi
 
 @SuppressLint("NewApi")
 class AndroidNotificationStyleBuilder(
@@ -27,7 +25,6 @@ class AndroidNotificationStyleBuilder(
         inboxStyle.setSummaryText(summary)
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     private fun AndroidNotificationStyle.Messaging.buildMessagingStyle() = messagingStyleFactory(
         personBuilderFactory()
             .setName(person.name)
