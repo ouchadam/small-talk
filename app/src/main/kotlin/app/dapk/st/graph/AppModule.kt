@@ -181,7 +181,7 @@ internal class FeatureModules internal constructor(
             clock
         )
     }
-    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, buildMeta) }
+    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
     val settingsModule by unsafeLazy {
         SettingsModule(
             storeModule.value,
