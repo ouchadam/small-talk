@@ -303,6 +303,7 @@ internal class MatrixModules(
                     }
                 }
 
+                val overviewStore = store.overviewStore()
                 installRoomService(
                     storeModule.value.memberStore(),
                     roomMessenger = {
@@ -316,6 +317,9 @@ internal class MatrixModules(
                                 )
                             }
                         }
+                    },
+                    roomInviteRemover = {
+                        overviewStore.removeInvites(listOf(it))
                     }
                 )
 
@@ -323,7 +327,7 @@ internal class MatrixModules(
 
                 installSyncService(
                     credentialsStore,
-                    store.overviewStore(),
+                    overviewStore,
                     store.roomStore(),
                     store.syncStore(),
                     store.filterStore(),
