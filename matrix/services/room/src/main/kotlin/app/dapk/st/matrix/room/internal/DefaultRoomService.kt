@@ -8,6 +8,8 @@ import app.dapk.st.matrix.http.emptyJsonBody
 import app.dapk.st.matrix.http.jsonBody
 import app.dapk.st.matrix.room.RoomMessenger
 import app.dapk.st.matrix.room.RoomService
+import io.ktor.client.plugins.*
+import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -16,7 +18,9 @@ class DefaultRoomService(
     private val logger: MatrixLogger,
     private val roomMembers: RoomMembers,
     private val roomMessenger: RoomMessenger,
+    private val roomInviteRemover: RoomInviteRemover,
 ) : RoomService {
+
     override suspend fun joinedMembers(roomId: RoomId): List<RoomService.JoinedMember> {
         val response = httpClient.execute(joinedMembersRequest(roomId))
         return response.joined.map { (userId, member) ->
@@ -68,7 +72,23 @@ class DefaultRoomService(
     }
 
     override suspend fun rejectJoinRoom(roomId: RoomId) {
-        httpClient.execute(rejectJoinRoomRequest(roomId))
+        runCatching { httpClient.execute(rejectJoinRoomRequest(roomId)) }.fold(
+            onSuccess = {},
+            onFailure = {
+                when (it) {
+                    is ClientRequestException -> {
+                        if (it.response.status == HttpStatusCode.Forbidden) {
+                            // allow error
+                        } else {
+                            throw it
+                        }
+                    }
+
+                    else -> throw it
+                }
+            }
+        )
+        roomInviteRemover.remove(roomId)
     }
 }
 

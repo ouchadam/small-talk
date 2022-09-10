@@ -1,5 +1,6 @@
 package app.dapk.st.profile
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.ErrorTracker
@@ -95,7 +96,9 @@ class ProfileViewModel(
 
     fun rejectRoomInvite(roomId: RoomId) {
         launchCatching { roomService.rejectJoinRoom(roomId) }.fold(
-            onError = {}
+            onError = {
+                Log.e("!!!", it.message, it)
+            }
         )
     }
 
