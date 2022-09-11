@@ -55,7 +55,7 @@ class PushTokenRegistrars(
     }
 
     override suspend fun registerCurrentToken() {
-        when (selection) {
+        when (currentSelection()) {
             FIREBASE_OPTION -> messagingPushTokenRegistrar.registerCurrentToken()
             NONE -> {
                 // do nothing
@@ -73,6 +73,10 @@ class PushTokenRegistrars(
                     messagingPushTokenRegistrar.unregister()
                     unifiedPushRegistrar.unregister()
                 }
+            }
+
+            null -> {
+                // do nothing
             }
 
             else -> unifiedPushRegistrar.unregister()
