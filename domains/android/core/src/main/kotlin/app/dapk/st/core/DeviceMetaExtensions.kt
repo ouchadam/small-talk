@@ -6,6 +6,8 @@ fun <T> DeviceMeta.isAtLeastO(block: () -> T, fallback: () -> T = { throw Illega
     return if (this.apiVersion >= Build.VERSION_CODES.O) block() else fallback()
 }
 
+fun DeviceMeta.isAtLeastS() = this.apiVersion >= Build.VERSION_CODES.S
+
 fun DeviceMeta.onAtLeastO(block: () -> Unit) {
     if (this.apiVersion >= Build.VERSION_CODES.O) block()
 }

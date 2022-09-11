@@ -1,6 +1,7 @@
 package app.dapk.st.settings
 
 import app.dapk.st.core.BuildMeta
+import app.dapk.st.core.DeviceMeta
 import app.dapk.st.push.PushTokenRegistrars
 import app.dapk.st.push.Registrar
 import internalfixture.aSettingHeaderItem
@@ -18,10 +19,11 @@ private const val ENABLED_MATERIAL_YOU = true
 class SettingsItemFactoryTest {
 
     private val buildMeta = BuildMeta(versionName = "a-version-name", versionCode = 100)
+    private val deviceMeta = DeviceMeta(apiVersion = 31)
     private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeThemeStore = FakeThemeStore()
 
-    private val settingsItemFactory = SettingsItemFactory(buildMeta, fakePushTokenRegistrars.instance, fakeThemeStore.instance)
+    private val settingsItemFactory = SettingsItemFactory(buildMeta, deviceMeta, fakePushTokenRegistrars.instance, fakeThemeStore.instance)
 
     @Test
     fun `when creating root items, then is expected`() = runTest {

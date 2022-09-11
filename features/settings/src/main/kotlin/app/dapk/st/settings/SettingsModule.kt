@@ -1,10 +1,7 @@
 package app.dapk.st.settings
 
 import android.content.ContentResolver
-import app.dapk.st.core.BuildMeta
-import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.core.ProvidableModule
-import app.dapk.st.core.ThemeStore
+import app.dapk.st.core.*
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.sync.SyncService
@@ -18,6 +15,7 @@ class SettingsModule(
     private val syncService: SyncService,
     private val contentResolver: ContentResolver,
     private val buildMeta: BuildMeta,
+    private val deviceMeta: DeviceMeta,
     private val coroutineDispatchers: CoroutineDispatchers,
     private val themeStore: ThemeStore,
 ) : ProvidableModule {
@@ -29,7 +27,7 @@ class SettingsModule(
             cryptoService,
             syncService,
             UriFilenameResolver(contentResolver, coroutineDispatchers),
-            SettingsItemFactory(buildMeta, pushModule.pushTokenRegistrars(), themeStore),
+            SettingsItemFactory(buildMeta, deviceMeta, pushModule.pushTokenRegistrars(), themeStore),
             pushModule.pushTokenRegistrars(),
             themeStore,
         )

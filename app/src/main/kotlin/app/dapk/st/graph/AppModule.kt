@@ -69,6 +69,7 @@ import java.time.Clock
 internal class AppModule(context: Application, logger: MatrixLogger) {
 
     private val buildMeta = BuildMeta(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+    private val deviceMeta = DeviceMeta(Build.VERSION.SDK_INT)
     private val trackingModule by unsafeLazy {
         TrackingModule(
             isCrashTrackingEnabled = !BuildConfig.DEBUG
@@ -135,6 +136,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         imageLoaderModule,
         context,
         buildMeta,
+        deviceMeta,
         coroutineDispatchers,
         clock,
     )
@@ -149,6 +151,7 @@ internal class FeatureModules internal constructor(
     imageLoaderModule: ImageLoaderModule,
     context: Context,
     buildMeta: BuildMeta,
+    deviceMeta: DeviceMeta,
     coroutineDispatchers: CoroutineDispatchers,
     clock: Clock,
 ) {
@@ -190,6 +193,7 @@ internal class FeatureModules internal constructor(
             matrixModules.sync,
             context.contentResolver,
             buildMeta,
+            deviceMeta,
             coroutineDispatchers,
             coreAndroidModule.themeStore(),
         )
@@ -202,7 +206,7 @@ internal class FeatureModules internal constructor(
             context,
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,
-            deviceMeta = DeviceMeta(Build.VERSION.SDK_INT)
+            deviceMeta = deviceMeta
         )
     }
 
