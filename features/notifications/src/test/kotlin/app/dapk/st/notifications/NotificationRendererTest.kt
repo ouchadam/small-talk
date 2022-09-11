@@ -35,7 +35,7 @@ class NotificationRendererTest {
     private val fakeNotificationFactory = FakeNotificationFactory()
     private val fakeAndroidNotificationBuilder = FakeAndroidNotificationBuilder()
 
-    private val notificationRenderer = NotificationRenderer(
+    private val notificationRenderer = NotificationMessageRenderer(
         fakeNotificationManager.instance,
         fakeNotificationFactory.instance,
         fakeAndroidNotificationBuilder.instance,

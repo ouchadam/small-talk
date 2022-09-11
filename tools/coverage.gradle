@@ -74,3 +74,12 @@ task allCodeCoverageReport(type: JacocoReport) {
     dependsOn { ["app:assembleDebug"] + projects*.test }
     initializeReport(it, projects, excludes)
 }
+
+task unitTestCodeCoverageReport(type: JacocoReport) {
+    outputs.upToDateWhen { false }
+    rootProject.apply plugin: 'jacoco'
+    def projects = collectProjects { !it.name.contains("test-harness") && !it.name.contains("stub") && !it.name.contains("-noop") }
+    dependsOn { ["app:assembleDebug"] + projects*.test }
+    initializeReport(it, projects, excludes)
+}
+

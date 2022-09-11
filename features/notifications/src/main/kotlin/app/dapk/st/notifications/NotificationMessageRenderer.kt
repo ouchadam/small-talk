@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 private const val SUMMARY_NOTIFICATION_ID = 101
 private const val MESSAGE_NOTIFICATION_ID = 100
 
-class NotificationRenderer(
+class NotificationMessageRenderer(
     private val notificationManager: NotificationManager,
     private val notificationStateMapper: NotificationStateMapper,
     private val androidNotificationBuilder: AndroidNotificationBuilder,

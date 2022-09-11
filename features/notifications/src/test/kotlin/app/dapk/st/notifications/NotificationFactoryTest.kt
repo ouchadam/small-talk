@@ -16,6 +16,9 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 private const val A_CHANNEL_ID = "a channel id"
 private val AN_OPEN_APP_INTENT = aPendingIntent()
@@ -38,6 +41,7 @@ class NotificationFactoryTest {
     private val fakeNotificationStyleFactory = FakeNotificationStyleFactory()
     private val fakeIntentFactory = FakeIntentFactory()
     private val fakeIconLoader = FakeIconLoader()
+    private val fixedClock = Clock.fixed(Instant.ofEpochMilli(0), ZoneOffset.UTC)
 
     private val notificationFactory = NotificationFactory(
         fakeContext.instance,
@@ -45,6 +49,7 @@ class NotificationFactoryTest {
         fakeIntentFactory,
         fakeIconLoader,
         DeviceMeta(26),
+        fixedClock
     )
 
     @Test
@@ -124,6 +129,30 @@ class NotificationFactoryTest {
         result shouldBeEqualTo expectedMessage(
             channel = DIRECT_CHANNEL_ID,
             shouldAlertMoreThanOnce = true,
+        )
+    }
+
+    @Test
+    fun `given invite, then creates expected`() {
+        fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
+        val content = "Content message"
+        val result = notificationFactory.createInvite(
+            InviteNotification(
+                content = content,
+                A_ROOM_ID,
+            )
+        )
+
+        result shouldBeEqualTo AndroidNotification(
+            channelId = INVITE_CHANNEL_ID,
+            whenTimestamp = fixedClock.millis(),
+            alertMoreThanOnce = true,
+            smallIcon = R.drawable.ic_notification_small_icon,
+            contentIntent = AN_OPEN_APP_INTENT,
+            category = Notification.CATEGORY_EVENT,
+            autoCancel = true,
+            contentTitle = "Invite",
+            contentText = content,
         )
     }
 

@@ -2,21 +2,27 @@ package app.dapk.st.notifications
 
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 
 class RenderNotificationsUseCase(
-    private val notificationRenderer: NotificationRenderer,
+    private val notificationRenderer: NotificationMessageRenderer,
+    private val inviteRenderer: NotificationInviteRenderer,
     private val observeRenderableUnreadEventsUseCase: ObserveUnreadNotificationsUseCase,
+    private val observeInviteNotificationsUseCase: ObserveInviteNotificationsUseCase,
     private val notificationChannels: NotificationChannels,
 ) {
 
-    suspend fun listenForNotificationChanges() {
+    suspend fun listenForNotificationChanges(scope: CoroutineScope) {
+        notificationChannels.initChannels()
         observeRenderableUnreadEventsUseCase()
-            .onStart { notificationChannels.initChannels() }
             .onEach { (each, diff) -> renderUnreadChange(each, diff) }
-            .collect()
+            .launchIn(scope)
+
+        observeInviteNotificationsUseCase()
+            .onEach { inviteRenderer.render(it) }
+            .launchIn(scope)
     }
 
     private suspend fun renderUnreadChange(allUnread: Map<RoomOverview, List<RoomEvent>>, diff: NotificationDiff) {
