@@ -14,6 +14,7 @@ class ObserveInviteNotificationsUseCaseImpl(private val overviewStore: OverviewS
     override suspend fun invoke(): Flow<InviteNotification> {
         return overviewStore.latestInvites()
             .diff()
+            .drop(1)
             .flatten()
             .map {
                 val text = when (val meta = it.inviteMeta) {
