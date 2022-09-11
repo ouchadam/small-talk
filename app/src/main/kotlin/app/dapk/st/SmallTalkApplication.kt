@@ -60,7 +60,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
 
         applicationScope.launch {
             val notificationsUseCase = notificationsModule.notificationsUseCase()
-            notificationsUseCase.listenForNotificationChanges()
+            notificationsUseCase.listenForNotificationChanges(this)
         }
     }
 

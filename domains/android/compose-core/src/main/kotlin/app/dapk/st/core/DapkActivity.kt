@@ -1,5 +1,6 @@
 package app.dapk.st.core
 
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -20,9 +21,12 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
 
     private lateinit var themeConfig: ThemeConfig
 
+    private val needsBackLeakWorkaround = Build.VERSION.SDK_INT == Build.VERSION_CODES.Q
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.themeConfig = ThemeConfig(themeStore.isMaterialYouEnabled())
+
 
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -52,5 +56,12 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
                 sideEffect()
             }
         }
+    }
+
+    override fun onBackPressed() {
+        if (needsBackLeakWorkaround && !onBackPressedDispatcher.hasEnabledCallbacks()) {
+            finishAfterTransition()
+        } else
+            super.onBackPressed()
     }
 }

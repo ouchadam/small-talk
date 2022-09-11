@@ -184,7 +184,7 @@ internal class FeatureModules internal constructor(
             clock
         )
     }
-    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, buildMeta) }
+    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
     val settingsModule by unsafeLazy {
         SettingsModule(
             storeModule.value,
@@ -203,6 +203,7 @@ internal class FeatureModules internal constructor(
         NotificationsModule(
             imageLoaderModule.iconLoader(),
             storeModule.value.roomStore(),
+            storeModule.value.overviewStore(),
             context,
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,
@@ -307,6 +308,7 @@ internal class MatrixModules(
                     }
                 }
 
+                val overviewStore = store.overviewStore()
                 installRoomService(
                     storeModule.value.memberStore(),
                     roomMessenger = {
@@ -320,6 +322,9 @@ internal class MatrixModules(
                                 )
                             }
                         }
+                    },
+                    roomInviteRemover = {
+                        overviewStore.removeInvites(listOf(it))
                     }
                 )
 
@@ -327,7 +332,7 @@ internal class MatrixModules(
 
                 installSyncService(
                     credentialsStore,
-                    store.overviewStore(),
+                    overviewStore,
                     store.roomStore(),
                     store.syncStore(),
                     store.filterStore(),

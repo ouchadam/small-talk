@@ -3,6 +3,7 @@ applyAndroidComposeLibraryModule(project)
 dependencies {
     implementation project(":matrix:services:profile")
     implementation project(":matrix:services:crypto")
+    implementation project(":matrix:services:sync")
     implementation project(":features:directory")
     implementation project(":features:login")
     implementation project(":features:settings")

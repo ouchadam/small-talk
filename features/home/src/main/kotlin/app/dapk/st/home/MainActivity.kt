@@ -1,11 +1,13 @@
 package app.dapk.st.home
 
 import android.os.Bundle
-import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.DapkActivity
 import app.dapk.st.core.module
@@ -35,7 +37,9 @@ class MainActivity : DapkActivity() {
             if (homeViewModel.hasVersionChanged()) {
                 BetaUpgradeDialog()
             } else {
-                HomeScreen(homeViewModel)
+                Surface(Modifier.fillMaxSize()) {
+                    HomeScreen(homeViewModel)
+                }
             }
         }
     }

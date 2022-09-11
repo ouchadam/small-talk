@@ -9,6 +9,7 @@ import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.internal.DefaultRoomService
+import app.dapk.st.matrix.room.internal.RoomInviteRemover
 import app.dapk.st.matrix.room.internal.RoomMembers
 import app.dapk.st.matrix.room.internal.RoomMembersCache
 
@@ -40,9 +41,16 @@ interface RoomService : MatrixService {
 fun MatrixServiceInstaller.installRoomService(
     memberStore: MemberStore,
     roomMessenger: ServiceDepFactory<RoomMessenger>,
+    roomInviteRemover: RoomInviteRemover,
 ) {
     this.install { (httpClient, _, services, logger) ->
-        SERVICE_KEY to DefaultRoomService(httpClient, logger, RoomMembers(memberStore, RoomMembersCache()), roomMessenger.create(services))
+        SERVICE_KEY to DefaultRoomService(
+            httpClient,
+            logger,
+            RoomMembers(memberStore, RoomMembersCache()),
+            roomMessenger.create(services),
+            roomInviteRemover
+        )
     }
 }
 
