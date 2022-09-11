@@ -102,16 +102,20 @@ class ProfileViewModel(
         )
     }
 
-    fun stop() {
-        syncingJob?.cancel()
-    }
-
     @Suppress("UNCHECKED_CAST")
     private inline fun <reified S : Page> updatePageState(crossinline block: S.() -> S) {
         val page = state.page
         val currentState = page.state
         require(currentState is S)
         updateState { copy(page = (page as SpiderPage<S>).copy(state = block(page.state))) }
+    }
+
+    fun reset() {
+        updateState { ProfileScreenState(SpiderPage(Page.Routes.profile, "Profile", null, Page.Profile(Lce.Loading()), hasToolbar = false)) }
+    }
+
+    fun stop() {
+        syncingJob?.cancel()
     }
 
 }
