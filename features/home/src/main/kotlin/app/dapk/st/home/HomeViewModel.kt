@@ -98,7 +98,17 @@ class HomeViewModel(
     fun changePage(page: Page) {
         state = when (val current = state) {
             Loading -> current
-            is SignedIn -> current.copy(page = page)
+            is SignedIn -> {
+                when (page) {
+                    Page.Directory -> {
+                        // do nothing
+                    }
+
+                    Page.Profile -> profileViewModel.reset()
+                }
+                current.copy(page = page)
+            }
+
             SignedOut -> current
         }
     }

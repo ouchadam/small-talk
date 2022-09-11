@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
-import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.*
 import app.dapk.st.matrix.sync.InviteMeta
@@ -43,6 +42,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onTopLevelBack: () -> Unit) {
             else -> viewModel.goTo(it)
         }
     }
+
     Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
         item(Page.Routes.profile) {
             ProfilePage(context, viewModel, it)
@@ -146,6 +146,7 @@ private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitatio
                 }
             }
         }
+
         is Lce.Error -> TODO()
     }
 }
