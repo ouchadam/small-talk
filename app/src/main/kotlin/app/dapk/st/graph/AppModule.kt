@@ -199,6 +199,7 @@ internal class FeatureModules internal constructor(
         NotificationsModule(
             imageLoaderModule.iconLoader(),
             storeModule.value.roomStore(),
+            storeModule.value.overviewStore(),
             context,
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,

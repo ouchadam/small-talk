@@ -32,6 +32,8 @@ class AndroidNotificationBuilder(
             .apply { setGroupSummary(notification.isGroupSummary) }
             .ifNotNull(notification.groupId) { setGroup(it) }
             .ifNotNull(notification.messageStyle) { style = it.build(notificationStyleBuilder) }
+            .ifNotNull(notification.contentTitle) { setContentTitle(it) }
+            .ifNotNull(notification.contentText) { setContentText(it) }
             .ifNotNull(notification.contentIntent) { setContentIntent(it) }
             .ifNotNull(notification.whenTimestamp) {
                 setShowWhen(true)
@@ -65,6 +67,8 @@ data class AndroidNotification(
     val shortcutId: String? = null,
     val alertMoreThanOnce: Boolean,
     val contentIntent: PendingIntent? = null,
+    val contentTitle: String? = null,
+    val contentText: String? = null,
     val messageStyle: AndroidNotificationStyle? = null,
     val category: String? = null,
     val smallIcon: Int? = null,

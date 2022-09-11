@@ -8,6 +8,7 @@ import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.navigator.IntentFactory
+import java.time.Clock
 
 private const val GROUP_ID = "st"
 
@@ -17,6 +18,7 @@ class NotificationFactory(
     private val intentFactory: IntentFactory,
     private val iconLoader: IconLoader,
     private val deviceMeta: DeviceMeta,
+    private val clock: Clock,
 ) {
     private val shouldAlwaysAlertDms = true
 
@@ -82,6 +84,21 @@ class NotificationFactory(
             ),
             isGroupSummary = true,
             category = Notification.CATEGORY_MESSAGE,
+        )
+    }
+
+    fun createInvite(inviteNotification: InviteNotification): AndroidNotification {
+        val openAppIntent = intentFactory.notificationOpenApp(context)
+        return AndroidNotification(
+            channelId = INVITE_CHANNEL_ID,
+            smallIcon = R.drawable.ic_notification_small_icon,
+            whenTimestamp = clock.millis(),
+            alertMoreThanOnce = true,
+            contentTitle = "Invite",
+            contentText = inviteNotification.content,
+            contentIntent = openAppIntent,
+            category = Notification.CATEGORY_EVENT,
+            autoCancel = true,
         )
     }
 }

@@ -164,7 +164,8 @@ class TestMatrix(
                             )
                         }
                     }
-                }
+                },
+                roomInviteRemover = { storeModule.overviewStore().removeInvites(listOf(it)) }
             )
 
             installSyncService(
