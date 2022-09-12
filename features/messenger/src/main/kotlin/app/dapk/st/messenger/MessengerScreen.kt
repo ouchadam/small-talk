@@ -10,11 +10,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +64,7 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
     Column {
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
             OverflowMenu {
-                DropdownMenuItem(text = { Text("Settings") }, onClick = {}) 
+                DropdownMenuItem(text = { Text("Settings", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {})
             }
         })
         when (state.composerState) {
@@ -565,12 +565,12 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                 .align(Alignment.Bottom)
                 .weight(1f)
                 .fillMaxHeight()
-                .background(Color.DarkGray, RoundedCornerShape(24.dp)),
+                .background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.TopStart,
         ) {
             Box(Modifier.padding(14.dp)) {
                 if (state.value.isEmpty()) {
-                    Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.4f))
+                    Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
                 }
                 BasicTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -584,11 +584,12 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
         }
         Spacer(modifier = Modifier.width(6.dp))
         var size by remember { mutableStateOf(IntSize(0, 0)) }
+        val enabled = state.value.isNotEmpty()
         IconButton(
-            enabled = state.value.isNotEmpty(),
+            enabled = enabled,
             modifier = Modifier
                 .clip(CircleShape)
-                .background(if (state.value.isEmpty()) Color.DarkGray else MaterialTheme.colorScheme.primary)
+                .background(if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer)
                 .run {
                     if (size.height == 0 || size.width == 0) {
                         this
@@ -607,7 +608,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             Icon(
                 imageVector = Icons.Filled.Send,
                 contentDescription = "",
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = if (enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f),
             )
         }
     }
@@ -633,7 +634,8 @@ private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> U
         Box(
             Modifier
                 .align(Alignment.BottomEnd)
-                .padding(12.dp)) {
+                .padding(12.dp)
+        ) {
             IconButton(
                 enabled = true,
                 modifier = Modifier
