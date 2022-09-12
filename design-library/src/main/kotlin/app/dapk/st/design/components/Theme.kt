@@ -15,18 +15,22 @@ private object Palette {
 private val DARK_COLOURS = darkColorScheme(
     primary = Palette.brandPrimary,
     onPrimary = Color(0xDDFFFFFF),
+    secondaryContainer = Color(0xFF363639),
+    onSecondaryContainer = Color(0xDDFFFFFF),
 )
 
 private val LIGHT_COLOURS = lightColorScheme(
     primary = Palette.brandPrimary,
     onPrimary = Color(0xDDFFFFFF),
+    secondaryContainer = Color(0xFFf1f0f1),
+    onSecondaryContainer = Color(0xFF000000),
 )
 
-private fun createExtended(primary: Color, onPrimary: Color) = ExtendedColors(
-    selfBubble = primary,
-    onSelfBubble = onPrimary,
-    othersBubble = Color(0x20EDEDED),
-    onOthersBubble = onPrimary,
+private fun createExtended(scheme: ColorScheme) = ExtendedColors(
+    selfBubble = scheme.primary,
+    onSelfBubble = scheme.onPrimary,
+    othersBubble = scheme.secondaryContainer,
+    onOthersBubble = scheme.onSecondaryContainer,
     selfBubbleReplyBackground = Color(0x40EAEAEA),
     otherBubbleReplyBackground = Color(0x20EAEAEA),
     missingImageColors = listOf(
@@ -58,15 +62,19 @@ fun SmallTalkTheme(themeConfig: ThemeConfig, content: @Composable () -> Unit) {
     val systemUiController = rememberSystemUiController()
     val systemInDarkTheme = isSystemInDarkTheme()
 
-    val colorScheme = if (themeConfig.useDynamicTheme) {
-        when (systemInDarkTheme) {
-            true -> dynamicDarkColorScheme(LocalContext.current)
-            false -> dynamicLightColorScheme(LocalContext.current)
+    val colorScheme = when {
+        themeConfig.useDynamicTheme -> {
+            when (systemInDarkTheme) {
+                true -> dynamicDarkColorScheme(LocalContext.current)
+                false -> dynamicLightColorScheme(LocalContext.current)
+            }
         }
-    } else {
-        when (systemInDarkTheme) {
-            true -> DARK_COLOURS
-            false -> LIGHT_COLOURS
+
+        else -> {
+            when (systemInDarkTheme) {
+                true -> DARK_COLOURS
+                false -> LIGHT_COLOURS
+            }
         }
     }
     MaterialTheme(colorScheme = colorScheme) {
@@ -74,7 +82,7 @@ fun SmallTalkTheme(themeConfig: ThemeConfig, content: @Composable () -> Unit) {
         SideEffect {
             systemUiController.setSystemBarsColor(backgroundColor)
         }
-        CompositionLocalProvider(LocalExtendedColors provides createExtended(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)) {
+        CompositionLocalProvider(LocalExtendedColors provides createExtended(colorScheme)) {
             content()
         }
     }

@@ -1,12 +1,15 @@
 package app.dapk.st.design.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
@@ -18,7 +21,8 @@ fun OverflowMenu(content: @Composable () -> Unit) {
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
-            offset = DpOffset(0.dp, (-72).dp)
+            offset = DpOffset(0.dp, (-72).dp),
+            modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
         ) {
             content()
         }
