@@ -1,8 +1,7 @@
 package app.dapk.st.design.components
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -18,13 +17,16 @@ private val DARK_COLOURS = darkColorScheme(
     onPrimary = Color(0xDDFFFFFF),
 )
 
-private val DARK_EXTENDED = createExtended(DARK_COLOURS.primary, DARK_COLOURS.onPrimary)
+private val LIGHT_COLOURS = lightColorScheme(
+    primary = Palette.brandPrimary,
+    onPrimary = Color(0xDDFFFFFF),
+)
 
 private fun createExtended(primary: Color, onPrimary: Color) = ExtendedColors(
     selfBubble = primary,
     onSelfBubble = onPrimary,
     othersBubble = Color(0x20EDEDED),
-    onOthersBubble = DARK_COLOURS.onPrimary,
+    onOthersBubble = onPrimary,
     selfBubbleReplyBackground = Color(0x40EAEAEA),
     otherBubbleReplyBackground = Color(0x20EAEAEA),
     missingImageColors = listOf(
@@ -49,15 +51,23 @@ data class ExtendedColors(
     }
 }
 
-private val LocalExtendedColors = staticCompositionLocalOf { DARK_EXTENDED }
+private val LocalExtendedColors = staticCompositionLocalOf<ExtendedColors> { throw IllegalAccessError() }
 
 @Composable
 fun SmallTalkTheme(themeConfig: ThemeConfig, content: @Composable () -> Unit) {
     val systemUiController = rememberSystemUiController()
+    val systemInDarkTheme = isSystemInDarkTheme()
+
     val colorScheme = if (themeConfig.useDynamicTheme) {
-        dynamicDarkColorScheme(LocalContext.current)
+        when (systemInDarkTheme) {
+            true -> dynamicDarkColorScheme(LocalContext.current)
+            false -> dynamicLightColorScheme(LocalContext.current)
+        }
     } else {
-        DARK_COLOURS
+        when (systemInDarkTheme) {
+            true -> DARK_COLOURS
+            false -> LIGHT_COLOURS
+        }
     }
     MaterialTheme(colorScheme = colorScheme) {
         val backgroundColor = MaterialTheme.colorScheme.background
