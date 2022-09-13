@@ -15,7 +15,7 @@ private val SERVICE_KEY = RoomService::class
 interface RoomService : MatrixService {
 
     suspend fun joinedMembers(roomId: RoomId): List<JoinedMember>
-    suspend fun markFullyRead(roomId: RoomId, eventId: EventId)
+    suspend fun markFullyRead(roomId: RoomId, eventId: EventId, isPrivate: Boolean)
 
     suspend fun findMember(roomId: RoomId, userId: UserId): RoomMember?
     suspend fun findMembers(roomId: RoomId, userIds: List<UserId>): List<RoomMember>

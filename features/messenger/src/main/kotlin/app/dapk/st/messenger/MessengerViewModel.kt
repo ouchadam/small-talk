@@ -101,7 +101,7 @@ internal class MessengerViewModel(
     private fun CoroutineScope.updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerState): Deferred<Unit> {
         return async {
             runCatching {
-                roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent)
+                roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent, isPrivate = true)
                 roomStore.markRead(state.roomState.roomOverview.roomId)
             }
         }

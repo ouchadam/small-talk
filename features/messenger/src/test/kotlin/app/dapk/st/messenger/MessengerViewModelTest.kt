@@ -69,7 +69,7 @@ class MessengerViewModelTest {
     @Test
     fun `given timeline emits state, when starting, then updates state and marks room and events as read`() = runViewModelTest {
         fakeRoomStore.expectUnit(times = 2) { it.markRead(A_ROOM_ID) }
-        fakeRoomService.expectUnit { it.markFullyRead(A_ROOM_ID, AN_EVENT_ID) }
+        fakeRoomService.expectUnit { it.markFullyRead(A_ROOM_ID, AN_EVENT_ID, isPrivate = true) }
         val state = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
         fakeObserveTimelineUseCase.given(A_ROOM_ID, A_SELF_ID).returns(flowOf(state))
 
