@@ -15,6 +15,7 @@ import test.delegateReturn
 
 private val A_SELECTION = Registrar("A_SELECTION")
 private const val ENABLED_MATERIAL_YOU = true
+private const val DISABLED_LOGGING = false
 
 class SettingsItemFactoryTest {
 
@@ -22,20 +23,27 @@ class SettingsItemFactoryTest {
     private val deviceMeta = DeviceMeta(apiVersion = 31)
     private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeThemeStore = FakeThemeStore()
+    private val fakeLoggingStore = FakeLoggingStore()
 
-    private val settingsItemFactory = SettingsItemFactory(buildMeta, deviceMeta, fakePushTokenRegistrars.instance, fakeThemeStore.instance)
+    private val settingsItemFactory = SettingsItemFactory(
+        buildMeta,
+        deviceMeta,
+        fakePushTokenRegistrars.instance,
+        fakeThemeStore.instance,
+        fakeLoggingStore.instance
+    )
 
     @Test
     fun `when creating root items, then is expected`() = runTest {
         fakePushTokenRegistrars.givenCurrentSelection().returns(A_SELECTION)
         fakeThemeStore.givenMaterialYouIsEnabled().returns(ENABLED_MATERIAL_YOU)
+        fakeLoggingStore.givenLoggingIsEnabled().returns(DISABLED_LOGGING)
 
         val result = settingsItemFactory.root()
 
         result shouldBeEqualTo listOf(
             aSettingHeaderItem("General"),
             aSettingTextItem(SettingItem.Id.Encryption, "Encryption"),
-            aSettingTextItem(SettingItem.Id.EventLog, "Event log"),
             aSettingTextItem(SettingItem.Id.PushProvider, "Push provider", A_SELECTION.id),
             SettingItem.Header("Theme"),
             SettingItem.Toggle(SettingItem.Id.ToggleDynamicTheme, "Enable Material You", state = ENABLED_MATERIAL_YOU),
@@ -43,6 +51,9 @@ class SettingsItemFactoryTest {
             aSettingTextItem(SettingItem.Id.ClearCache, "Clear cache"),
             aSettingHeaderItem("Account"),
             aSettingTextItem(SettingItem.Id.SignOut, "Sign out"),
+            aSettingHeaderItem("Advanced"),
+            SettingItem.Toggle(SettingItem.Id.ToggleEnableLogs, "Enable local logging", state = DISABLED_LOGGING),
+            aSettingTextItem(SettingItem.Id.EventLog, "Event log", enabled = DISABLED_LOGGING),
             aSettingHeaderItem("About"),
             aSettingTextItem(SettingItem.Id.PrivacyPolicy, "Privacy policy"),
             aSettingTextItem(SettingItem.Id.Ignored, "Version", buildMeta.versionName),

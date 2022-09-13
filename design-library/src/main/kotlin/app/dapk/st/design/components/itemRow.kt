@@ -8,12 +8,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TextRow(title: String, content: String? = null, includeDivider: Boolean = true, onClick: (() -> Unit)? = null, body: @Composable () -> Unit = {}) {
+fun TextRow(
+    title: String,
+    content: String? = null,
+    includeDivider: Boolean = true,
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
+    body: @Composable () -> Unit = {}
+) {
     val modifier = Modifier.padding(horizontal = 24.dp)
     Column(
         Modifier
@@ -21,14 +29,19 @@ fun TextRow(title: String, content: String? = null, includeDivider: Boolean = tr
             .clickable(enabled = onClick != null) { onClick?.invoke() }) {
         Spacer(modifier = Modifier.height(24.dp))
         Column(modifier) {
+            val textModifier = when (enabled) {
+                true -> Modifier
+                false -> Modifier.alpha(0.5f)
+            }
             when (content) {
                 null -> {
-                    Text(text = title, fontSize = 18.sp)
+                    Text(text = title, fontSize = 18.sp, modifier = textModifier)
                 }
+
                 else -> {
-                    Text(text = title, fontSize = 12.sp)
+                    Text(text = title, fontSize = 12.sp, modifier = textModifier)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = content, fontSize = 18.sp)
+                    Text(text = content, fontSize = 18.sp, modifier = textModifier)
                 }
             }
             body()
@@ -56,6 +69,6 @@ fun IconRow(icon: ImageVector, title: String, onClick: (() -> Unit)? = null) {
 }
 
 @Composable
-fun SettingsTextRow(title: String, subtitle: String?, onClick: (() -> Unit)?) {
-    TextRow(title = title, subtitle, includeDivider = false, onClick)
+fun SettingsTextRow(title: String, subtitle: String?, onClick: (() -> Unit)?, enabled: Boolean) {
+    TextRow(title = title, subtitle, includeDivider = false, onClick, enabled = enabled)
 }

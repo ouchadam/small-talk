@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -197,11 +196,11 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
                 items(content.value) { item ->
                     when (item) {
                         is SettingItem.Text -> {
-                            val itemOnClick = onClick.takeIf { item.id != SettingItem.Id.Ignored }?.let {
-                                { it.invoke(item) }
-                            }
+                            val itemOnClick = onClick.takeIf {
+                                item.id != SettingItem.Id.Ignored && item.enabled
+                            }?.let { { it.invoke(item) } }
 
-                            SettingsTextRow(item.content, item.subtitle, itemOnClick)
+                            SettingsTextRow(item.content, item.subtitle, itemOnClick, enabled = item.enabled)
                         }
 
                         is SettingItem.AccessToken -> {
@@ -313,6 +312,7 @@ private fun SettingsViewModel.ObserveEvents(onSignOut: () -> Unit) {
                 is OpenUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = it.url.toUri() })
                 }
+
                 RecreateActivity -> {
                     context.getActivity()?.recreate()
                 }

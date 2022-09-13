@@ -205,6 +205,7 @@ internal class FeatureModules internal constructor(
             deviceMeta,
             coroutineDispatchers,
             coreAndroidModule.themeStore(),
+            storeModule.value.loggingStore(),
         )
     }
     val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }

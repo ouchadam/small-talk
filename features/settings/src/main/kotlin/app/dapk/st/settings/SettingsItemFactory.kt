@@ -1,6 +1,10 @@
 package app.dapk.st.settings
 
-import app.dapk.st.core.*
+import app.dapk.st.core.BuildMeta
+import app.dapk.st.core.DeviceMeta
+import app.dapk.st.core.ThemeStore
+import app.dapk.st.core.isAtLeastS
+import app.dapk.st.domain.eventlog.LoggingStore
 import app.dapk.st.push.PushTokenRegistrars
 
 internal class SettingsItemFactory(
@@ -8,14 +12,14 @@ internal class SettingsItemFactory(
     private val deviceMeta: DeviceMeta,
     private val pushTokenRegistrars: PushTokenRegistrars,
     private val themeStore: ThemeStore,
+    private val loggingStore: LoggingStore,
 ) {
 
-    suspend fun root() = general() + theme() + data() + account() + about()
+    suspend fun root() = general() + theme() + data() + account() + advanced() + about()
 
     private suspend fun general() = listOf(
         SettingItem.Header("General"),
         SettingItem.Text(SettingItem.Id.Encryption, "Encryption"),
-        SettingItem.Text(SettingItem.Id.EventLog, "Event log"),
         SettingItem.Text(SettingItem.Id.PushProvider, "Push provider", pushTokenRegistrars.currentSelection().id)
     )
 
@@ -35,6 +39,15 @@ internal class SettingsItemFactory(
         SettingItem.Header("Account"),
         SettingItem.Text(SettingItem.Id.SignOut, "Sign out"),
     )
+
+    private suspend fun advanced(): List<SettingItem> {
+        val loggingIsEnabled = loggingStore.isEnabled()
+        return listOf(
+            SettingItem.Header("Advanced"),
+            SettingItem.Toggle(SettingItem.Id.ToggleEnableLogs, "Enable local logging", state = loggingIsEnabled),
+            SettingItem.Text(SettingItem.Id.EventLog, "Event log", enabled = loggingIsEnabled),
+        )
+    }
 
     private fun about() = listOf(
         SettingItem.Header("About"),

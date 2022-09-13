@@ -7,6 +7,7 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.ThemeStore
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
+import app.dapk.st.domain.eventlog.LoggingStore
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.matrix.sync.SyncService
@@ -32,6 +33,7 @@ internal class SettingsViewModel(
     private val settingsItemFactory: SettingsItemFactory,
     private val pushTokenRegistrars: PushTokenRegistrars,
     private val themeStore: ThemeStore,
+    private val loggingStore: LoggingStore,
     factory: MutableStateFactory<SettingsScreenState> = defaultStateFactory(),
 ) : DapkViewModel<SettingsScreenState, SettingsEvent>(
     initialState = SettingsScreenState(SpiderPage(Page.Routes.root, "Settings", null, Page.Root(Lce.Loading()))),
@@ -52,31 +54,23 @@ internal class SettingsViewModel(
 
     fun onClick(item: SettingItem) {
         when (item.id) {
-            SignOut -> {
-                viewModelScope.launch {
-                    cacheCleaner.cleanCache(removeCredentials = true)
-                    _events.emit(SignedOut)
-                }
+            SignOut -> viewModelScope.launch {
+                cacheCleaner.cleanCache(removeCredentials = true)
+                _events.emit(SignedOut)
             }
 
-            AccessToken -> {
-                viewModelScope.launch {
-                    require(item is SettingItem.AccessToken)
-                    _events.emit(CopyToClipboard("Token copied", item.accessToken))
-                }
+            AccessToken -> viewModelScope.launch {
+                require(item is SettingItem.AccessToken)
+                _events.emit(CopyToClipboard("Token copied", item.accessToken))
             }
 
-            ClearCache -> {
-                viewModelScope.launch {
-                    cacheCleaner.cleanCache(removeCredentials = false)
-                    _events.emit(Toast(message = "Cache deleted"))
-                }
+            ClearCache -> viewModelScope.launch {
+                cacheCleaner.cleanCache(removeCredentials = false)
+                _events.emit(Toast(message = "Cache deleted"))
             }
 
-            EventLog -> {
-                viewModelScope.launch {
-                    _events.emit(OpenEventLog)
-                }
+            EventLog -> viewModelScope.launch {
+                _events.emit(OpenEventLog)
             }
 
             Encryption -> {
@@ -85,10 +79,8 @@ internal class SettingsViewModel(
                 }
             }
 
-            PrivacyPolicy -> {
-                viewModelScope.launch {
-                    _events.emit(OpenUrl(PRIVACY_POLICY_URL))
-                }
+            PrivacyPolicy -> viewModelScope.launch {
+                _events.emit(OpenUrl(PRIVACY_POLICY_URL))
             }
 
             PushProvider -> {
@@ -100,16 +92,24 @@ internal class SettingsViewModel(
             Ignored -> {
                 // do nothing
             }
-            ToggleDynamicTheme -> {
-                viewModelScope.launch {
-                    themeStore.storeMaterialYouEnabled(!themeStore.isMaterialYouEnabled())
-                    start()
-                    _events.emit(RecreateActivity)
-                }
+
+            ToggleDynamicTheme -> viewModelScope.launch {
+                themeStore.storeMaterialYouEnabled(!themeStore.isMaterialYouEnabled())
+                refreshRoot()
+                _events.emit(RecreateActivity)
+
+            }
+
+            ToggleEnableLogs -> viewModelScope.launch {
+                loggingStore.setEnabled(!loggingStore.isEnabled())
+                refreshRoot()
             }
         }
     }
 
+    private fun refreshRoot() {
+        start()
+    }
 
     fun fetchPushProviders() {
         updatePageState<Page.PushProviders> { copy(options = Lce.Loading()) }
@@ -146,9 +146,11 @@ internal class SettingsViewModel(
                                         is ImportResult.Error -> {
                                             // do nothing
                                         }
+
                                         is ImportResult.Update -> {
                                             // do nothing
                                         }
+
                                         is ImportResult.Success -> {
                                             syncService.forceManualRefresh(it.roomIds.toList())
                                         }

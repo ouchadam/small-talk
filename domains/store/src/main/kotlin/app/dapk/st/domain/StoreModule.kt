@@ -6,6 +6,7 @@ import app.dapk.st.core.Preferences
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.domain.eventlog.EventLogPersistence
+import app.dapk.st.domain.eventlog.LoggingStore
 import app.dapk.st.domain.localecho.LocalEchoPersistence
 import app.dapk.st.domain.preference.CachingPreferences
 import app.dapk.st.domain.preference.PropertyCache
@@ -39,7 +40,7 @@ class StoreModule(
     val localEchoStore: LocalEchoStore by unsafeLazy { LocalEchoPersistence(errorTracker, database) }
 
     private val cache = PropertyCache()
-    val cachingPreferences = CachingPreferences(cache,  preferences)
+    val cachingPreferences = CachingPreferences(cache, preferences)
 
     fun pushStore() = PushTokenRegistrarPreferences(preferences)
 
@@ -61,6 +62,8 @@ class StoreModule(
     fun eventLogStore(): EventLogPersistence {
         return EventLogPersistence(database, coroutineDispatchers)
     }
+
+    fun loggingStore(): LoggingStore = LoggingStore(cachingPreferences)
 
     fun memberStore(): MemberStore {
         return MemberPersistence(database, coroutineDispatchers)
