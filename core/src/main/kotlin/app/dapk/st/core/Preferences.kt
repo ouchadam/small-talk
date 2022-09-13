@@ -8,5 +8,7 @@ interface Preferences {
     suspend fun remove(key: String)
 }
 
+interface CachedPreferences : Preferences
+
 suspend fun Preferences.readBoolean(key: String) = this.readString(key)?.toBooleanStrict()
 suspend fun Preferences.store(key: String, value: Boolean) = this.store(key, value.toString())

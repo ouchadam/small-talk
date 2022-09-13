@@ -126,7 +126,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
                 attachments
             )
         },
-        unsafeLazy { storeModule.value.preferences }
+        unsafeLazy { storeModule.value.cachingPreferences },
     )
 
     val featureModules = FeatureModules(

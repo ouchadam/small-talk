@@ -19,7 +19,7 @@ internal class SettingsItemFactory(
         SettingItem.Text(SettingItem.Id.PushProvider, "Push provider", pushTokenRegistrars.currentSelection().id)
     )
 
-    private fun theme() = listOfNotNull(
+    private suspend fun theme() = listOfNotNull(
         SettingItem.Header("Theme"),
         SettingItem.Toggle(SettingItem.Id.ToggleDynamicTheme, "Enable Material You", state = themeStore.isMaterialYouEnabled()).takeIf {
             deviceMeta.isAtLeastS()
