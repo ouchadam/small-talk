@@ -70,8 +70,8 @@ class UnifiedPushMessageReceiver : MessagingReceiver() {
 
         @Serializable
         data class Notification(
-            @SerialName("event_id") val eventId: String?,
-            @SerialName("room_id") val roomId: String?,
+            @SerialName("event_id") val eventId: String? = null,
+            @SerialName("room_id") val roomId: String? = null,
         )
     }
 }
