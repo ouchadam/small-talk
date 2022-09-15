@@ -20,10 +20,7 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import test.MatrixTestScope
-import test.TestMatrix
-import test.flowTest
-import test.restoreLoginAndInitialSync
+import test.*
 import java.nio.file.Paths
 import java.util.*
 
@@ -35,8 +32,8 @@ class SmokeTest {
     @Test
     @Order(1)
     fun `can register accounts`() = runTest {
-        SharedState._alice = createAndRegisterAccount()
-        SharedState._bob = createAndRegisterAccount()
+        SharedState._alice = createAndRegisterAccount("alice")
+        SharedState._bob = createAndRegisterAccount("bob")
     }
 
     @Test
@@ -94,7 +91,7 @@ class SmokeTest {
 
     @Test
     fun `can import E2E room keys file`() = runTest {
-        val ignoredUser = TestUser("ignored", RoomMember(UserId("ignored"), null, null), "ignored")
+        val ignoredUser = TestUser("ignored", RoomMember(UserId("ignored"), null, null), "ignored", "ignored")
         val cryptoService = TestMatrix(ignoredUser, includeLogging = true).client.cryptoService()
         val stream = loadResourceStream("element-keys.txt")
 
@@ -133,10 +130,10 @@ class SmokeTest {
     }
 }
 
-private suspend fun createAndRegisterAccount(): TestUser {
+private suspend fun createAndRegisterAccount(testUsername: String): TestUser {
     val aUserName = "${UUID.randomUUID()}"
     val userId = UserId("@$aUserName:localhost:8080")
-    val aUser = TestUser("aaaa11111zzzz", RoomMember(userId, aUserName, null), HTTPS_TEST_SERVER_URL)
+    val aUser = TestUser("aaaa11111zzzz", RoomMember(userId, aUserName, null), HTTPS_TEST_SERVER_URL, testUsername)
 
     val result = TestMatrix(aUser, includeLogging = true, includeHttpLogging = true)
         .client
@@ -167,26 +164,35 @@ private suspend fun login(user: TestUser) {
 }
 
 object SharedState {
+
     val alice: TestUser
         get() = _alice!!
     var _alice: TestUser? = null
+        set(value) {
+            field = value!!
+            TestUsers.users.add(value)
+        }
 
     val bob: TestUser
         get() = _bob!!
     var _bob: TestUser? = null
+        set(value) {
+            field = value!!
+            TestUsers.users.add(value)
+        }
 
     val sharedRoom: RoomId
         get() = _sharedRoom!!
     var _sharedRoom: RoomId? = null
 }
 
-data class TestUser(val password: String, val roomMember: RoomMember, val homeServer: String)
+data class TestUser(val password: String, val roomMember: RoomMember, val homeServer: String, val testName: String)
 data class TestMessage(val content: String, val author: RoomMember)
 
 fun String.from(roomMember: RoomMember) = TestMessage("$this - ${UUID.randomUUID()}", roomMember)
 
 fun testAfterInitialSync(block: suspend MatrixTestScope.(TestMatrix, TestMatrix) -> Unit) {
-    restoreLoginAndInitialSync(TestMatrix(SharedState.alice, includeLogging = false), TestMatrix(SharedState.bob, includeLogging = false), block)
+    restoreLoginAndInitialSync(TestMatrix(SharedState.alice, includeLogging = true), TestMatrix(SharedState.bob, includeLogging = false), block)
 }
 
 private fun Flow<Verification.State>.automaticVerification(testMatrix: TestMatrix) = this.onEach {
