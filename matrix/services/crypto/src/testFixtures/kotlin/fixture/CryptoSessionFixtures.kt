@@ -10,8 +10,9 @@ fun anAccountCryptoSession(
     senderKey: Curve25519 = aCurve25519(),
     deviceKeys: DeviceKeys = aDeviceKeys(),
     maxKeys: Int = 5,
+    hasKeys: Boolean = false,
     olmAccount: Any = mockk(),
-) = Olm.AccountCryptoSession(fingerprint, senderKey, deviceKeys, maxKeys, olmAccount)
+) = Olm.AccountCryptoSession(fingerprint, senderKey, deviceKeys, hasKeys, maxKeys, olmAccount)
 
 fun aRoomCryptoSession(
     creationTimestampUtc: Long = 0L,
