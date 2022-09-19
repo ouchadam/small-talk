@@ -30,7 +30,6 @@ internal class SyncReducer(
 
     suspend fun reduce(isInitialSync: Boolean, sideEffects: SideEffectResult, response: ApiSyncResponse, userCredentials: UserCredentials): ReducerResult {
         val directMessages = response.directMessages()
-
         val invites = response.rooms?.invite?.map { roomInvite(it, userCredentials) } ?: emptyList()
         val roomsLeft = findRoomsLeft(response, userCredentials)
         val newRooms = response.rooms?.join?.keys?.filterNot { roomDataSource.contains(it) } ?: emptyList()
@@ -46,6 +45,7 @@ internal class SyncReducer(
                             apiSyncRoom = apiRoom,
                             directMessage = directMessages[roomId],
                             userCredentials = userCredentials,
+                            heroes = apiRoom.summary?.heroes,
                         ),
                         isInitialSync = isInitialSync
                     )
