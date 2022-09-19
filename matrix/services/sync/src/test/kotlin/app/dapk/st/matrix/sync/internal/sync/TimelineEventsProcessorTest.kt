@@ -101,4 +101,4 @@ internal fun aRoomToProcess(
     apiSyncRoom: ApiSyncRoom = anApiSyncRoom(),
     directMessage: UserId? = null,
     userCredentials: UserCredentials = aUserCredentials(),
-) = RoomToProcess(roomId, apiSyncRoom, directMessage, userCredentials)
+) = RoomToProcess(roomId, apiSyncRoom, directMessage, userCredentials, heroes = null)
