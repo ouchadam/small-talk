@@ -15,16 +15,16 @@ internal class RoomOverviewProcessor(
     suspend fun process(roomToProcess: RoomToProcess, previousState: RoomOverview?, lastMessage: LastMessage?): RoomOverview {
         val combinedEvents = roomToProcess.apiSyncRoom.state.stateEvents + roomToProcess.apiSyncRoom.timeline.apiTimelineEvents
         val isEncrypted = combinedEvents.any { it is ApiTimelineEvent.Encryption }
-
         val readMarker = roomToProcess.apiSyncRoom.accountData?.events?.filterIsInstance<ApiAccountEvent.FullyRead>()?.firstOrNull()?.content?.eventId
         return when (previousState) {
             null -> combinedEvents.filterIsInstance<ApiTimelineEvent.RoomCreate>().first().let { roomCreate ->
-                val roomName = roomDisplayName(combinedEvents)
+                val roomName = roomDisplayName(roomToProcess, combinedEvents)
                 val isGroup = roomToProcess.directMessage == null
+                val processedName = roomName ?: roomToProcess.directMessage?.let {
+                    roomMembersService.find(roomToProcess.roomId, it)?.let { it.displayName ?: it.id.value }
+                }
                 RoomOverview(
-                    roomName = roomName ?: roomToProcess.directMessage?.let {
-                        roomMembersService.find(roomToProcess.roomId, it)?.let { it.displayName ?: it.id.value }
-                    },
+                    roomName = processedName,
                     roomCreationUtc = roomCreate.utcTimestamp,
                     lastMessage = lastMessage,
                     roomId = roomToProcess.roomId,
@@ -40,9 +40,10 @@ internal class RoomOverviewProcessor(
                     isEncrypted = isEncrypted,
                 )
             }
+
             else -> {
                 previousState.copy(
-                    roomName = previousState.roomName ?: roomDisplayName(combinedEvents),
+                    roomName = previousState.roomName ?: roomDisplayName(roomToProcess, combinedEvents),
                     lastMessage = lastMessage ?: previousState.lastMessage,
                     roomAvatarUrl = previousState.roomAvatarUrl ?: roomAvatar(
                         roomToProcess.roomId,
@@ -58,9 +59,13 @@ internal class RoomOverviewProcessor(
         }
     }
 
-    private fun roomDisplayName(combinedEvents: List<ApiTimelineEvent>): String? {
-        val roomName = combinedEvents.filterIsInstance<ApiTimelineEvent.RoomName>().lastOrNull()
-        return roomName?.content?.name
+    private suspend fun roomDisplayName(roomToProcess: RoomToProcess, combinedEvents: List<ApiTimelineEvent>): String? {
+        val roomName = combinedEvents.filterIsInstance<ApiTimelineEvent.RoomName>().lastOrNull()?.content?.name
+            ?: combinedEvents.filterIsInstance<ApiTimelineEvent.CanonicalAlias>().lastOrNull()?.content?.alias
+            ?: roomToProcess.heroes?.let {
+                roomMembersService.find(roomToProcess.roomId, it).joinToString { it.displayName ?: it.id.value }
+            }
+        return roomName?.takeIf { it.isNotEmpty() }
     }
 
     private suspend fun roomAvatar(
@@ -75,6 +80,7 @@ internal class RoomOverviewProcessor(
                 val filterIsInstance = combinedEvents.filterIsInstance<ApiTimelineEvent.RoomAvatar>()
                 filterIsInstance.lastOrNull()?.content?.url?.convertMxUrToUrl(homeServerUrl)?.let { AvatarUrl(it) }
             }
+
             else -> membersService.find(roomId, dmUser)?.avatarUrl
         }
     }

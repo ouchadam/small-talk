@@ -18,7 +18,7 @@ private const val ENABLED_MATERIAL_YOU = true
 
 class SettingsItemFactoryTest {
 
-    private val buildMeta = BuildMeta(versionName = "a-version-name", versionCode = 100)
+    private val buildMeta = BuildMeta(versionName = "a-version-name", versionCode = 100, isDebug = false)
     private val deviceMeta = DeviceMeta(apiVersion = 31)
     private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeThemeStore = FakeThemeStore()

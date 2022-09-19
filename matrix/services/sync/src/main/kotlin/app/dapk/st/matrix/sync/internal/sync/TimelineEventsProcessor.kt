@@ -38,6 +38,7 @@ internal class TimelineEventsProcessor(
                     is ApiTimelineEvent.RoomMember -> null
                     is ApiTimelineEvent.RoomName -> null
                     is ApiTimelineEvent.RoomTopic -> null
+                    is ApiTimelineEvent.CanonicalAlias -> null
                     ApiTimelineEvent.Ignored -> null
                 }
                 roomEvent

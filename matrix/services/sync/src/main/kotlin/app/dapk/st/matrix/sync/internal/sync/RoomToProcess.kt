@@ -10,4 +10,5 @@ internal data class RoomToProcess(
     val apiSyncRoom: ApiSyncRoom,
     val directMessage: UserId?,
     val userCredentials: UserCredentials,
+    val heroes: List<UserId>?,
 )
