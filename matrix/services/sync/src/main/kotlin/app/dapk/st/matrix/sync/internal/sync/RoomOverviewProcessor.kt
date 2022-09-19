@@ -21,10 +21,12 @@ internal class RoomOverviewProcessor(
             null -> combinedEvents.filterIsInstance<ApiTimelineEvent.RoomCreate>().first().let { roomCreate ->
                 val roomName = roomDisplayName(combinedEvents)
                 val isGroup = roomToProcess.directMessage == null
+                val processedName = roomName ?: roomToProcess.directMessage?.let {
+                    roomMembersService.find(roomToProcess.roomId, it)?.let { it.displayName ?: it.id.value }
+                }
+
                 RoomOverview(
-                    roomName = roomName ?: roomToProcess.directMessage?.let {
-                        roomMembersService.find(roomToProcess.roomId, it)?.let { it.displayName ?: it.id.value }
-                    },
+                    roomName = processedName,
                     roomCreationUtc = roomCreate.utcTimestamp,
                     lastMessage = lastMessage,
                     roomId = roomToProcess.roomId,
@@ -40,6 +42,7 @@ internal class RoomOverviewProcessor(
                     isEncrypted = isEncrypted,
                 )
             }
+
             else -> {
                 previousState.copy(
                     roomName = previousState.roomName ?: roomDisplayName(combinedEvents),
@@ -60,7 +63,8 @@ internal class RoomOverviewProcessor(
 
     private fun roomDisplayName(combinedEvents: List<ApiTimelineEvent>): String? {
         val roomName = combinedEvents.filterIsInstance<ApiTimelineEvent.RoomName>().lastOrNull()
-        return roomName?.content?.name
+        return (roomName?.content?.name)
+            ?: combinedEvents.filterIsInstance<ApiTimelineEvent.CanonicalAlias>().lastOrNull()?.content?.alias
     }
 
     private suspend fun roomAvatar(
@@ -75,6 +79,7 @@ internal class RoomOverviewProcessor(
                 val filterIsInstance = combinedEvents.filterIsInstance<ApiTimelineEvent.RoomAvatar>()
                 filterIsInstance.lastOrNull()?.content?.url?.convertMxUrToUrl(homeServerUrl)?.let { AvatarUrl(it) }
             }
+
             else -> membersService.find(roomId, dmUser)?.avatarUrl
         }
     }
