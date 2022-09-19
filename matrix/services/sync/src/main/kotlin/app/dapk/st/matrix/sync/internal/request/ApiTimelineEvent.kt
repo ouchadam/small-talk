@@ -21,7 +21,13 @@ internal sealed class ApiTimelineEvent {
         @Serializable
         internal data class Content(
             @SerialName("type") val type: String? = null
-        )
+        ) {
+
+            object Type {
+                const val SPACE = "m.space"
+            }
+
+        }
     }
 
     @Serializable

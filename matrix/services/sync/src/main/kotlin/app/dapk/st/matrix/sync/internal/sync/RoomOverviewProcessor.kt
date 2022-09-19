@@ -12,33 +12,38 @@ internal class RoomOverviewProcessor(
     private val roomMembersService: RoomMembersService,
 ) {
 
-    suspend fun process(roomToProcess: RoomToProcess, previousState: RoomOverview?, lastMessage: LastMessage?): RoomOverview {
+    suspend fun process(roomToProcess: RoomToProcess, previousState: RoomOverview?, lastMessage: LastMessage?): RoomOverview? {
         val combinedEvents = roomToProcess.apiSyncRoom.state.stateEvents + roomToProcess.apiSyncRoom.timeline.apiTimelineEvents
         val isEncrypted = combinedEvents.any { it is ApiTimelineEvent.Encryption }
         val readMarker = roomToProcess.apiSyncRoom.accountData?.events?.filterIsInstance<ApiAccountEvent.FullyRead>()?.firstOrNull()?.content?.eventId
         return when (previousState) {
             null -> combinedEvents.filterIsInstance<ApiTimelineEvent.RoomCreate>().first().let { roomCreate ->
-                val roomName = roomDisplayName(roomToProcess, combinedEvents)
-                val isGroup = roomToProcess.directMessage == null
-                val processedName = roomName ?: roomToProcess.directMessage?.let {
-                    roomMembersService.find(roomToProcess.roomId, it)?.let { it.displayName ?: it.id.value }
+                when (roomCreate.content.type) {
+                    ApiTimelineEvent.RoomCreate.Content.Type.SPACE -> null
+                    else -> {
+                        val roomName = roomDisplayName(roomToProcess, combinedEvents)
+                        val isGroup = roomToProcess.directMessage == null
+                        val processedName = roomName ?: roomToProcess.directMessage?.let {
+                            roomMembersService.find(roomToProcess.roomId, it)?.let { it.displayName ?: it.id.value }
+                        }
+                        RoomOverview(
+                            roomName = processedName,
+                            roomCreationUtc = roomCreate.utcTimestamp,
+                            lastMessage = lastMessage,
+                            roomId = roomToProcess.roomId,
+                            isGroup = isGroup,
+                            roomAvatarUrl = roomAvatar(
+                                roomToProcess.roomId,
+                                roomMembersService,
+                                roomToProcess.directMessage,
+                                combinedEvents,
+                                roomToProcess.userCredentials.homeServer
+                            ),
+                            readMarker = readMarker,
+                            isEncrypted = isEncrypted,
+                        )
+                    }
                 }
-                RoomOverview(
-                    roomName = processedName,
-                    roomCreationUtc = roomCreate.utcTimestamp,
-                    lastMessage = lastMessage,
-                    roomId = roomToProcess.roomId,
-                    isGroup = isGroup,
-                    roomAvatarUrl = roomAvatar(
-                        roomToProcess.roomId,
-                        roomMembersService,
-                        roomToProcess.directMessage,
-                        combinedEvents,
-                        roomToProcess.userCredentials.homeServer
-                    ),
-                    readMarker = readMarker,
-                    isEncrypted = isEncrypted,
-                )
             }
 
             else -> {

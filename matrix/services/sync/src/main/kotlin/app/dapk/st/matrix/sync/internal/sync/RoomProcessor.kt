@@ -17,7 +17,7 @@ internal class RoomProcessor(
     private val ephemeralEventsUseCase: EphemeralEventsUseCase,
 ) {
 
-    suspend fun processRoom(roomToProcess: RoomToProcess, isInitialSync: Boolean): RoomState {
+    suspend fun processRoom(roomToProcess: RoomToProcess, isInitialSync: Boolean): RoomState? {
         val members = roomToProcess.apiSyncRoom.collectMembers(roomToProcess.userCredentials)
         roomMembersService.insert(roomToProcess.roomId, members)
 
@@ -28,16 +28,17 @@ internal class RoomProcessor(
             previousState?.events ?: emptyList(),
         )
 
-        val overview = createRoomOverview(distinctEvents, roomToProcess, previousState)
-        unreadEventsProcessor.processUnreadState(overview, previousState?.roomOverview, newEvents, roomToProcess.userCredentials.userId, isInitialSync)
+        return createRoomOverview(distinctEvents, roomToProcess, previousState)?.let {
+            unreadEventsProcessor.processUnreadState(it, previousState?.roomOverview, newEvents, roomToProcess.userCredentials.userId, isInitialSync)
 
-        return RoomState(overview, distinctEvents).also {
-            roomDataSource.persist(roomToProcess.roomId, previousState, it)
-            ephemeralEventsUseCase.processEvents(roomToProcess)
+            RoomState(it, distinctEvents).also {
+                roomDataSource.persist(roomToProcess.roomId, previousState, it)
+                ephemeralEventsUseCase.processEvents(roomToProcess)
+            }
         }
     }
 
-    private suspend fun createRoomOverview(distinctEvents: List<RoomEvent>, roomToProcess: RoomToProcess, previousState: RoomState?): RoomOverview {
+    private suspend fun createRoomOverview(distinctEvents: List<RoomEvent>, roomToProcess: RoomToProcess, previousState: RoomState?): RoomOverview? {
         val lastMessage = distinctEvents.sortedByDescending { it.utcTimestamp }.findLastMessage()
         return roomOverviewProcessor.process(roomToProcess, previousState?.roomOverview, lastMessage)
     }
@@ -56,6 +57,7 @@ private fun ApiSyncRoom.collectMembers(userCredentials: UserCredentials): List<R
                         avatarUrl = it.content.avatarUrl?.convertMxUrToUrl(userCredentials.homeServer)?.let { AvatarUrl(it) },
                     )
                 }
+
                 else -> null
             }
         }
