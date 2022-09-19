@@ -100,16 +100,24 @@ class HomeViewModel(
             Loading -> current
             is SignedIn -> {
                 when (page) {
-                    Page.Directory -> {
-                        // do nothing
+                    current.page -> current
+                    else -> current.copy(page = page).also {
+                        pageChangeSideEffects(page)
                     }
-
-                    Page.Profile -> profileViewModel.reset()
                 }
-                current.copy(page = page)
             }
 
             SignedOut -> current
+        }
+    }
+
+    private fun pageChangeSideEffects(page: Page) {
+        when (page) {
+            Page.Directory -> {
+                // do nothing
+            }
+
+            Page.Profile -> profileViewModel.reset()
         }
     }
 
