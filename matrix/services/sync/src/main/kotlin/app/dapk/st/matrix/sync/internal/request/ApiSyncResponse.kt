@@ -56,6 +56,12 @@ internal data class ApiSyncRoom(
     @SerialName("state") val state: ApiSyncRoomState,
     @SerialName("account_data") val accountData: ApiAccountData? = null,
     @SerialName("ephemeral") val ephemeral: ApiEphemeral? = null,
+    @SerialName("summary") val summary: ApiRoomSummary? = null,
+)
+
+@Serializable
+internal data class ApiRoomSummary(
+    @SerialName("m.heroes") val heroes: List<UserId>? = null
 )
 
 @Serializable

@@ -15,16 +15,28 @@ internal class MaybeCreateAndUploadOneTimeKeysUseCaseImpl(
     private val credentialsStore: CredentialsStore,
     private val deviceService: DeviceService,
     private val logger: MatrixLogger,
-): MaybeCreateAndUploadOneTimeKeysUseCase {
+) : MaybeCreateAndUploadOneTimeKeysUseCase {
 
     override suspend fun invoke(currentServerKeyCount: ServerKeyCount) {
-        val ensureCryptoAccount = fetchAccountCryptoUseCase.invoke()
-        val keysDiff = (ensureCryptoAccount.maxKeys / 2) - currentServerKeyCount.value
-        if (keysDiff > 0) {
-            logger.crypto("current otk: $currentServerKeyCount, creating: $keysDiff")
-            ensureCryptoAccount.createAndUploadOneTimeKeys(countToCreate = keysDiff + (ensureCryptoAccount.maxKeys / 4))
-        } else {
-            logger.crypto("current otk: $currentServerKeyCount, not creating new keys")
+        val cryptoAccount = fetchAccountCryptoUseCase.invoke()
+        when {
+            currentServerKeyCount.value == 0 && cryptoAccount.hasKeys -> {
+                logger.crypto("Server has no keys but a crypto instance exists, waiting for next update")
+            }
+
+            else -> {
+                val keysDiff = (cryptoAccount.maxKeys / 2) - currentServerKeyCount.value
+                when {
+                    keysDiff > 0 -> {
+                        logger.crypto("current otk: $currentServerKeyCount, creating: $keysDiff")
+                        cryptoAccount.createAndUploadOneTimeKeys(countToCreate = keysDiff + (cryptoAccount.maxKeys / 4))
+                    }
+
+                    else -> {
+                        logger.crypto("current otk: $currentServerKeyCount, not creating new keys")
+                    }
+                }
+            }
         }
     }
 

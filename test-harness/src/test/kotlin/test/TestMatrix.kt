@@ -46,6 +46,12 @@ import java.io.File
 import java.time.Clock
 import javax.imageio.ImageIO
 
+object TestUsers {
+
+    val users = mutableSetOf<TestUser>()
+
+}
+
 class TestMatrix(
     private val user: TestUser,
     temporaryDatabase: Boolean = false,
@@ -53,10 +59,11 @@ class TestMatrix(
     includeLogging: Boolean = false,
 ) {
 
-    private val errorTracker = PrintingErrorTracking(prefix = user.roomMember.id.value.split(":")[0])
+    private val errorTracker = PrintingErrorTracking(prefix = user.testName)
     private val logger: MatrixLogger = { tag, message ->
         if (includeLogging) {
-            println("${user.roomMember.id.value.split(":")[0]}  $tag $message")
+            val messageWithIdReplaceByName = TestUsers.users.fold(message) { acc, user -> acc.replace(user.roomMember.id.value, "*${user.testName}") }
+            println("${user.testName}  $tag $messageWithIdReplaceByName")
         }
     }
 

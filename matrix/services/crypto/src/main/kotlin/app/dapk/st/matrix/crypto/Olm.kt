@@ -72,6 +72,7 @@ interface Olm {
         val fingerprint: Ed25519,
         val senderKey: Curve25519,
         val deviceKeys: DeviceKeys,
+        val hasKeys: Boolean,
         val maxKeys: Int,
         val olmAccount: Any,
     )

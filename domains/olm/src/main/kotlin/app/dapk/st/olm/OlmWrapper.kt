@@ -67,7 +67,7 @@ class OlmWrapper(
 
     private suspend fun accountCrypto(deviceCredentials: DeviceCredentials): AccountCryptoSession? {
         return olmStore.read()?.let { olmAccount ->
-            createAccountCryptoSession(deviceCredentials, olmAccount)
+            createAccountCryptoSession(deviceCredentials, olmAccount, isNew = false)
         }
     }
 
@@ -80,12 +80,12 @@ class OlmWrapper(
         val olmAccount = this.olmAccount as OlmAccount
         olmAccount.generateOneTimeKeys(count)
 
-        val oneTimeKeys = DeviceService.OneTimeKeys(olmAccount.oneTimeKeys()["curve25519"]!!.map {
+        val oneTimeKeys = DeviceService.OneTimeKeys(olmAccount.oneTimeCurveKeys().map { (key, value) ->
             DeviceService.OneTimeKeys.Key.SignedCurve(
-                keyId = it.key,
-                value = it.value,
+                keyId = key,
+                value = value.value,
                 signature = DeviceService.OneTimeKeys.Key.SignedCurve.Ed25519Signature(
-                    value = it.value.toSignedJson(olmAccount),
+                    value = value.value.toSignedJson(olmAccount),
                     deviceId = credentials.deviceId,
                     userId = credentials.userId,
                 )
@@ -98,20 +98,21 @@ class OlmWrapper(
 
     private suspend fun createAccountCrypto(deviceCredentials: DeviceCredentials, action: suspend (AccountCryptoSession) -> Unit): AccountCryptoSession {
         val olmAccount = OlmAccount()
-        return createAccountCryptoSession(deviceCredentials, olmAccount).also {
+        return createAccountCryptoSession(deviceCredentials, olmAccount, isNew = true).also {
             action(it)
             olmStore.persist(olmAccount)
         }
     }
 
-    private fun createAccountCryptoSession(credentials: DeviceCredentials, olmAccount: OlmAccount): AccountCryptoSession {
+    private fun createAccountCryptoSession(credentials: DeviceCredentials, olmAccount: OlmAccount, isNew: Boolean): AccountCryptoSession {
         val (identityKey, senderKey) = olmAccount.readIdentityKeys()
         return AccountCryptoSession(
             fingerprint = identityKey,
             senderKey = senderKey,
             deviceKeys = deviceKeyFactory.create(credentials.userId, credentials.deviceId, identityKey, senderKey, olmAccount),
             olmAccount = olmAccount,
-            maxKeys = olmAccount.maxOneTimeKeys().toInt()
+            maxKeys = olmAccount.maxOneTimeKeys().toInt(),
+            hasKeys = !isNew,
         )
     }
 
@@ -136,6 +137,7 @@ class OlmWrapper(
                     singletonFlows.update("room-${roomId.value}", rotatedSession)
                 }
             }
+
             else -> this
         }
     }
@@ -277,10 +279,12 @@ class OlmWrapper(
                             }
                         }
                     }
+
                     OlmMessage.MESSAGE_TYPE_MESSAGE -> {
                         logger.crypto("decrypting olm message type")
                         session.decryptMessage(olmMessage)?.let { JsonString(it) }
                     }
+
                     else -> throw IllegalArgumentException("Unknown message type: $type")
                 }
             }.onFailure {
@@ -297,7 +301,7 @@ class OlmWrapper(
     }
 
     private suspend fun AccountCryptoSession.updateAccountInstance(olmAccount: OlmAccount) {
-        singletonFlows.update("account-crypto", this.copy(olmAccount = olmAccount))
+        singletonFlows.update("account-crypto", this.copy(olmAccount = olmAccount, hasKeys = true))
         olmStore.persist(olmAccount)
     }
 

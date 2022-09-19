@@ -68,7 +68,7 @@ import java.time.Clock
 
 internal class AppModule(context: Application, logger: MatrixLogger) {
 
-    private val buildMeta = BuildMeta(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+    private val buildMeta = BuildMeta(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, isDebug = BuildConfig.DEBUG)
     private val deviceMeta = DeviceMeta(Build.VERSION.SDK_INT)
     private val trackingModule by unsafeLazy {
         TrackingModule(
@@ -94,7 +94,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
-    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver)
+    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver, buildMeta)
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(
@@ -232,6 +232,7 @@ internal class MatrixModules(
     private val logger: MatrixLogger,
     private val coroutineDispatchers: CoroutineDispatchers,
     private val contentResolver: ContentResolver,
+    private val buildMeta: BuildMeta,
 ) {
 
     val matrix by unsafeLazy {
@@ -240,7 +241,7 @@ internal class MatrixModules(
         MatrixClient(
             KtorMatrixHttpClientFactory(
                 credentialsStore,
-                includeLogging = true
+                includeLogging = buildMeta.isDebug,
             ),
             logger
         ).also {

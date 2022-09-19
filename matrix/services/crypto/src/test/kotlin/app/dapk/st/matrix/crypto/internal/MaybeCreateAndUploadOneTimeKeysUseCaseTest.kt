@@ -22,12 +22,11 @@ class MaybeCreateAndUploadOneTimeKeysUseCaseTest {
 
     private val fakeDeviceService = FakeDeviceService()
     private val fakeOlm = FakeOlm()
-    private val fakeCredentialsStore = FakeCredentialsStore().also {
-        it.givenCredentials().returns(A_USER_CREDENTIALS)
-    }
+    private val fakeCredentialsStore = FakeCredentialsStore().also { it.givenCredentials().returns(A_USER_CREDENTIALS) }
+    private val fakeFetchAccountCryptoUseCase = FakeFetchAccountCryptoUseCase()
 
     private val maybeCreateAndUploadOneTimeKeysUseCase = MaybeCreateAndUploadOneTimeKeysUseCaseImpl(
-        FakeFetchAccountCryptoUseCase().also { it.givenFetch().returns(AN_ACCOUNT_CRYPTO_SESSION) },
+        fakeFetchAccountCryptoUseCase.also { it.givenFetch().returns(AN_ACCOUNT_CRYPTO_SESSION) },
         fakeOlm,
         fakeCredentialsStore,
         fakeDeviceService,
@@ -39,6 +38,16 @@ class MaybeCreateAndUploadOneTimeKeysUseCaseTest {
         val moreThanHalfOfMax = ServerKeyCount((MAX_KEYS / 2) + 1)
 
         maybeCreateAndUploadOneTimeKeysUseCase.invoke(moreThanHalfOfMax)
+
+        fakeDeviceService.verifyDidntUploadOneTimeKeys()
+    }
+
+    @Test
+    fun `given account has keys and server count is 0 then does nothing`() = runTest {
+        fakeFetchAccountCryptoUseCase.givenFetch().returns(AN_ACCOUNT_CRYPTO_SESSION.copy(hasKeys = true))
+        val zeroServiceKeys = ServerKeyCount(0)
+
+        maybeCreateAndUploadOneTimeKeysUseCase.invoke(zeroServiceKeys)
 
         fakeDeviceService.verifyDidntUploadOneTimeKeys()
     }

@@ -70,4 +70,5 @@ private fun aRoomToProcess(ephemeral: ApiEphemeral? = null) = RoomToProcess(
     anApiSyncRoom(ephemeral = ephemeral),
     directMessage = null,
     userCredentials = aUserCredentials(),
+    heroes = null,
 )

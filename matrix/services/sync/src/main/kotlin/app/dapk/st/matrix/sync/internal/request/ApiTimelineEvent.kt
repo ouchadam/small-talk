@@ -21,7 +21,13 @@ internal sealed class ApiTimelineEvent {
         @Serializable
         internal data class Content(
             @SerialName("type") val type: String? = null
-        )
+        ) {
+
+            object Type {
+                const val SPACE = "m.space"
+            }
+
+        }
     }
 
     @Serializable
@@ -50,6 +56,18 @@ internal sealed class ApiTimelineEvent {
         )
     }
 
+    @Serializable
+    @SerialName("m.room.canonical_alias")
+    internal data class CanonicalAlias(
+        @SerialName("event_id") val id: EventId,
+        @SerialName("content") val content: Content,
+    ) : ApiTimelineEvent() {
+
+        @Serializable
+        internal data class Content(
+            @SerialName("alias") val alias: String
+        )
+    }
 
     @Serializable
     @SerialName("m.room.avatar")

@@ -5,17 +5,13 @@ package test
 import TestMessage
 import TestUser
 import app.dapk.st.core.extensions.ifNull
-import app.dapk.st.matrix.common.MxUrl
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
-import app.dapk.st.matrix.common.convertMxUrToUrl
-import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.syncService
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.util.cio.*
@@ -28,7 +24,6 @@ import org.amshove.kluent.fail
 import org.amshove.kluent.shouldBeEqualTo
 import java.io.File
 import java.math.BigInteger
-import java.net.URL
 import java.security.MessageDigest
 import java.util.*
 

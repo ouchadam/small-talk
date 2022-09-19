@@ -27,6 +27,7 @@ internal class SyncSideEffects(
             response.deviceLists?.changed?.ifEmpty { null }?.let {
                 notifyDevicesUpdated.notifyChanges(it, requestToken)
             }
+
             oneTimeKeyProducer.onServerKeyCount(response.oneTimeKeysCount["signed_curve25519"] ?: ServerKeyCount(0))
 
             val decryptedToDeviceEvents = decryptedToDeviceEvents(response)
