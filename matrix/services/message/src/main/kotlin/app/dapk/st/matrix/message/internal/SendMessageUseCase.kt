@@ -38,22 +38,31 @@ internal class SendMessageUseCase(
             }
 
             is MessageService.Message.ImageMessage -> {
-                val imageContent = imageContentReader.read(message.content.uri)
-                val uri = httpClient.execute(uploadRequest(imageContent.content, imageContent.fileName, imageContent.mimeType)).contentUri
-                val request = sendRequest(
-                    roomId = message.roomId,
-                    eventType = EventType.ROOM_MESSAGE,
-                    txId = message.localId,
-                    content = MessageService.Message.Content.ImageContent(
-                        url = uri,
-                        filename = imageContent.fileName,
-                        MessageService.Message.Content.ImageContent.Info(
-                            height = imageContent.height,
-                            width = imageContent.width,
-                            size = imageContent.size
+                val request = when (message.sendEncrypted) {
+                    true -> {
+                        throw IllegalStateException()
+                    }
+
+                    false -> {
+                        val imageContent = imageContentReader.read(message.content.uri)
+                        val uri = httpClient.execute(uploadRequest(imageContent.content, imageContent.fileName, imageContent.mimeType)).contentUri
+                        sendRequest(
+                            roomId = message.roomId,
+                            eventType = EventType.ROOM_MESSAGE,
+                            txId = message.localId,
+                            content = MessageService.Message.Content.ImageContent(
+                                url = uri,
+                                filename = imageContent.fileName,
+                                MessageService.Message.Content.ImageContent.Info(
+                                    height = imageContent.height,
+                                    width = imageContent.width,
+                                    size = imageContent.size
+                                )
+                            ),
                         )
-                    ),
-                )
+                    }
+                }
+
                 httpClient.execute(request).eventId
             }
         }
