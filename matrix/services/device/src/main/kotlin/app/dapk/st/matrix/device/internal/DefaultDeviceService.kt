@@ -6,8 +6,6 @@ import app.dapk.st.matrix.device.DeviceService.OneTimeKeys.Key.SignedCurve.Ed255
 import app.dapk.st.matrix.device.KnownDeviceStore
 import app.dapk.st.matrix.device.ToDevicePayload
 import app.dapk.st.matrix.http.MatrixHttpClient
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.*
@@ -141,22 +139,3 @@ internal class DefaultDeviceService(
     }
 }
 
-@Serializable
-sealed class ApiMessage {
-
-    @Serializable
-    @SerialName("text_message")
-    data class TextMessage(
-        @SerialName("content") val content: TextContent,
-        @SerialName("room_id") val roomId: RoomId,
-        @SerialName("type") val type: String,
-    ) : ApiMessage() {
-
-        @Serializable
-        data class TextContent(
-            @SerialName("body") val body: String,
-            @SerialName("msgtype") val type: String = MessageType.TEXT.value,
-        )
-    }
-
-}
