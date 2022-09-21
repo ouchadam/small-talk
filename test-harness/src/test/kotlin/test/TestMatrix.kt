@@ -121,7 +121,7 @@ class TestMatrix(
                 coroutineDispatchers = coroutineDispatchers,
             )
 
-            installMessageService(storeModule.localEchoStore, InstantScheduler(it), JavaImageContentReader()) { serviceProvider ->
+            installMessageService(storeModule.localEchoStore, InstantScheduler(it), JavaImageContentReader(), base64) { serviceProvider ->
                 MessageEncrypter { message ->
                     val result = serviceProvider.cryptoService().encrypt(
                         roomId = message.roomId,

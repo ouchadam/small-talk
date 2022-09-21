@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.message.internal
 
+import app.dapk.st.core.Base64
 import app.dapk.st.matrix.MatrixTaskRunner
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.http.MatrixHttpClient
@@ -19,17 +20,18 @@ internal class DefaultMessageService(
     httpClient: MatrixHttpClient,
     private val localEchoStore: LocalEchoStore,
     private val backgroundScheduler: BackgroundScheduler,
+    base64: Base64,
     messageEncrypter: MessageEncrypter,
     imageContentReader: ImageContentReader,
 ) : MessageService, MatrixTaskRunner {
 
-    private val sendMessageUseCase = SendMessageUseCase(httpClient, messageEncrypter, imageContentReader)
+    private val sendMessageUseCase = SendMessageUseCase(httpClient, messageEncrypter, imageContentReader, base64)
     private val sendEventMessageUseCase = SendEventMessageUseCase(httpClient)
 
     override suspend fun canRun(task: MatrixTaskRunner.MatrixTask) = task.type == MATRIX_MESSAGE_TASK_TYPE || task.type == MATRIX_IMAGE_MESSAGE_TASK_TYPE
 
     override suspend fun run(task: MatrixTaskRunner.MatrixTask): MatrixTaskRunner.TaskResult {
-        val message = when(task.type) {
+        val message = when (task.type) {
             MATRIX_MESSAGE_TASK_TYPE -> Json.decodeFromString(MessageService.Message.TextMessage.serializer(), task.jsonPayload)
             MATRIX_IMAGE_MESSAGE_TASK_TYPE -> Json.decodeFromString(MessageService.Message.ImageMessage.serializer(), task.jsonPayload)
             else -> throw IllegalStateException("Unhandled task type: ${task.type}")
