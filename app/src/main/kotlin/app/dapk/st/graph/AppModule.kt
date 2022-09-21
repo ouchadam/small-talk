@@ -31,8 +31,6 @@ import app.dapk.st.matrix.crypto.cryptoService
 import app.dapk.st.matrix.crypto.installCryptoService
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
-import app.dapk.st.matrix.message.internal.ApiMessage
-import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService
@@ -277,26 +275,9 @@ internal class MatrixModules(
                 installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader) { serviceProvider ->
                     MessageEncrypter { message ->
                         val result = serviceProvider.cryptoService().encrypt(
-                            roomId = when (message) {
-                                is MessageService.Message.TextMessage -> message.roomId
-                                is MessageService.Message.ImageMessage -> message.roomId
-                            },
+                            roomId = message.roomId,
                             credentials = credentialsStore.credentials()!!,
-                            when (message) {
-                                is MessageService.Message.TextMessage -> JsonString(
-                                    MatrixHttpClient.jsonWithDefaults.encodeToString(
-                                        ApiMessage.TextMessage.serializer(),
-                                        ApiMessage.TextMessage(
-                                            ApiMessage.TextMessage.TextContent(
-                                                message.content.body,
-                                                message.content.type,
-                                            ), message.roomId, type = EventType.ROOM_MESSAGE.value
-                                        )
-                                    )
-                                )
-
-                                is MessageService.Message.ImageMessage -> TODO()
-                            }
+                            messageJson = message.contents,
                         )
 
                         MessageEncrypter.EncryptedMessagePayload(
