@@ -1,13 +1,9 @@
 package app.dapk.st.matrix.message.internal
 
-import app.dapk.st.core.Base64
 import app.dapk.st.matrix.MatrixTaskRunner
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.http.MatrixHttpClient
-import app.dapk.st.matrix.message.BackgroundScheduler
-import app.dapk.st.matrix.message.LocalEchoStore
-import app.dapk.st.matrix.message.MessageEncrypter
-import app.dapk.st.matrix.message.MessageService
+import app.dapk.st.matrix.message.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
 import java.net.SocketException
@@ -20,12 +16,12 @@ internal class DefaultMessageService(
     httpClient: MatrixHttpClient,
     private val localEchoStore: LocalEchoStore,
     private val backgroundScheduler: BackgroundScheduler,
-    base64: Base64,
     messageEncrypter: MessageEncrypter,
+    mediaEncrypter: MediaEncrypter,
     imageContentReader: ImageContentReader,
 ) : MessageService, MatrixTaskRunner {
 
-    private val sendMessageUseCase = SendMessageUseCase(httpClient, messageEncrypter, imageContentReader, base64)
+    private val sendMessageUseCase = SendMessageUseCase(httpClient, messageEncrypter, mediaEncrypter, imageContentReader)
     private val sendEventMessageUseCase = SendEventMessageUseCase(httpClient)
 
     override suspend fun canRun(task: MatrixTaskRunner.MatrixTask) = task.type == MATRIX_MESSAGE_TASK_TYPE || task.type == MATRIX_IMAGE_MESSAGE_TASK_TYPE

@@ -1,10 +1,12 @@
-package app.dapk.st.matrix.message.internal
+package app.dapk.st.matrix.crypto.internal
 
 import app.dapk.st.core.Base64
+import app.dapk.st.matrix.crypto.Crypto
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -16,7 +18,7 @@ private const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"
 
 class MediaEncrypter(private val base64: Base64) {
 
-    fun encrypt(input: InputStream, name: String): Result {
+    fun encrypt(input: InputStream): Crypto.MediaEncryptionResult {
         val secureRandom = SecureRandom()
         val initVectorBytes = ByteArray(16) { 0.toByte() }
 
@@ -30,10 +32,9 @@ class MediaEncrypter(private val base64: Base64) {
 
         val messageDigest = MessageDigest.getInstance(MESSAGE_DIGEST_ALGORITHM)
 
-        val outputFile = File.createTempFile("_encrypt-${name.hashCode()}", ".png")
+        val outputFile = File.createTempFile("_encrypt-${UUID.randomUUID()}", ".png")
 
-        val outputStream = outputFile.outputStream()
-        outputStream.use { s ->
+        outputFile.outputStream().use { s ->
             val encryptCipher = Cipher.getInstance(CIPHER_ALGORITHM)
             val secretKeySpec = SecretKeySpec(key, SECRET_KEY_SPEC_ALGORITHM)
             val ivParameterSpec = IvParameterSpec(initVectorBytes)
@@ -60,8 +61,8 @@ class MediaEncrypter(private val base64: Base64) {
             s.write(encodedBytes)
         }
 
-        return Result(
-            contents = outputFile.readBytes(),
+        return Crypto.MediaEncryptionResult(
+            uri = outputFile.toURI(),
             algorithm = "A256CTR",
             ext = true,
             keyOperations = listOf("encrypt", "decrypt"),
@@ -72,19 +73,6 @@ class MediaEncrypter(private val base64: Base64) {
             v = "v2"
         )
     }
-
-    data class Result(
-        val contents: ByteArray,
-        val algorithm: String,
-        val ext: Boolean,
-        val keyOperations: List<String>,
-        val kty: String,
-        val k: String,
-        val iv: String,
-        val hashes: Map<String, String>,
-        val v: String,
-    )
-
 }
 
 private fun base64ToBase64Url(base64: String): String {
