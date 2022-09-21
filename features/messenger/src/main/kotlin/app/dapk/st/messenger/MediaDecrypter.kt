@@ -1,7 +1,6 @@
 package app.dapk.st.messenger
 
-import android.util.Base64
-import app.dapk.st.matrix.sync.RoomEvent
+import app.dapk.st.core.Base64
 import okio.Buffer
 import java.io.InputStream
 import java.security.MessageDigest
@@ -14,11 +13,11 @@ private const val CIPHER_ALGORITHM = "AES/CTR/NoPadding"
 private const val SECRET_KEY_SPEC_ALGORITHM = "AES"
 private const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"
 
-class MediaDecrypter {
+class MediaDecrypter(private val base64: Base64) {
 
-    fun decrypt(input: InputStream, keys: RoomEvent.Image.ImageMeta.Keys): Buffer {
-        val key = Base64.decode(keys.k.replace('-', '+').replace('_', '/'), Base64.DEFAULT)
-        val initVectorBytes = Base64.decode(keys.iv, Base64.DEFAULT)
+    fun decrypt(input: InputStream, k: String, iv: String): Buffer {
+        val key = base64.decode(k.replace('-', '+').replace('_', '/'))
+        val initVectorBytes = base64.decode(iv)
 
         val decryptCipher = Cipher.getInstance(CIPHER_ALGORITHM)
         val secretKeySpec = SecretKeySpec(key, SECRET_KEY_SPEC_ALGORITHM)
