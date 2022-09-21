@@ -147,7 +147,6 @@ class MatrixTestScope(private val testScope: TestScope) {
         this.client.syncService().room(roomId)
             .map {
                 it.events.filterIsInstance<RoomEvent.Image>().map {
-                    println("found: ${it}")
                     val output = File(image.parentFile.absolutePath, "output.png")
                     HttpClient().request(it.imageMeta.url).bodyAsChannel().copyAndClose(output.writeChannel())
                     val md5Hash = when (val keys = it.imageMeta.keys) {

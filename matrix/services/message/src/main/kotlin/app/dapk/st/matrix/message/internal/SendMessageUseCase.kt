@@ -66,7 +66,6 @@ internal class SendMessageUseCase(
             true -> {
                 val result = mediaEncrypter.encrypt(imageContent.inputStream())
                 val bytes = File(result.uri).readBytes()
-                println("!!! ${bytes.size}")
 
                 val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, "application/octet-stream")).contentUri
 
@@ -114,9 +113,7 @@ internal class SendMessageUseCase(
             }
 
             false -> {
-                val bytes = ByteArrayOutputStream().also {
-                    it.writeTo(imageContent.outputStream())
-                }.toByteArray()
+                val bytes = File(imageContent.uri).readBytes()
 
                 val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, imageContent.mimeType)).contentUri
                 sendRequest(
