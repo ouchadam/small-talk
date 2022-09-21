@@ -146,6 +146,7 @@ class TestMatrix(
                         val result = cryptoService.encrypt(input)
                         MediaEncrypter.Result(
                             uri = result.uri,
+                            contentLength = result.contentLength,
                             algorithm = result.algorithm,
                             ext = result.ext,
                             keyOperations = result.keyOperations,
@@ -339,7 +340,7 @@ class JavaBase64 : Base64 {
 
 class JavaImageContentReader : ImageContentReader {
 
-    override fun read(uri: String): ImageContentReader.ImageContent {
+    override fun meta(uri: String): ImageContentReader.ImageContent {
         val file = File(uri)
         val size = file.length()
         val image = ImageIO.read(file)
@@ -349,8 +350,9 @@ class JavaImageContentReader : ImageContentReader {
             size = size,
             mimeType = "image/${file.extension}",
             fileName = file.name,
-            uri = file.toURI(),
         )
     }
+
+    override fun inputStream(uri: String) = File(uri).inputStream()
 
 }

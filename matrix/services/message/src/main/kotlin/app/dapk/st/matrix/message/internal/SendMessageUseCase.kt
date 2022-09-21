@@ -7,8 +7,6 @@ import app.dapk.st.matrix.message.ApiSendResponse
 import app.dapk.st.matrix.message.MediaEncrypter
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService.Message
-import java.io.ByteArrayOutputStream
-import java.io.File
 
 internal class SendMessageUseCase(
     private val httpClient: MatrixHttpClient,
@@ -60,18 +58,23 @@ internal class SendMessageUseCase(
     }
 
     private suspend fun ApiMessageMapper.imageMessageRequest(message: Message.ImageMessage): HttpRequest<ApiSendResponse> {
-        val imageContent = imageContentReader.read(message.content.uri)
+        val imageMeta = imageContentReader.meta(message.content.uri)
 
         return when (message.sendEncrypted) {
             true -> {
-                val result = mediaEncrypter.encrypt(imageContent.inputStream())
-                val bytes = File(result.uri).readBytes()
-
-                val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, "application/octet-stream")).contentUri
+                val result = mediaEncrypter.encrypt(imageContentReader.inputStream(message.content.uri))
+                val uri = httpClient.execute(
+                    uploadRequest(
+                        result.openStream(),
+                        result.contentLength,
+                        imageMeta.fileName,
+                        "application/octet-stream"
+                    )
+                ).contentUri
 
                 val content = ApiMessage.ImageMessage.ImageContent(
                     url = null,
-                    filename = imageContent.fileName,
+                    filename = imageMeta.fileName,
                     file = ApiMessage.ImageMessage.ImageContent.File(
                         url = uri,
                         key = ApiMessage.ImageMessage.ImageContent.File.EncryptionMeta(
@@ -86,9 +89,9 @@ internal class SendMessageUseCase(
                         v = result.v,
                     ),
                     info = ApiMessage.ImageMessage.ImageContent.Info(
-                        height = imageContent.height,
-                        width = imageContent.width,
-                        size = imageContent.size
+                        height = imageMeta.height,
+                        width = imageMeta.width,
+                        size = imageMeta.size
                     )
                 )
 
@@ -113,20 +116,25 @@ internal class SendMessageUseCase(
             }
 
             false -> {
-                val bytes = File(imageContent.uri).readBytes()
-
-                val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, imageContent.mimeType)).contentUri
+                val uri = httpClient.execute(
+                    uploadRequest(
+                        imageContentReader.inputStream(message.content.uri),
+                        imageMeta.size,
+                        imageMeta.fileName,
+                        imageMeta.mimeType
+                    )
+                ).contentUri
                 sendRequest(
                     roomId = message.roomId,
                     eventType = EventType.ROOM_MESSAGE,
                     txId = message.localId,
                     content = ApiMessage.ImageMessage.ImageContent(
                         url = uri,
-                        filename = imageContent.fileName,
+                        filename = imageMeta.fileName,
                         ApiMessage.ImageMessage.ImageContent.Info(
-                            height = imageContent.height,
-                            width = imageContent.width,
-                            size = imageContent.size
+                            height = imageMeta.height,
+                            width = imageMeta.width,
+                            size = imageMeta.size
                         )
                     ),
                 )

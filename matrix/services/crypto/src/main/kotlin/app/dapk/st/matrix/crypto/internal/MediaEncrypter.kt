@@ -63,6 +63,7 @@ class MediaEncrypter(private val base64: Base64) {
 
         return Crypto.MediaEncryptionResult(
             uri = outputFile.toURI(),
+            contentLength = outputFile.length(),
             algorithm = "A256CTR",
             ext = true,
             keyOperations = listOf("encrypt", "decrypt"),

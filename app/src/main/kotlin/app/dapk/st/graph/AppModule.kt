@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.provider.OpenableColumns
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
 import app.dapk.st.SharedPreferencesDelegate
@@ -59,7 +60,7 @@ import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import kotlinx.coroutines.Dispatchers
-import java.net.URI
+import java.io.InputStream
 import java.time.Clock
 
 internal class AppModule(context: Application, logger: MatrixLogger) {
@@ -303,6 +304,7 @@ internal class MatrixModules(
                             val result = cryptoService.encrypt(input)
                             MediaEncrypter.Result(
                                 uri = result.uri,
+                                contentLength = result.contentLength,
                                 algorithm = result.algorithm,
                                 ext = result.ext,
                                 keyOperations = result.keyOperations,
@@ -482,23 +484,27 @@ internal class DomainModules(
 }
 
 internal class AndroidImageContentReader(private val contentResolver: ContentResolver) : ImageContentReader {
-    override fun read(uri: String): ImageContentReader.ImageContent {
+    override fun meta(uri: String): ImageContentReader.ImageContent {
         val androidUri = Uri.parse(uri)
         val fileStream = contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")
 
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeStream(fileStream, null, options)
 
-        return contentResolver.openInputStream(androidUri)?.use { stream ->
-            val output = stream.readBytes()
-            ImageContentReader.ImageContent(
-                height = options.outHeight,
-                width = options.outWidth,
-                size = output.size.toLong(),
-                mimeType = options.outMimeType,
-                fileName = androidUri.lastPathSegment ?: "file",
-                uri = URI.create(uri)
-            )
+        val fileSize = contentResolver.query(androidUri, null, null, null, null)?.use { cursor ->
+            cursor.moveToFirst()
+            val columnIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            cursor.getLong(columnIndex)
         } ?: throw IllegalArgumentException("Could not process $uri")
+
+        return ImageContentReader.ImageContent(
+            height = options.outHeight,
+            width = options.outWidth,
+            size = fileSize,
+            mimeType = options.outMimeType,
+            fileName = androidUri.lastPathSegment ?: "file",
+        )
     }
+
+    override fun inputStream(uri: String): InputStream = contentResolver.openInputStream(Uri.parse(uri))!!
 }

@@ -42,6 +42,7 @@ interface Crypto {
 
     data class MediaEncryptionResult(
         val uri: URI,
+        val contentLength: Long,
         val algorithm: String,
         val ext: Boolean,
         val keyOperations: List<String>,
