@@ -2,6 +2,7 @@ package app.dapk.st.matrix.message.internal
 
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.EventType
+import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService
@@ -17,11 +18,25 @@ internal class SendMessageUseCase(
             is MessageService.Message.TextMessage -> {
                 val request = when (message.sendEncrypted) {
                     true -> {
+                        val content = JsonString(
+                            MatrixHttpClient.jsonWithDefaults.encodeToString(
+                                ApiMessage.TextMessage.serializer(),
+                                ApiMessage.TextMessage(
+                                    content = ApiMessage.TextMessage.TextContent(
+                                        message.content.body,
+                                        message.content.type,
+                                    ),
+                                    roomId = message.roomId,
+                                    type = EventType.ROOM_MESSAGE.value
+                                )
+                            )
+                        )
+
                         sendRequest(
                             roomId = message.roomId,
                             eventType = EventType.ENCRYPTED,
                             txId = message.localId,
-                            content = messageEncrypter.encrypt(message),
+                            content = messageEncrypter.encrypt(MessageEncrypter.ClearMessagePayload(message.roomId, content)),
                         )
                     }
 
