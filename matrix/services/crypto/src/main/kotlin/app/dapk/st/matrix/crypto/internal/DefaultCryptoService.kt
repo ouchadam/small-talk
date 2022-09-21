@@ -13,8 +13,14 @@ internal class DefaultCryptoService(
     private val olmCrypto: OlmCrypto,
     private val verificationHandler: VerificationHandler,
     private val roomKeyImporter: RoomKeyImporter,
+    private val mediaEncrypter: MediaEncrypter,
     private val logger: MatrixLogger,
 ) : CryptoService {
+
+    override suspend fun encrypt(input: InputStream): Crypto.MediaEncryptionResult {
+        return mediaEncrypter.encrypt(input)
+    }
+
     override suspend fun encrypt(roomId: RoomId, credentials: DeviceCredentials, messageJson: JsonString): Crypto.EncryptionResult {
         return olmCrypto.encryptMessage(roomId, credentials, messageJson)
     }

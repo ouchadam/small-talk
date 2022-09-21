@@ -81,6 +81,14 @@ class SmokeTest {
 
     @Test
     @Order(7)
+    fun `can send and receive encrypted image messages`() = testAfterInitialSync { alice, bob ->
+        val testImage = loadResourceFile("test-image2.png")
+        alice.sendImageMessage(SharedState.sharedRoom, testImage, isEncrypted = true)
+        bob.expectImageMessage(SharedState.sharedRoom, testImage, SharedState.alice.roomMember)
+    }
+
+    @Test
+    @Order(8)
     fun `can request and verify devices`() = testAfterInitialSync { alice, bob ->
         alice.client.cryptoService().verificationAction(Verification.Action.Request(bob.userId(), bob.deviceId()))
         alice.client.cryptoService().verificationState().automaticVerification(alice).expectAsync { it == Verification.State.Done }

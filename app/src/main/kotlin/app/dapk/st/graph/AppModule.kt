@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.provider.OpenableColumns
 import app.dapk.db.DapkDb
 import app.dapk.st.BuildConfig
 import app.dapk.st.SharedPreferencesDelegate
@@ -31,14 +32,9 @@ import app.dapk.st.matrix.crypto.cryptoService
 import app.dapk.st.matrix.crypto.installCryptoService
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
-import app.dapk.st.matrix.device.internal.ApiMessage
-import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
-import app.dapk.st.matrix.message.MessageEncrypter
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.*
 import app.dapk.st.matrix.message.internal.ImageContentReader
-import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
@@ -64,6 +60,7 @@ import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import kotlinx.coroutines.Dispatchers
+import java.io.InputStream
 import java.time.Clock
 
 internal class AppModule(context: Application, logger: MatrixLogger) {
@@ -80,6 +77,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val database = DapkDb(driver)
     private val clock = Clock.systemUTC()
     val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
+    val base64 = AndroidBase64()
 
     val storeModule = unsafeLazy {
         StoreModule(
@@ -94,7 +92,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
-    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver, buildMeta)
+    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver, base64, buildMeta)
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(
@@ -139,6 +137,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         deviceMeta,
         coroutineDispatchers,
         clock,
+        base64,
     )
 }
 
@@ -154,6 +153,7 @@ internal class FeatureModules internal constructor(
     deviceMeta: DeviceMeta,
     coroutineDispatchers: CoroutineDispatchers,
     clock: Clock,
+    base64: Base64,
 ) {
 
     val directoryModule by unsafeLazy {
@@ -181,7 +181,9 @@ internal class FeatureModules internal constructor(
             matrixModules.room,
             storeModule.value.credentialsStore(),
             storeModule.value.roomStore(),
-            clock
+            clock,
+            context,
+            base64,
         )
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
@@ -232,6 +234,7 @@ internal class MatrixModules(
     private val logger: MatrixLogger,
     private val coroutineDispatchers: CoroutineDispatchers,
     private val contentResolver: ContentResolver,
+    private val base64: Base64,
     private val buildMeta: BuildMeta,
 ) {
 
@@ -249,7 +252,6 @@ internal class MatrixModules(
                 installAuthService(credentialsStore)
                 installEncryptionService(store.knownDevicesStore())
 
-                val base64 = AndroidBase64()
                 val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), base64)
                 val singletonFlows = SingletonFlows(coroutineDispatchers)
                 val olm = OlmWrapper(
@@ -274,40 +276,47 @@ internal class MatrixModules(
                     coroutineDispatchers = coroutineDispatchers,
                 )
                 val imageContentReader = AndroidImageContentReader(contentResolver)
-                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader) { serviceProvider ->
-                    MessageEncrypter { message ->
-                        val result = serviceProvider.cryptoService().encrypt(
-                            roomId = when (message) {
-                                is MessageService.Message.TextMessage -> message.roomId
-                                is MessageService.Message.ImageMessage -> message.roomId
-                            },
-                            credentials = credentialsStore.credentials()!!,
-                            when (message) {
-                                is MessageService.Message.TextMessage -> JsonString(
-                                    MatrixHttpClient.jsonWithDefaults.encodeToString(
-                                        ApiMessage.TextMessage.serializer(),
-                                        ApiMessage.TextMessage(
-                                            ApiMessage.TextMessage.TextContent(
-                                                message.content.body,
-                                                message.content.type,
-                                            ), message.roomId, type = EventType.ROOM_MESSAGE.value
-                                        )
-                                    )
-                                )
+                installMessageService(
+                    store.localEchoStore,
+                    BackgroundWorkAdapter(workModule.workScheduler()),
+                    imageContentReader,
+                    messageEncrypter = {
+                        val cryptoService = it.cryptoService()
+                        MessageEncrypter { message ->
+                            val result = cryptoService.encrypt(
+                                roomId = message.roomId,
+                                credentials = credentialsStore.credentials()!!,
+                                messageJson = message.contents,
+                            )
 
-                                is MessageService.Message.ImageMessage -> TODO()
-                            }
-                        )
-
-                        MessageEncrypter.EncryptedMessagePayload(
-                            result.algorithmName,
-                            result.senderKey,
-                            result.cipherText,
-                            result.sessionId,
-                            result.deviceId,
-                        )
-                    }
-                }
+                            MessageEncrypter.EncryptedMessagePayload(
+                                result.algorithmName,
+                                result.senderKey,
+                                result.cipherText,
+                                result.sessionId,
+                                result.deviceId,
+                            )
+                        }
+                    },
+                    mediaEncrypter = {
+                        val cryptoService = it.cryptoService()
+                        MediaEncrypter { input ->
+                            val result = cryptoService.encrypt(input)
+                            MediaEncrypter.Result(
+                                uri = result.uri,
+                                contentLength = result.contentLength,
+                                algorithm = result.algorithm,
+                                ext = result.ext,
+                                keyOperations = result.keyOperations,
+                                kty = result.kty,
+                                k = result.k,
+                                iv = result.iv,
+                                hashes = result.hashes,
+                                v = result.v,
+                            )
+                        }
+                    },
+                )
 
                 val overviewStore = store.overviewStore()
                 installRoomService(
@@ -475,23 +484,27 @@ internal class DomainModules(
 }
 
 internal class AndroidImageContentReader(private val contentResolver: ContentResolver) : ImageContentReader {
-    override fun read(uri: String): ImageContentReader.ImageContent {
+    override fun meta(uri: String): ImageContentReader.ImageContent {
         val androidUri = Uri.parse(uri)
         val fileStream = contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")
 
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeStream(fileStream, null, options)
 
-        return contentResolver.openInputStream(androidUri)?.use { stream ->
-            val output = stream.readBytes()
-            ImageContentReader.ImageContent(
-                height = options.outHeight,
-                width = options.outWidth,
-                size = output.size.toLong(),
-                mimeType = options.outMimeType,
-                fileName = androidUri.lastPathSegment ?: "file",
-                content = output
-            )
+        val fileSize = contentResolver.query(androidUri, null, null, null, null)?.use { cursor ->
+            cursor.moveToFirst()
+            val columnIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            cursor.getLong(columnIndex)
         } ?: throw IllegalArgumentException("Could not process $uri")
+
+        return ImageContentReader.ImageContent(
+            height = options.outHeight,
+            width = options.outWidth,
+            size = fileSize,
+            mimeType = options.outMimeType,
+            fileName = androidUri.lastPathSegment ?: "file",
+        )
     }
+
+    override fun inputStream(uri: String): InputStream = contentResolver.openInputStream(Uri.parse(uri))!!
 }

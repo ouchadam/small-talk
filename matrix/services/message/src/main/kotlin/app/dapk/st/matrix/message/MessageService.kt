@@ -1,10 +1,14 @@
 package app.dapk.st.matrix.message
 
+import app.dapk.st.core.Base64
 import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
 import app.dapk.st.matrix.MatrixServiceProvider
 import app.dapk.st.matrix.ServiceDepFactory
-import app.dapk.st.matrix.common.*
+import app.dapk.st.matrix.common.AlgorithmName
+import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.MessageType
+import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.message.internal.DefaultMessageService
 import app.dapk.st.matrix.message.internal.ImageContentReader
 import kotlinx.coroutines.flow.Flow
@@ -67,21 +71,6 @@ interface MessageService : MatrixService {
                 @SerialName("uri") val uri: String,
             ) : Content()
 
-            @Serializable
-            data class ImageContent(
-                @SerialName("url") val url: MxUrl,
-                @SerialName("body") val filename: String,
-                @SerialName("info") val info: Info,
-                @SerialName("msgtype") val type: String = MessageType.IMAGE.value,
-            ) : Content() {
-
-                @Serializable
-                data class Info(
-                    @SerialName("h") val height: Int,
-                    @SerialName("w") val width: Int,
-                    @SerialName("size") val size: Long,
-                )
-            }
         }
     }
 
@@ -142,9 +131,17 @@ fun MatrixServiceInstaller.installMessageService(
     backgroundScheduler: BackgroundScheduler,
     imageContentReader: ImageContentReader,
     messageEncrypter: ServiceDepFactory<MessageEncrypter> = ServiceDepFactory { MissingMessageEncrypter },
+    mediaEncrypter: ServiceDepFactory<MediaEncrypter> = ServiceDepFactory { MissingMediaEncrypter },
 ) {
     this.install { (httpClient, _, installedServices) ->
-        SERVICE_KEY to DefaultMessageService(httpClient, localEchoStore, backgroundScheduler, messageEncrypter.create(installedServices), imageContentReader)
+        SERVICE_KEY to DefaultMessageService(
+            httpClient,
+            localEchoStore,
+            backgroundScheduler,
+            messageEncrypter.create(installedServices),
+            mediaEncrypter.create(installedServices),
+            imageContentReader
+        )
     }
 }
 

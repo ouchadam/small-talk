@@ -16,14 +16,9 @@ import app.dapk.st.matrix.crypto.cryptoService
 import app.dapk.st.matrix.crypto.installCryptoService
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
-import app.dapk.st.matrix.device.internal.ApiMessage
-import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
-import app.dapk.st.matrix.message.MessageEncrypter
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.*
 import app.dapk.st.matrix.message.internal.ImageContentReader
-import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.room.RoomMessenger
 import app.dapk.st.matrix.room.installRoomService
@@ -35,7 +30,6 @@ import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
 import kotlinx.coroutines.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.amshove.kluent.fail
 import test.impl.InMemoryDatabase
@@ -88,6 +82,7 @@ class TestMatrix(
         },
         coroutineDispatchers = coroutineDispatchers
     )
+    val base64 = JavaBase64()
 
     val client = MatrixClient(
         KtorMatrixHttpClientFactory(
@@ -100,7 +95,6 @@ class TestMatrix(
             installAuthService(storeModule.credentialsStore())
             installEncryptionService(storeModule.knownDevicesStore())
 
-            val base64 = JavaBase64()
             val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore(), base64)
             val olm = OlmWrapper(
                 olmStore = olmAccountStore,
@@ -124,39 +118,47 @@ class TestMatrix(
                 coroutineDispatchers = coroutineDispatchers,
             )
 
-            installMessageService(storeModule.localEchoStore, InstantScheduler(it), JavaImageContentReader()) { serviceProvider ->
-                MessageEncrypter { message ->
-                    val result = serviceProvider.cryptoService().encrypt(
-                        roomId = when (message) {
-                            is MessageService.Message.TextMessage -> message.roomId
-                            is MessageService.Message.ImageMessage -> message.roomId
-                        },
-                        credentials = storeModule.credentialsStore().credentials()!!,
-                        when (message) {
-                            is MessageService.Message.TextMessage -> JsonString(
-                                MatrixHttpClient.jsonWithDefaults.encodeToString(
-                                    ApiMessage.TextMessage(
-                                        ApiMessage.TextMessage.TextContent(
-                                            message.content.body,
-                                            message.content.type,
-                                        ), message.roomId, type = EventType.ROOM_MESSAGE.value
-                                    )
-                                )
-                            )
+            installMessageService(
+                localEchoStore = storeModule.localEchoStore,
+                backgroundScheduler = InstantScheduler(it),
+                imageContentReader = JavaImageContentReader(),
+                messageEncrypter = {
+                    val cryptoService = it.cryptoService()
+                    MessageEncrypter { message ->
+                        val result = cryptoService.encrypt(
+                            roomId = message.roomId,
+                            credentials = storeModule.credentialsStore().credentials()!!,
+                            messageJson = message.contents,
+                        )
 
-                            is MessageService.Message.ImageMessage -> TODO()
-                        }
-                    )
-
-                    MessageEncrypter.EncryptedMessagePayload(
-                        result.algorithmName,
-                        result.senderKey,
-                        result.cipherText,
-                        result.sessionId,
-                        result.deviceId,
-                    )
-                }
-            }
+                        MessageEncrypter.EncryptedMessagePayload(
+                            result.algorithmName,
+                            result.senderKey,
+                            result.cipherText,
+                            result.sessionId,
+                            result.deviceId,
+                        )
+                    }
+                },
+                mediaEncrypter = {
+                    val cryptoService = it.cryptoService()
+                    MediaEncrypter { input ->
+                        val result = cryptoService.encrypt(input)
+                        MediaEncrypter.Result(
+                            uri = result.uri,
+                            contentLength = result.contentLength,
+                            algorithm = result.algorithm,
+                            ext = result.ext,
+                            keyOperations = result.keyOperations,
+                            kty = result.kty,
+                            k = result.k,
+                            iv = result.iv,
+                            hashes = result.hashes,
+                            v = result.v,
+                        )
+                    }
+                },
+            )
 
             installRoomService(
                 storeModule.memberStore(),
@@ -338,7 +340,7 @@ class JavaBase64 : Base64 {
 
 class JavaImageContentReader : ImageContentReader {
 
-    override fun read(uri: String): ImageContentReader.ImageContent {
+    override fun meta(uri: String): ImageContentReader.ImageContent {
         val file = File(uri)
         val size = file.length()
         val image = ImageIO.read(file)
@@ -348,8 +350,9 @@ class JavaImageContentReader : ImageContentReader {
             size = size,
             mimeType = "image/${file.extension}",
             fileName = file.name,
-            content = file.readBytes()
         )
     }
+
+    override fun inputStream(uri: String) = File(uri).inputStream()
 
 }

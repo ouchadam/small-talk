@@ -5,19 +5,25 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import app.dapk.st.core.*
-import app.dapk.st.design.components.SmallTalkTheme
+import app.dapk.st.core.DapkActivity
+import app.dapk.st.core.extensions.unsafeLazy
+import app.dapk.st.core.module
+import app.dapk.st.core.viewModel
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.navigator.MessageAttachment
 import kotlinx.parcelize.Parcelize
 
+val LocalDecyptingFetcherFactory = staticCompositionLocalOf<DecryptingFetcherFactory> { throw IllegalAccessError() }
+
 class MessengerActivity : DapkActivity() {
 
-    private val viewModel by viewModel { module<MessengerModule>().messengerViewModel() }
+    private val module by unsafeLazy { module<MessengerModule>() }
+    private val viewModel by viewModel { module.messengerViewModel() }
 
     companion object {
 
@@ -44,11 +50,13 @@ class MessengerActivity : DapkActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val payload = readPayload<MessagerActivityPayload>()
-        log(AppLogTag.ERROR_NON_FATAL, payload)
+        val factory = module.decryptingFetcherFactory()
         setContent {
-                Surface(Modifier.fillMaxSize()) {
+            Surface(Modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalDecyptingFetcherFactory provides factory) {
                     MessengerScreen(RoomId(payload.roomId), payload.attachments, viewModel, navigator)
                 }
+            }
         }
     }
 }

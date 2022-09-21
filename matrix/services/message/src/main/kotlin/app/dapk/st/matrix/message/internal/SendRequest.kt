@@ -9,18 +9,20 @@ import app.dapk.st.matrix.message.ApiSendResponse
 import app.dapk.st.matrix.message.ApiUploadResponse
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService.EventMessage
-import app.dapk.st.matrix.message.MessageService.Message
-import io.ktor.content.*
+import app.dapk.st.matrix.message.internal.ApiMessage.ImageMessage
+import app.dapk.st.matrix.message.internal.ApiMessage.TextMessage
 import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.utils.io.jvm.javaio.*
+import java.io.InputStream
 import java.util.*
 
-internal fun sendRequest(roomId: RoomId, eventType: EventType, txId: String, content: Message.Content) = httpRequest<ApiSendResponse>(
+internal fun sendRequest(roomId: RoomId, eventType: EventType, txId: String, content: ApiMessageContent) = httpRequest<ApiSendResponse>(
     path = "_matrix/client/r0/rooms/${roomId.value}/send/${eventType.value}/${txId}",
     method = MatrixHttpClient.Method.PUT,
     body = when (content) {
-        is Message.Content.TextContent -> jsonBody(Message.Content.TextContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
-        is Message.Content.ImageContent -> jsonBody(Message.Content.ImageContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
-        is Message.Content.ApiImageContent -> throw IllegalArgumentException()
+        is TextMessage.TextContent -> jsonBody(TextMessage.TextContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
+        is ImageMessage.ImageContent -> jsonBody(ImageMessage.ImageContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
     }
 )
 
@@ -38,12 +40,15 @@ internal fun sendRequest(roomId: RoomId, eventType: EventType, content: EventMes
     }
 )
 
-internal fun uploadRequest(body: ByteArray, filename: String, contentType: String) = httpRequest<ApiUploadResponse>(
+internal fun uploadRequest(stream: InputStream, contentLength: Long, filename: String, contentType: String) = httpRequest<ApiUploadResponse>(
     path = "_matrix/media/r0/upload/?filename=$filename",
     headers = listOf("Content-Type" to contentType),
     method = MatrixHttpClient.Method.POST,
-    body = ByteArrayContent(body, ContentType.parse(contentType)),
+    body = ChannelWriterContent(
+        body = { stream.copyTo(this) },
+        contentType = ContentType.parse(contentType),
+        contentLength = contentLength,
+    ),
 )
-
 
 fun txId() = "local.${UUID.randomUUID()}"

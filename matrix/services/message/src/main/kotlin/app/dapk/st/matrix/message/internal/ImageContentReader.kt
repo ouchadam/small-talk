@@ -1,7 +1,10 @@
 package app.dapk.st.matrix.message.internal
 
+import java.io.InputStream
+
 interface ImageContentReader {
-    fun read(uri: String): ImageContent
+    fun meta(uri: String): ImageContent
+    fun inputStream(uri: String): InputStream
 
     data class ImageContent(
         val height: Int,
@@ -9,28 +12,5 @@ interface ImageContentReader {
         val size: Long,
         val fileName: String,
         val mimeType: String,
-        val content: ByteArray
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as ImageContent
-
-            if (height != other.height) return false
-            if (width != other.width) return false
-            if (size != other.size) return false
-            if (!content.contentEquals(other.content)) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = height
-            result = 31 * result + width
-            result = 31 * result + size.hashCode()
-            result = 31 * result + content.contentHashCode()
-            return result
-        }
-    }
+    )
 }
