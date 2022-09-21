@@ -82,6 +82,7 @@ class TestMatrix(
         },
         coroutineDispatchers = coroutineDispatchers
     )
+    val base64 = JavaBase64()
 
     val client = MatrixClient(
         KtorMatrixHttpClientFactory(
@@ -94,7 +95,6 @@ class TestMatrix(
             installAuthService(storeModule.credentialsStore())
             installEncryptionService(storeModule.knownDevicesStore())
 
-            val base64 = JavaBase64()
             val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore(), base64)
             val olm = OlmWrapper(
                 olmStore = olmAccountStore,
@@ -349,7 +349,7 @@ class JavaImageContentReader : ImageContentReader {
             size = size,
             mimeType = "image/${file.extension}",
             fileName = file.name,
-            content = file.readBytes()
+            uri = file.toURI(),
         )
     }
 

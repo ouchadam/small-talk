@@ -7,6 +7,7 @@ import TestUser
 import app.dapk.st.core.extensions.ifNull
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
+import app.dapk.st.matrix.crypto.MediaDecrypter
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.sync.RoomEvent
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.fail
 import org.amshove.kluent.shouldBeEqualTo
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
@@ -145,10 +147,21 @@ class MatrixTestScope(private val testScope: TestScope) {
         this.client.syncService().room(roomId)
             .map {
                 it.events.filterIsInstance<RoomEvent.Image>().map {
-                    println("found: ${it.imageMeta.url}")
+                    println("found: ${it}")
                     val output = File(image.parentFile.absolutePath, "output.png")
                     HttpClient().request(it.imageMeta.url).bodyAsChannel().copyAndClose(output.writeChannel())
-                    output.readBytes().md5Hash() to it.author
+                    val md5Hash = when (val keys = it.imageMeta.keys) {
+                        null -> output.readBytes().md5Hash()
+                        else -> {
+                            val byteStream = ByteArrayOutputStream()
+                            MediaDecrypter(this.base64).decrypt(output.inputStream(), keys.k, keys.iv).collect {
+                                byteStream.write(it)
+                            }
+                            byteStream.toByteArray().md5Hash()
+                        }
+                    }
+
+                    md5Hash to it.author
                 }.firstOrNull()
             }
             .assert(image.readBytes().md5Hash() to author)

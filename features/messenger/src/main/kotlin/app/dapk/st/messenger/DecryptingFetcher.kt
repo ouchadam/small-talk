@@ -2,6 +2,7 @@ package app.dapk.st.messenger
 
 import android.content.Context
 import app.dapk.st.core.Base64
+import app.dapk.st.matrix.crypto.MediaDecrypter
 import app.dapk.st.matrix.sync.RoomEvent
 import coil.ImageLoader
 import coil.decode.DataSource
@@ -42,7 +43,11 @@ class DecryptingFetcher(
     }
 
     private fun handleEncrypted(response: Response, keys: RoomEvent.Image.ImageMeta.Keys): Buffer {
-        return response.body?.byteStream()?.let { mediaDecrypter.decrypt(it, keys.k, keys.iv) } ?: Buffer()
+        return response.body?.byteStream()?.let { byteStream ->
+            Buffer().also { buffer ->
+                mediaDecrypter.decrypt(byteStream, keys.k, keys.iv).collect { buffer.write(it) }
+            }
+        } ?: Buffer()
     }
 }
 
