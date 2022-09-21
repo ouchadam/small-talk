@@ -31,7 +31,7 @@ import app.dapk.st.matrix.crypto.cryptoService
 import app.dapk.st.matrix.crypto.installCryptoService
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
-import app.dapk.st.matrix.device.internal.ApiMessage
+import app.dapk.st.matrix.message.internal.ApiMessage
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.MessageEncrypter
