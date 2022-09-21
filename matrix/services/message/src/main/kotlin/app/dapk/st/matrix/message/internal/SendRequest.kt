@@ -9,18 +9,18 @@ import app.dapk.st.matrix.message.ApiSendResponse
 import app.dapk.st.matrix.message.ApiUploadResponse
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService.EventMessage
-import app.dapk.st.matrix.message.MessageService.Message
+import app.dapk.st.matrix.message.internal.ApiMessage.ImageMessage
+import app.dapk.st.matrix.message.internal.ApiMessage.TextMessage
 import io.ktor.content.*
 import io.ktor.http.*
 import java.util.*
 
-internal fun sendRequest(roomId: RoomId, eventType: EventType, txId: String, content: Message.Content) = httpRequest<ApiSendResponse>(
+internal fun sendRequest(roomId: RoomId, eventType: EventType, txId: String, content: ApiMessageContent) = httpRequest<ApiSendResponse>(
     path = "_matrix/client/r0/rooms/${roomId.value}/send/${eventType.value}/${txId}",
     method = MatrixHttpClient.Method.PUT,
     body = when (content) {
-        is Message.Content.TextContent -> jsonBody(Message.Content.TextContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
-        is Message.Content.ImageContent -> jsonBody(Message.Content.ImageContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
-        is Message.Content.ApiImageContent -> throw IllegalArgumentException()
+        is TextMessage.TextContent -> jsonBody(TextMessage.TextContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
+        is ImageMessage.ImageContent -> jsonBody(ImageMessage.ImageContent.serializer(), content, MatrixHttpClient.jsonWithDefaults)
     }
 )
 
@@ -44,6 +44,5 @@ internal fun uploadRequest(body: ByteArray, filename: String, contentType: Strin
     method = MatrixHttpClient.Method.POST,
     body = ByteArrayContent(body, ContentType.parse(contentType)),
 )
-
 
 fun txId() = "local.${UUID.randomUUID()}"

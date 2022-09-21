@@ -272,7 +272,7 @@ internal class MatrixModules(
                     coroutineDispatchers = coroutineDispatchers,
                 )
                 val imageContentReader = AndroidImageContentReader(contentResolver)
-                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader) { serviceProvider ->
+                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader, base64) { serviceProvider ->
                     MessageEncrypter { message ->
                         val result = serviceProvider.cryptoService().encrypt(
                             roomId = message.roomId,
