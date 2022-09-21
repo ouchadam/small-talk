@@ -32,11 +32,8 @@ import app.dapk.st.matrix.crypto.installCryptoService
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
-import app.dapk.st.matrix.message.MessageEncrypter
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.message.installMessageService
+import app.dapk.st.matrix.message.*
 import app.dapk.st.matrix.message.internal.ImageContentReader
-import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
@@ -272,23 +269,46 @@ internal class MatrixModules(
                     coroutineDispatchers = coroutineDispatchers,
                 )
                 val imageContentReader = AndroidImageContentReader(contentResolver)
-                installMessageService(store.localEchoStore, BackgroundWorkAdapter(workModule.workScheduler()), imageContentReader, base64) { serviceProvider ->
-                    MessageEncrypter { message ->
-                        val result = serviceProvider.cryptoService().encrypt(
-                            roomId = message.roomId,
-                            credentials = credentialsStore.credentials()!!,
-                            messageJson = message.contents,
-                        )
+                installMessageService(
+                    store.localEchoStore,
+                    BackgroundWorkAdapter(workModule.workScheduler()),
+                    imageContentReader,
+                    messageEncrypter = {
+                        val cryptoService = it.cryptoService()
+                        MessageEncrypter { message ->
+                            val result = cryptoService.encrypt(
+                                roomId = message.roomId,
+                                credentials = credentialsStore.credentials()!!,
+                                messageJson = message.contents,
+                            )
 
-                        MessageEncrypter.EncryptedMessagePayload(
-                            result.algorithmName,
-                            result.senderKey,
-                            result.cipherText,
-                            result.sessionId,
-                            result.deviceId,
-                        )
-                    }
-                }
+                            MessageEncrypter.EncryptedMessagePayload(
+                                result.algorithmName,
+                                result.senderKey,
+                                result.cipherText,
+                                result.sessionId,
+                                result.deviceId,
+                            )
+                        }
+                    },
+                    mediaEncrypter = {
+                        val cryptoService = it.cryptoService()
+                        MediaEncrypter { input ->
+                            val result = cryptoService.encrypt(input)
+                            MediaEncrypter.Result(
+                                uri = result.uri,
+                                algorithm = result.algorithm,
+                                ext = result.ext,
+                                keyOperations = result.keyOperations,
+                                kty = result.kty,
+                                k = result.k,
+                                iv = result.iv,
+                                hashes = result.hashes,
+                                v = result.v,
+                            )
+                        }
+                    },
+                )
 
                 val overviewStore = store.overviewStore()
                 installRoomService(

@@ -11,10 +11,12 @@ import app.dapk.st.matrix.crypto.internal.*
 import app.dapk.st.matrix.device.deviceService
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
+import java.net.URI
 
 private val SERVICE_KEY = CryptoService::class
 
 interface CryptoService : MatrixService {
+    suspend fun encrypt(input: InputStream): Crypto.MediaEncryptionResult
     suspend fun encrypt(roomId: RoomId, credentials: DeviceCredentials, messageJson: JsonString): Crypto.EncryptionResult
     suspend fun decrypt(encryptedPayload: EncryptedMessageContent): DecryptionResult
     suspend fun importRoomKeys(keys: List<SharedRoomKey>)
@@ -36,6 +38,18 @@ interface Crypto {
         val cipherText: CipherText,
         val sessionId: SessionId,
         val deviceId: DeviceId
+    )
+
+    data class MediaEncryptionResult(
+        val uri: URI,
+        val algorithm: String,
+        val ext: Boolean,
+        val keyOperations: List<String>,
+        val kty: String,
+        val k: String,
+        val iv: String,
+        val hashes: Map<String, String>,
+        val v: String,
     )
 
 }
@@ -151,7 +165,9 @@ fun MatrixServiceInstaller.installCryptoService(
         )
         val verificationHandler = VerificationHandler(deviceService, credentialsStore, logger, JsonCanonicalizer(), olm)
         val roomKeyImporter = RoomKeyImporter(base64, coroutineDispatchers)
-        SERVICE_KEY to DefaultCryptoService(olmCrypto, verificationHandler, roomKeyImporter, logger)
+        val mediaEncrypter = MediaEncrypter(base64)
+
+        SERVICE_KEY to DefaultCryptoService(olmCrypto, verificationHandler, roomKeyImporter, mediaEncrypter, logger)
     }
 }
 
@@ -166,12 +182,13 @@ sealed interface ImportResult {
     data class Error(val cause: Type) : ImportResult {
 
         sealed interface Type {
-            data class Unknown(val cause: Throwable): Type
-            object NoKeysFound: Type
-            object UnexpectedDecryptionOutput: Type
-            object UnableToOpenFile: Type
+            data class Unknown(val cause: Throwable) : Type
+            object NoKeysFound : Type
+            object UnexpectedDecryptionOutput : Type
+            object UnableToOpenFile : Type
         }
 
     }
+
     data class Update(val importedKeysCount: Long) : ImportResult
 }

@@ -75,7 +75,7 @@ class SmokeTest {
     @Order(6)
     fun `can send and receive clear image messages`() = testAfterInitialSync { alice, bob ->
         val testImage = loadResourceFile("test-image.png")
-        alice.sendImageMessage(SharedState.sharedRoom, testImage, isEncrypted = true)
+        alice.sendImageMessage(SharedState.sharedRoom, testImage, isEncrypted = false)
         bob.expectImageMessage(SharedState.sharedRoom, testImage, SharedState.alice.roomMember)
     }
 

@@ -1,19 +1,19 @@
 package app.dapk.st.matrix.message.internal
 
-import app.dapk.st.core.Base64
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.MatrixHttpClient.HttpRequest
 import app.dapk.st.matrix.message.ApiSendResponse
+import app.dapk.st.matrix.message.MediaEncrypter
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService.Message
-import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 internal class SendMessageUseCase(
     private val httpClient: MatrixHttpClient,
     private val messageEncrypter: MessageEncrypter,
+    private val mediaEncrypter: MediaEncrypter,
     private val imageContentReader: ImageContentReader,
-    private val base64: Base64,
 ) {
 
     private val mapper = ApiMessageMapper()
@@ -63,12 +63,12 @@ internal class SendMessageUseCase(
 
         return when (message.sendEncrypted) {
             true -> {
-                val result = MediaEncrypter(base64).encrypt(
-                    ByteArrayInputStream(imageContent.content),
-                    imageContent.fileName,
-                )
+                val result = mediaEncrypter.encrypt(imageContent.stream())
+                val bytes = ByteArrayOutputStream().also {
+                    it.writeTo(result.openStream())
+                }.toByteArray()
 
-                val uri = httpClient.execute(uploadRequest(result.contents, imageContent.fileName, "application/octet-stream")).contentUri
+                val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, "application/octet-stream")).contentUri
 
                 val content = ApiMessage.ImageMessage.ImageContent(
                     url = null,

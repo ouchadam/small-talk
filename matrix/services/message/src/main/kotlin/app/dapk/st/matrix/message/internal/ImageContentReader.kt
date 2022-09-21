@@ -1,5 +1,7 @@
 package app.dapk.st.matrix.message.internal
 
+import java.io.InputStream
+
 interface ImageContentReader {
     fun read(uri: String): ImageContent
 
@@ -31,6 +33,10 @@ interface ImageContentReader {
             result = 31 * result + size.hashCode()
             result = 31 * result + content.contentHashCode()
             return result
+        }
+
+        fun stream(): InputStream {
+            TODO("Not yet implemented")
         }
     }
 }

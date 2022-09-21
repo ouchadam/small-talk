@@ -130,16 +130,16 @@ fun MatrixServiceInstaller.installMessageService(
     localEchoStore: LocalEchoStore,
     backgroundScheduler: BackgroundScheduler,
     imageContentReader: ImageContentReader,
-    base64: Base64,
     messageEncrypter: ServiceDepFactory<MessageEncrypter> = ServiceDepFactory { MissingMessageEncrypter },
+    mediaEncrypter: ServiceDepFactory<MediaEncrypter> = ServiceDepFactory { MissingMediaEncrypter },
 ) {
     this.install { (httpClient, _, installedServices) ->
         SERVICE_KEY to DefaultMessageService(
             httpClient,
             localEchoStore,
             backgroundScheduler,
-            base64,
             messageEncrypter.create(installedServices),
+            mediaEncrypter.create(installedServices),
             imageContentReader
         )
     }
