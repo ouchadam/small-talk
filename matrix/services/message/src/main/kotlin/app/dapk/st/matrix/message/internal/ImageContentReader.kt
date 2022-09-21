@@ -1,10 +1,10 @@
 package app.dapk.st.matrix.message.internal
 
-import java.io.File
-import java.net.URI
+import java.io.InputStream
 
 interface ImageContentReader {
-    fun read(uri: String): ImageContent
+    fun meta(uri: String): ImageContent
+    fun inputStream(uri: String): InputStream
 
     data class ImageContent(
         val height: Int,
@@ -12,9 +12,5 @@ interface ImageContentReader {
         val size: Long,
         val fileName: String,
         val mimeType: String,
-        val uri: URI
-    ) {
-        fun inputStream() = File(uri).inputStream()
-        fun outputStream() = File(uri).outputStream()
-    }
+    )
 }

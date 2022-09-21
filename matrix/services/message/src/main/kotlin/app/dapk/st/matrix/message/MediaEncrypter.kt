@@ -10,6 +10,7 @@ fun interface MediaEncrypter {
 
     data class Result(
         val uri: URI,
+        val contentLength: Long,
         val algorithm: String,
         val ext: Boolean,
         val keyOperations: List<String>,
@@ -20,7 +21,7 @@ fun interface MediaEncrypter {
         val v: String,
     ) {
 
-        fun openStream() = File(uri).outputStream()
+        fun openStream() = File(uri).inputStream()
     }
 
 }

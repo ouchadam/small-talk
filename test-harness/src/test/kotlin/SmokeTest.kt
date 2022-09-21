@@ -87,7 +87,6 @@ class SmokeTest {
         bob.expectImageMessage(SharedState.sharedRoom, testImage, SharedState.alice.roomMember)
     }
 
-
     @Test
     @Order(8)
     fun `can request and verify devices`() = testAfterInitialSync { alice, bob ->
