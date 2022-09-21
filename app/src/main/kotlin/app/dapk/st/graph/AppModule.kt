@@ -59,6 +59,7 @@ import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import kotlinx.coroutines.Dispatchers
+import java.net.URI
 import java.time.Clock
 
 internal class AppModule(context: Application, logger: MatrixLogger) {
@@ -75,6 +76,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val database = DapkDb(driver)
     private val clock = Clock.systemUTC()
     val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
+    val base64 = AndroidBase64()
 
     val storeModule = unsafeLazy {
         StoreModule(
@@ -89,7 +91,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
-    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver, buildMeta)
+    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver, base64, buildMeta)
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(
@@ -134,6 +136,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         deviceMeta,
         coroutineDispatchers,
         clock,
+        base64,
     )
 }
 
@@ -149,6 +152,7 @@ internal class FeatureModules internal constructor(
     deviceMeta: DeviceMeta,
     coroutineDispatchers: CoroutineDispatchers,
     clock: Clock,
+    base64: Base64,
 ) {
 
     val directoryModule by unsafeLazy {
@@ -176,7 +180,9 @@ internal class FeatureModules internal constructor(
             matrixModules.room,
             storeModule.value.credentialsStore(),
             storeModule.value.roomStore(),
-            clock
+            clock,
+            context,
+            base64,
         )
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
@@ -227,6 +233,7 @@ internal class MatrixModules(
     private val logger: MatrixLogger,
     private val coroutineDispatchers: CoroutineDispatchers,
     private val contentResolver: ContentResolver,
+    private val base64: Base64,
     private val buildMeta: BuildMeta,
 ) {
 
@@ -244,7 +251,6 @@ internal class MatrixModules(
                 installAuthService(credentialsStore)
                 installEncryptionService(store.knownDevicesStore())
 
-                val base64 = AndroidBase64()
                 val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), base64)
                 val singletonFlows = SingletonFlows(coroutineDispatchers)
                 val olm = OlmWrapper(
@@ -491,7 +497,7 @@ internal class AndroidImageContentReader(private val contentResolver: ContentRes
                 size = output.size.toLong(),
                 mimeType = options.outMimeType,
                 fileName = androidUri.lastPathSegment ?: "file",
-                content = output
+                uri = URI.create(uri)
             )
         } ?: throw IllegalArgumentException("Could not process $uri")
     }

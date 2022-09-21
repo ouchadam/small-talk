@@ -228,7 +228,6 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
 @Composable
 private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
     val context = LocalContext.current
-    val fetcherFactory = remember { DecryptingFetcherFactory(context) }
 
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
@@ -258,7 +257,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                     modifier = Modifier.size(content.message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
                     painter = rememberAsyncImagePainter(
                         model = ImageRequest.Builder(context)
-                            .fetcherFactory(fetcherFactory)
+                            .fetcherFactory(LocalDecyptingFetcherFactory.current)
                             .data(content.message)
                             .build()
                     ),
@@ -407,7 +406,6 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                     .defaultMinSize(minWidth = 50.dp)
             ) {
                 val context = LocalContext.current
-                val fetcherFactory = remember { DecryptingFetcherFactory(context) }
                 Column(
                     Modifier
                         .background(if (content.isNotSelf) SmallTalkTheme.extendedColors.otherBubbleReplyBackground else SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
@@ -438,7 +436,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                                 modifier = Modifier.size(replyingTo.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
                                 painter = rememberAsyncImagePainter(
                                     model = ImageRequest.Builder(context)
-                                        .fetcherFactory(fetcherFactory)
+                                        .fetcherFactory(LocalDecyptingFetcherFactory.current)
                                         .data(replyingTo)
                                         .build()
                                 ),
@@ -481,7 +479,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             painter = rememberAsyncImagePainter(
                                 model = ImageRequest.Builder(context)
                                     .data(content.message)
-                                    .fetcherFactory(fetcherFactory)
+                                    .fetcherFactory(LocalDecyptingFetcherFactory.current)
                                     .build()
                             ),
                             contentDescription = null,

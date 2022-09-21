@@ -8,6 +8,7 @@ import app.dapk.st.matrix.message.MediaEncrypter
 import app.dapk.st.matrix.message.MessageEncrypter
 import app.dapk.st.matrix.message.MessageService.Message
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 internal class SendMessageUseCase(
     private val httpClient: MatrixHttpClient,
@@ -63,10 +64,9 @@ internal class SendMessageUseCase(
 
         return when (message.sendEncrypted) {
             true -> {
-                val result = mediaEncrypter.encrypt(imageContent.stream())
-                val bytes = ByteArrayOutputStream().also {
-                    it.writeTo(result.openStream())
-                }.toByteArray()
+                val result = mediaEncrypter.encrypt(imageContent.inputStream())
+                val bytes = File(result.uri).readBytes()
+                println("!!! ${bytes.size}")
 
                 val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, "application/octet-stream")).contentUri
 
@@ -114,7 +114,11 @@ internal class SendMessageUseCase(
             }
 
             false -> {
-                val uri = httpClient.execute(uploadRequest(imageContent.content, imageContent.fileName, imageContent.mimeType)).contentUri
+                val bytes = ByteArrayOutputStream().also {
+                    it.writeTo(imageContent.outputStream())
+                }.toByteArray()
+
+                val uri = httpClient.execute(uploadRequest(bytes, imageContent.fileName, imageContent.mimeType)).contentUri
                 sendRequest(
                     roomId = message.roomId,
                     eventType = EventType.ROOM_MESSAGE,
