@@ -1,7 +1,6 @@
-package app.dapk.st.messenger
+package app.dapk.st.matrix.crypto
 
 import app.dapk.st.core.Base64
-import okio.Buffer
 import java.io.InputStream
 import java.security.MessageDigest
 import javax.crypto.Cipher
@@ -15,7 +14,7 @@ private const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"
 
 class MediaDecrypter(private val base64: Base64) {
 
-    fun decrypt(input: InputStream, k: String, iv: String): Buffer {
+    fun decrypt(input: InputStream, k: String, iv: String): Collector {
         val key = base64.decode(k.replace('-', '+').replace('_', '/'))
         val initVectorBytes = base64.decode(iv)
 
@@ -30,17 +29,22 @@ class MediaDecrypter(private val base64: Base64) {
         val d = ByteArray(CRYPTO_BUFFER_SIZE)
         var decodedBytes: ByteArray
 
-        val outputStream = Buffer()
-        input.use {
-            read = it.read(d)
-            while (read != -1) {
-                messageDigest.update(d, 0, read)
-                decodedBytes = decryptCipher.update(d, 0, read)
-                outputStream.write(decodedBytes)
+        return Collector { partial ->
+            input.use {
                 read = it.read(d)
+                while (read != -1) {
+                    messageDigest.update(d, 0, read)
+                    decodedBytes = decryptCipher.update(d, 0, read)
+                    partial(decodedBytes)
+                    read = it.read(d)
+                }
             }
         }
-        return outputStream
     }
 
+}
+
+
+fun interface Collector {
+    fun collect(partial: (ByteArray) -> Unit)
 }
