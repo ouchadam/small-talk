@@ -258,6 +258,7 @@ private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
                     painter = rememberAsyncImagePainter(
                         model = ImageRequest.Builder(context)
                             .fetcherFactory(LocalDecyptingFetcherFactory.current)
+                            .memoryCacheKey(content.message.imageMeta.url)
                             .data(content.message)
                             .build()
                     ),
@@ -437,6 +438,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                                 painter = rememberAsyncImagePainter(
                                     model = ImageRequest.Builder(context)
                                         .fetcherFactory(LocalDecyptingFetcherFactory.current)
+                                        .memoryCacheKey(replyingTo.imageMeta.url)
                                         .data(replyingTo)
                                         .build()
                                 ),
@@ -478,7 +480,8 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                             modifier = Modifier.size(message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
                             painter = rememberAsyncImagePainter(
                                 model = ImageRequest.Builder(context)
-                                    .data(content.message)
+                                    .data(message)
+                                    .memoryCacheKey(message.imageMeta.url)
                                     .fetcherFactory(LocalDecyptingFetcherFactory.current)
                                     .build()
                             ),

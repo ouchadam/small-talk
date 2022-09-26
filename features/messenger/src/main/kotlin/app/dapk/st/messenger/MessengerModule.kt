@@ -4,6 +4,7 @@ import android.content.Context
 import app.dapk.st.core.Base64
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.matrix.common.CredentialsStore
+import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomStore
@@ -30,5 +31,5 @@ class MessengerModule(
         return TimelineUseCaseImpl(syncService, messageService, roomService, mergeWithLocalEchosUseCase)
     }
 
-    internal fun decryptingFetcherFactory() = DecryptingFetcherFactory(context, base64)
+    internal fun decryptingFetcherFactory(roomId: RoomId) = DecryptingFetcherFactory(context, base64, roomId)
 }
