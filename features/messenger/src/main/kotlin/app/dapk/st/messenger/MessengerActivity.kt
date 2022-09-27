@@ -50,7 +50,7 @@ class MessengerActivity : DapkActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val payload = readPayload<MessagerActivityPayload>()
-        val factory = module.decryptingFetcherFactory()
+        val factory = module.decryptingFetcherFactory(RoomId(payload.roomId))
         setContent {
             Surface(Modifier.fillMaxSize()) {
                 CompositionLocalProvider(LocalDecyptingFetcherFactory provides factory) {
