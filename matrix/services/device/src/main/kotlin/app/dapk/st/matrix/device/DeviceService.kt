@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.device
 
+import app.dapk.st.matrix.InstallExtender
 import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
 import app.dapk.st.matrix.MatrixServiceProvider
@@ -122,8 +123,8 @@ sealed class ToDevicePayload {
     sealed interface VerificationPayload
 }
 
-fun MatrixServiceInstaller.installEncryptionService(knownDeviceStore: KnownDeviceStore) {
-    this.install { (httpClient, _, _, logger) ->
+fun MatrixServiceInstaller.installEncryptionService(knownDeviceStore: KnownDeviceStore): InstallExtender<DeviceService> {
+    return this.install { (httpClient, _, _, logger) ->
         SERVICE_KEY to DefaultDeviceService(httpClient, logger, knownDeviceStore)
     }
 }

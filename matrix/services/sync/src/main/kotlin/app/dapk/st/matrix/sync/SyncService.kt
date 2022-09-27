@@ -2,10 +2,7 @@ package app.dapk.st.matrix.sync
 
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.extensions.ErrorTracker
-import app.dapk.st.matrix.MatrixClient
-import app.dapk.st.matrix.MatrixService
-import app.dapk.st.matrix.MatrixServiceInstaller
-import app.dapk.st.matrix.ServiceDepFactory
+import app.dapk.st.matrix.*
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.sync.internal.DefaultSyncService
 import app.dapk.st.matrix.sync.internal.request.*
@@ -49,7 +46,7 @@ fun MatrixServiceInstaller.installSyncService(
     errorTracker: ErrorTracker,
     coroutineDispatchers: CoroutineDispatchers,
     syncConfig: SyncConfig = SyncConfig(),
-) {
+): InstallExtender<SyncService> {
     this.serializers {
         polymorphicDefault(ApiTimelineEvent::class) {
             ApiTimelineEvent.Ignored.serializer()
@@ -71,7 +68,7 @@ fun MatrixServiceInstaller.installSyncService(
         }
     }
 
-    this.install { (httpClient, json, services, logger) ->
+    return this.install { (httpClient, json, services, logger) ->
         SERVICE_KEY to DefaultSyncService(
             httpClient = httpClient,
             syncStore = syncStore,

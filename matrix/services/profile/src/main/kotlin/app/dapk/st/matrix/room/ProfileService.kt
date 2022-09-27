@@ -1,6 +1,7 @@
 package app.dapk.st.matrix.room
 
 import app.dapk.st.core.SingletonFlows
+import app.dapk.st.matrix.InstallExtender
 import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
 import app.dapk.st.matrix.MatrixServiceProvider
@@ -29,8 +30,8 @@ fun MatrixServiceInstaller.installProfileService(
     profileStore: ProfileStore,
     singletonFlows: SingletonFlows,
     credentialsStore: CredentialsStore,
-) {
-    this.install { (httpClient, _, _, logger) ->
+): InstallExtender<ProfileService> {
+    return this.install { (httpClient, _, _, logger) ->
         SERVICE_KEY to DefaultProfileService(httpClient, logger, profileStore, singletonFlows, credentialsStore)
     }
 }

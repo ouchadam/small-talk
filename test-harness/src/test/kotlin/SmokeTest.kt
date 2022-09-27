@@ -123,18 +123,20 @@ class SmokeTest {
         alice.expectTextMessage(SharedState.sharedRoom, message2)
 
         // Needs investigation
-//        val aliceSecondDevice = testMatrix(SharedState.alice, isTemp = true, withLogging = true).also { it.newlogin() }
-//        aliceSecondDevice.client.syncService().startSyncing().collectAsync {
-//            val message3 = "from alice to bob and alice's second device".from(SharedState.alice.roomMember)
-//            alice.sendTextMessage(SharedState.sharedRoom, message3.content, isEncrypted)
-//            aliceSecondDevice.expectTextMessage(SharedState.sharedRoom, message3)
-//            bob.expectTextMessage(SharedState.sharedRoom, message3)
-//
-//            val message4 = "from alice's second device to bob and alice's first device".from(SharedState.alice.roomMember)
-//            aliceSecondDevice.sendTextMessage(SharedState.sharedRoom, message4.content, isEncrypted)
-//            alice.expectTextMessage(SharedState.sharedRoom, message4)
-//            bob.expectTextMessage(SharedState.sharedRoom, message4)
-//        }
+        val aliceSecondDevice = testMatrix(SharedState.alice, isTemp = true, withLogging = true).also { it.newlogin() }
+        aliceSecondDevice.client.syncService().startSyncing().collectAsync {
+            aliceSecondDevice.client.proxyDeviceService().waitForOneTimeKeysToBeUploaded()
+
+            val message3 = "from alice to bob and alice's second device".from(SharedState.alice.roomMember)
+            alice.sendTextMessage(SharedState.sharedRoom, message3.content, isEncrypted)
+            aliceSecondDevice.expectTextMessage(SharedState.sharedRoom, message3)
+            bob.expectTextMessage(SharedState.sharedRoom, message3)
+
+            val message4 = "from alice's second device to bob and alice's first device".from(SharedState.alice.roomMember)
+            aliceSecondDevice.sendTextMessage(SharedState.sharedRoom, message4.content, isEncrypted)
+            alice.expectTextMessage(SharedState.sharedRoom, message4)
+            bob.expectTextMessage(SharedState.sharedRoom, message4)
+        }
     }
 }
 

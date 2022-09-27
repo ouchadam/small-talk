@@ -170,6 +170,8 @@ class OlmWrapper(
         val inBound = OlmInboundGroupSession(roomCryptoSession.key)
         olmStore.persist(roomCryptoSession.id, inBound)
 
+        logger.crypto("Creating megolm: ${roomCryptoSession.id}")
+
         return roomCryptoSession
     }
 
@@ -181,7 +183,7 @@ class OlmWrapper(
     private suspend fun deviceCrypto(input: OlmSessionInput): DeviceCryptoSession? {
         return olmStore.readSessions(listOf(input.identity))?.let {
             DeviceCryptoSession(
-                input.deviceId, input.userId, input.identity, input.fingerprint, it
+                input.deviceId, input.userId, input.identity, input.fingerprint, it.map { it.second }
             )
         }
     }

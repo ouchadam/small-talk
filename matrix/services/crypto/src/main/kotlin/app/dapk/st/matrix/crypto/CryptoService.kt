@@ -2,10 +2,7 @@ package app.dapk.st.matrix.crypto
 
 import app.dapk.st.core.Base64
 import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.matrix.MatrixService
-import app.dapk.st.matrix.MatrixServiceInstaller
-import app.dapk.st.matrix.MatrixServiceProvider
-import app.dapk.st.matrix.ServiceDepFactory
+import app.dapk.st.matrix.*
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.crypto.internal.*
 import app.dapk.st.matrix.device.deviceService
@@ -136,8 +133,8 @@ fun MatrixServiceInstaller.installCryptoService(
     roomMembersProvider: ServiceDepFactory<RoomMembersProvider>,
     base64: Base64,
     coroutineDispatchers: CoroutineDispatchers,
-) {
-    this.install { (_, _, services, logger) ->
+): InstallExtender<CryptoService> {
+    return this.install { (_, _, services, logger) ->
         val deviceService = services.deviceService()
         val accountCryptoUseCase = FetchAccountCryptoUseCaseImpl(credentialsStore, olm, deviceService)
 

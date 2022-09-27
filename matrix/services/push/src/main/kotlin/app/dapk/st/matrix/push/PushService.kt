@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.push
 
+import app.dapk.st.matrix.InstallExtender
 import app.dapk.st.matrix.MatrixClient
 import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
@@ -38,8 +39,8 @@ interface PushService : MatrixService {
 
 fun MatrixServiceInstaller.installPushService(
     credentialsStore: CredentialsStore,
-) {
-    this.install { (httpClient, _, _, logger) ->
+): InstallExtender<PushService> {
+    return this.install { (httpClient, _, _, logger) ->
         SERVICE_KEY to DefaultPushService(httpClient, credentialsStore, logger)
     }
 }
