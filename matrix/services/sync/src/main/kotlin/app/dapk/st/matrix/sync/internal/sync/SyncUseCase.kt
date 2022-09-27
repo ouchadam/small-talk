@@ -8,7 +8,6 @@ import app.dapk.st.matrix.sync.internal.SideEffectFlowIterator
 import app.dapk.st.matrix.sync.internal.overview.ReducedSyncFilterUseCase
 import app.dapk.st.matrix.sync.internal.request.syncRequest
 import app.dapk.st.matrix.sync.internal.room.SyncSideEffects
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 
@@ -25,19 +24,17 @@ internal class SyncUseCase(
     private val syncConfig: SyncConfig,
 ) {
 
-    fun sync(): Flow<Unit> {
-        return flow {
-            val credentials = credentialsStore.credentials()!!
-            val filterId = filterUseCase.reducedFilter(credentials.userId)
-            with(flowIterator) {
-                loop<OverviewState>(
-                    initial = null,
-                    onPost = { emit(Unit) },
-                    onIteration = { onEachSyncIteration(filterId, credentials, previousState = it) }
-                )
-            }
-        }.cancellable()
-    }
+    private val _flow = flow {
+        val credentials = credentialsStore.credentials()!!
+        val filterId = filterUseCase.reducedFilter(credentials.userId)
+        with(flowIterator) {
+            loop<OverviewState>(
+                initial = null,
+                onPost = { emit(Unit) },
+                onIteration = { onEachSyncIteration(filterId, credentials, previousState = it) }
+            )
+        }
+    }.cancellable()
 
     private suspend fun onEachSyncIteration(filterId: SyncService.FilterId, credentials: UserCredentials, previousState: OverviewState?): OverviewState? {
         val syncToken = syncStore.read(key = SyncStore.SyncKey.Overview)
@@ -84,5 +81,7 @@ internal class SyncUseCase(
             )
         )
     }
+
+    fun sync() = _flow
 
 }
