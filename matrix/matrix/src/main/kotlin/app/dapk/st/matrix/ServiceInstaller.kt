@@ -11,15 +11,22 @@ internal class ServiceInstaller {
     private val services = mutableMapOf<Any, MatrixService>()
     private val serviceInstaller = object : MatrixServiceInstaller {
 
-        val serviceCollector = mutableListOf<MatrixService.Factory>()
+        val serviceCollector = mutableListOf<Pair<MatrixService.Factory, (MatrixService) -> MatrixService>>()
         val serializers = mutableListOf<SerializersModuleBuilder.() -> Unit>()
 
         override fun serializers(builder: SerializersModuleBuilder.() -> Unit) {
             serializers.add(builder)
         }
 
-        override fun install(factory: MatrixService.Factory) {
-            serviceCollector.add(factory)
+        override fun <T : MatrixService> install(factory: MatrixService.Factory): InstallExtender<T> {
+            val mutableProxy = MutableProxy<T>()
+            return object : InstallExtender<T> {
+                override fun proxy(proxy: (T) -> T) {
+                    mutableProxy.value = proxy
+                }
+            }.also {
+                serviceCollector.add(factory to mutableProxy)
+            }
         }
     }
 
@@ -39,9 +46,9 @@ internal class ServiceInstaller {
         val serviceProvider = object : MatrixServiceProvider {
             override fun <T : MatrixService> getService(key: ServiceKey) = this@ServiceInstaller.getService<T>(key)
         }
-        serviceInstaller.serviceCollector.forEach {
-            val (key, service) = it.create(ServiceDependencies(httpClient, json, serviceProvider, logger))
-            services[key] = service
+        serviceInstaller.serviceCollector.forEach { (factory, extender) ->
+            val (key, service) = factory.create(ServiceDependencies(httpClient, json, serviceProvider, logger))
+            services[key] = extender(service)
         }
     }
 
@@ -56,5 +63,14 @@ internal class ServiceInstaller {
             .firstOrNull { it.canRun(task) }?.run(task)
             ?: throw IllegalArgumentException("No service available to handle ${task.type}")
     }
+
+}
+
+internal class MutableProxy<T : MatrixService> : (MatrixService) -> MatrixService {
+
+    var value: (T) -> T = { it }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun invoke(service: MatrixService) = value(service as T)
 
 }

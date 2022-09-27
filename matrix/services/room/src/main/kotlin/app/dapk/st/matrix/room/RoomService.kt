@@ -1,9 +1,6 @@
 package app.dapk.st.matrix.room
 
-import app.dapk.st.matrix.MatrixService
-import app.dapk.st.matrix.MatrixServiceInstaller
-import app.dapk.st.matrix.MatrixServiceProvider
-import app.dapk.st.matrix.ServiceDepFactory
+import app.dapk.st.matrix.*
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
@@ -42,8 +39,8 @@ fun MatrixServiceInstaller.installRoomService(
     memberStore: MemberStore,
     roomMessenger: ServiceDepFactory<RoomMessenger>,
     roomInviteRemover: RoomInviteRemover,
-) {
-    this.install { (httpClient, _, services, logger) ->
+): InstallExtender<RoomService> {
+    return this.install { (httpClient, _, services, logger) ->
         SERVICE_KEY to DefaultRoomService(
             httpClient,
             logger,

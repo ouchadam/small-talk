@@ -43,7 +43,11 @@ data class ServiceDependencies(
 
 interface MatrixServiceInstaller {
     fun serializers(builder: SerializersModuleBuilder.() -> Unit)
-    fun install(factory: MatrixService.Factory)
+    fun <T : MatrixService> install(factory: MatrixService.Factory): InstallExtender<T>
+}
+
+interface InstallExtender<T : MatrixService> {
+    fun proxy(proxy: (T) -> T)
 }
 
 interface MatrixServiceProvider {
