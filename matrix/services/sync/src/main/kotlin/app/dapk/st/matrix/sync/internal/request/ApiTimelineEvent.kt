@@ -82,7 +82,6 @@ internal sealed class ApiTimelineEvent {
         )
     }
 
-
     @Serializable
     @SerialName("m.room.member")
     internal data class RoomMember(
@@ -108,6 +107,15 @@ internal sealed class ApiTimelineEvent {
 
         }
     }
+
+    @Serializable
+    @SerialName("m.room.redaction")
+    internal data class RoomRedcation(
+        @SerialName("event_id") val id: EventId,
+        @SerialName("redacts") val redactedId: EventId,
+        @SerialName("origin_server_ts") val utcTimestamp: Long,
+        @SerialName("sender") val senderId: UserId,
+    ) : ApiTimelineEvent()
 
     @Serializable
     internal data class DecryptionStatus(
