@@ -27,6 +27,7 @@ class MainActivity : DapkActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         homeViewModel.events.onEach {
             when (it) {
                 HomeEvent.Relaunch -> recreate()

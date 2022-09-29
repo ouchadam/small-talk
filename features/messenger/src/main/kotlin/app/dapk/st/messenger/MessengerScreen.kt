@@ -1,9 +1,11 @@
 package app.dapk.st.messenger
 
 import android.content.res.Configuration
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +36,7 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.*
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
@@ -40,6 +44,7 @@ import app.dapk.st.matrix.sync.MessageMeta
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomEvent.Message
 import app.dapk.st.matrix.sync.RoomState
+import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
@@ -47,10 +52,16 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment>?, viewModel: MessengerViewModel, navigator: Navigator) {
+internal fun MessengerScreen(
+    roomId: RoomId,
+    attachments: List<MessageAttachment>?,
+    viewModel: MessengerViewModel,
+    navigator: Navigator,
+    galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>
+) {
     val state = viewModel.state
 
-    viewModel.ObserveEvents()
+    viewModel.ObserveEvents(galleryLauncher)
     LifecycleEffect(
         onStart = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) },
         onStop = { viewModel.post(MessengerAction.OnMessengerGone) }
@@ -74,6 +85,7 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
+                    onAttach = { viewModel.startAttachment() }
                 )
             }
 
@@ -89,10 +101,16 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
 }
 
 @Composable
-private fun MessengerViewModel.ObserveEvents() {
+private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
     StartObserving {
         this@ObserveEvents.events.launch {
-            // TODO()
+            when (it) {
+                MessengerEvent.SelectImageAttachment -> {
+                    state.roomState.takeIfContent()?.let {
+                        galleryLauncher.launch(ImageGalleryActivityPayload(it.roomState.roomOverview.roomName ?: ""))
+                    }
+                }
+            }
         }
     }
 }
@@ -553,7 +571,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
 }
 
 @Composable
-private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -579,7 +597,16 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                     onValueChange = { onTextChange(it) },
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     textStyle = LocalTextStyle.current.copy(color = SmallTalkTheme.extendedColors.onOthersBubble),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true)
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
+                    decorationBox = {
+                        Box {
+                            Icon(
+                                modifier = Modifier.align(Alignment.CenterEnd).clickable { onAttach() },
+                                imageVector = Icons.Filled.Image,
+                                contentDescription = "",
+                            )
+                        }
+                    }
                 )
             }
         }

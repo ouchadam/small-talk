@@ -43,6 +43,7 @@ import app.dapk.st.matrix.sync.internal.request.ApiToDeviceEvent
 import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.messenger.MessengerActivity
 import app.dapk.st.messenger.MessengerModule
+import app.dapk.st.messenger.gallery.ImageGalleryModule
 import app.dapk.st.navigator.IntentFactory
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.notifications.MatrixPushHandler
@@ -215,6 +216,10 @@ internal class FeatureModules internal constructor(
 
     val shareEntryModule by unsafeLazy {
         ShareEntryModule(matrixModules.sync, matrixModules.room)
+    }
+
+    val imageGalleryModule by unsafeLazy {
+        ImageGalleryModule(context.contentResolver, coroutineDispatchers)
     }
 
     val pushModule by unsafeLazy {

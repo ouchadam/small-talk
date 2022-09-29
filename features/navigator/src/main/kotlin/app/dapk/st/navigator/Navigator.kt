@@ -81,7 +81,7 @@ data class MessageAttachment(val uri: AndroidUri, val type: MimeType) : Parcelab
     private companion object : Parceler<MessageAttachment> {
         override fun create(parcel: Parcel): MessageAttachment {
             val uri = AndroidUri(parcel.readString()!!)
-            val type = when(parcel.readString()!!) {
+            val type = when (parcel.readString()!!) {
                 "mimetype-image" -> MimeType.Image
                 else -> throw IllegalStateException()
             }

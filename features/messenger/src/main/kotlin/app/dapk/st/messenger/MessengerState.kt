@@ -10,7 +10,9 @@ data class MessengerScreenState(
     val composerState: ComposerState,
 )
 
-sealed interface MessengerEvent
+sealed interface MessengerEvent {
+    object SelectImageAttachment : MessengerEvent
+}
 
 sealed interface ComposerState {
 

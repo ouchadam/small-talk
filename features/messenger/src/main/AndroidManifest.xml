@@ -9,6 +9,7 @@
             android:windowSoftInputMode="adjustResize"/>
 
         <activity android:name=".roomsettings.RoomSettingsActivity"/>
+        <activity android:name=".gallery.ImageGalleryActivity"/>
 
     </application>
 
