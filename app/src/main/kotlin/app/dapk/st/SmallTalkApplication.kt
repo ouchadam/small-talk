@@ -15,6 +15,7 @@ import app.dapk.st.graph.AppModule
 import app.dapk.st.home.HomeModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.messenger.MessengerModule
+import app.dapk.st.messenger.gallery.ImageGalleryModule
 import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushModule
@@ -81,6 +82,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
             TaskRunnerModule::class -> appModule.domainModules.taskRunnerModule
             CoreAndroidModule::class -> appModule.coreAndroidModule
             ShareEntryModule::class -> featureModules.shareEntryModule
+            ImageGalleryModule::class -> featureModules.imageGalleryModule
             else -> throw IllegalArgumentException("Unknown: $klass")
         } as T
     }

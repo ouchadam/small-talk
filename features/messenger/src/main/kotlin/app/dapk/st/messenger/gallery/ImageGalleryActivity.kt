@@ -12,21 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
-import app.dapk.st.core.DapkActivity
-import app.dapk.st.core.Lce
-import app.dapk.st.core.PermissionResult
+import app.dapk.st.core.*
+import app.dapk.st.core.extensions.unsafeLazy
+import app.dapk.st.messenger.MessengerModule
 import kotlinx.coroutines.launch
 
 class ImageGalleryActivity : DapkActivity() {
 
+    private val module by unsafeLazy { module<ImageGalleryModule>() }
+    private val viewModel by viewModel { module.imageGalleryViewModel() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val viewModel = ImageGalleryViewModel(
-            FetchMediaFoldersUseCase(contentResolver),
-            FetchMediaUseCase(contentResolver),
-        )
-
         val permissionState = mutableStateOf<Lce<PermissionResult>>(Lce.Loading())
 
         lifecycleScope.launch {
