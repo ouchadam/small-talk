@@ -13,25 +13,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.*
 import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
@@ -222,9 +216,11 @@ fun ImageGalleryScreen(viewModel: ImageGalleryViewModel, onTopLevelBack: () -> U
 
 @Composable
 fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit) {
-    var boxWidth by remember { mutableStateOf(IntSize.Zero) }
-    val localDensity = LocalDensity.current
     val screenWidth = LocalConfiguration.current.screenWidthDp
+
+    val gradient = Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
+    )
 
     when (val content = state.content) {
         is Lce.Loading -> {
@@ -242,11 +238,8 @@ fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Un
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     items(content.value, key = { it.bucketId }) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(2.dp)
-                            .clickable { onClick(it) }
-                            .onGloballyPositioned {
-                                boxWidth = it.size
-                            }) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(2.dp).aspectRatio(1f)
+                            .clickable { onClick(it) }) {
                             Image(
                                 painter = rememberAsyncImagePainter(
                                     model = ImageRequest.Builder(LocalContext.current)
@@ -254,17 +247,11 @@ fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Un
                                         .build(),
                                 ),
                                 contentDescription = "123",
-                                modifier = Modifier.fillMaxWidth().height(with(localDensity) { boxWidth.width.toDp() }),
+                                modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
 
-                            val gradient = Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
-                                startY = boxWidth.width.toFloat() * 0.5f,
-                                endY = boxWidth.width.toFloat()
-                            )
-
-                            Box(modifier = Modifier.matchParentSize().background(gradient))
+                            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.6f).background(gradient).align(Alignment.BottomStart))
                             Row(
                                 modifier = Modifier.fillMaxWidth().align(Alignment.BottomStart).padding(4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -279,14 +266,12 @@ fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Un
             }
         }
 
-        is Lce.Error -> TODO()
+        is Lce.Error -> GenericError { }
     }
 }
 
 @Composable
 fun ImageGalleryMedia(state: ImageGalleryPage.Files) {
-    var boxWidth by remember { mutableStateOf(IntSize.Zero) }
-    val localDensity = LocalDensity.current
     val screenWidth = LocalConfiguration.current.screenWidthDp
 
     Column {
@@ -299,15 +284,15 @@ fun ImageGalleryMedia(state: ImageGalleryPage.Files) {
             is Lce.Loading -> {
                 CenteredLoading()
             }
+
             is Lce.Content -> {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(columns),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    val modifier = Modifier.fillMaxWidth().padding(2.dp).aspectRatio(1f)
                     items(content.value, key = { it.id }) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(2.dp).onGloballyPositioned {
-                            boxWidth = it.size
-                        }) {
+                        Box(modifier = modifier) {
                             Image(
                                 painter = rememberAsyncImagePainter(
                                     model = ImageRequest.Builder(LocalContext.current)
@@ -316,7 +301,7 @@ fun ImageGalleryMedia(state: ImageGalleryPage.Files) {
                                         .build(),
                                 ),
                                 contentDescription = "123",
-                                modifier = Modifier.fillMaxWidth().height(with(localDensity) { boxWidth.width.toDp() }),
+                                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                                 contentScale = ContentScale.Crop
                             )
                         }
@@ -324,7 +309,7 @@ fun ImageGalleryMedia(state: ImageGalleryPage.Files) {
                 }
             }
 
-            is Lce.Error -> TODO()
+            is Lce.Error -> GenericError { }
         }
 
     }
