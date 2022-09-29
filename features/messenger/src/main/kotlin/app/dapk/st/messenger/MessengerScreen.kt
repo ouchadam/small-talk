@@ -74,9 +74,9 @@ internal fun MessengerScreen(
 
     Column {
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
-            OverflowMenu {
-                DropdownMenuItem(text = { Text("Settings", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {})
-            }
+//            OverflowMenu {
+//                DropdownMenuItem(text = { Text("Settings", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {})
+//            }
         })
         when (state.composerState) {
             is ComposerState.Text -> {
