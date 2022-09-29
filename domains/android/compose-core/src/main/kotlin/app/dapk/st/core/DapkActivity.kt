@@ -61,11 +61,13 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
         }
     }
 
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         if (needsBackLeakWorkaround && !onBackPressedDispatcher.hasEnabledCallbacks()) {
             finishAfterTransition()
-        } else
+        } else {
             super.onBackPressed()
+        }
     }
 
     protected suspend fun ensurePermission(permission: String): PermissionResult {

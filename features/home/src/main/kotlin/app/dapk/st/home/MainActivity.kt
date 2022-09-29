@@ -1,46 +1,29 @@
 package app.dapk.st.home
 
 import android.os.Bundle
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import android.widget.Toast
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
-import app.dapk.st.core.*
-import app.dapk.st.core.components.CenteredLoading
-import app.dapk.st.design.components.GenericError
+import androidx.lifecycle.lifecycleScope
+import app.dapk.st.core.DapkActivity
+import app.dapk.st.core.Lce
+import app.dapk.st.core.module
+import app.dapk.st.core.viewModel
 import app.dapk.st.design.components.Route
-import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.directory.DirectoryModule
-import app.dapk.st.home.gallery.FetchMediaFoldersUseCase
-import app.dapk.st.home.gallery.FetchMediaUseCase
 import app.dapk.st.home.gallery.Folder
+import app.dapk.st.home.gallery.GetImageFromGallery
 import app.dapk.st.home.gallery.Media
 import app.dapk.st.login.LoginModule
 import app.dapk.st.profile.ProfileModule
-import app.dapk.st.viewmodel.DapkViewModel
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class MainActivity : DapkActivity() {
 
@@ -52,49 +35,26 @@ class MainActivity : DapkActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val viewModel = ImageGalleryViewModel(
-            FetchMediaFoldersUseCase(contentResolver),
-            FetchMediaUseCase(contentResolver),
-        )
+        homeViewModel.events.onEach {
+            when (it) {
+                HomeEvent.Relaunch -> recreate()
+            }
+        }.launchIn(lifecycleScope)
 
-//        lifecycleScope.launch {
-//            when (ensurePermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-//                PermissionResult.Denied -> {
-//                }
-//
-//                PermissionResult.Granted -> {
-//                    state.value = FetchMediaFoldersUseCase(contentResolver).fetchFolders()
-//                }
-//
-//                PermissionResult.ShowRational -> {
-//
-//                }
-//            }
-//        }
+        registerForActivityResult(GetImageFromGallery()) {
+            Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
+        }.launch(null)
+
 
         setContent {
-            Surface {
-                ImageGalleryScreen(viewModel) {
-                    finish()
+            if (homeViewModel.hasVersionChanged()) {
+                BetaUpgradeDialog()
+            } else {
+                Surface(Modifier.fillMaxSize()) {
+                    HomeScreen(homeViewModel)
                 }
             }
         }
-
-//        homeViewModel.events.onEach {
-//            when (it) {
-//                HomeEvent.Relaunch -> recreate()
-//            }
-//        }.launchIn(lifecycleScope)
-//
-//        setContent {
-//            if (homeViewModel.hasVersionChanged()) {
-//                BetaUpgradeDialog()
-//            } else {
-//                Surface(Modifier.fillMaxSize()) {
-//                    HomeScreen(homeViewModel)
-//                }
-//            }
-//        }
     }
 
     @Composable
@@ -132,188 +92,3 @@ sealed interface ImageGalleryPage {
 
 
 sealed interface ImageGalleryEvent
-
-class ImageGalleryViewModel(
-    private val foldersUseCase: FetchMediaFoldersUseCase,
-    private val fetchMediaUseCase: FetchMediaUseCase,
-) : DapkViewModel<ImageGalleryState, ImageGalleryEvent>(
-    initialState = ImageGalleryState(page = SpiderPage(route = ImageGalleryPage.Routes.folders, "", null, ImageGalleryPage.Folders(Lce.Loading())))
-) {
-
-    private var currentPageJob: Job? = null
-
-    fun start() {
-        currentPageJob?.cancel()
-        currentPageJob = viewModelScope.launch {
-            val folders = foldersUseCase.fetchFolders()
-            updatePageState<ImageGalleryPage.Folders> { copy(content = Lce.Content(folders)) }
-        }
-
-    }
-
-    fun goTo(page: SpiderPage<out ImageGalleryPage>) {
-        currentPageJob?.cancel()
-        updateState { copy(page = page) }
-    }
-
-    fun selectFolder(folder: Folder) {
-        currentPageJob?.cancel()
-
-        updateState {
-            copy(
-                page = SpiderPage(
-                    route = ImageGalleryPage.Routes.files,
-                    label = page.label,
-                    parent = ImageGalleryPage.Routes.folders,
-                    state = ImageGalleryPage.Files(Lce.Loading())
-                )
-            )
-        }
-
-        currentPageJob = viewModelScope.launch {
-            val media = fetchMediaUseCase.getMediaInBucket(folder.bucketId)
-            updatePageState<ImageGalleryPage.Files> {
-                copy(content = Lce.Content(media))
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private inline fun <reified S : ImageGalleryPage> updatePageState(crossinline block: S.() -> S) {
-        val page = state.page
-        val currentState = page.state
-        require(currentState is S)
-        updateState { copy(page = (page as SpiderPage<S>).copy(state = block(page.state))) }
-    }
-
-}
-
-@Composable
-fun ImageGalleryScreen(viewModel: ImageGalleryViewModel, onTopLevelBack: () -> Unit) {
-    LifecycleEffect(onStart = {
-        viewModel.start()
-    })
-
-    val onNavigate: (SpiderPage<out ImageGalleryPage>?) -> Unit = {
-        when (it) {
-            null -> onTopLevelBack()
-            else -> viewModel.goTo(it)
-        }
-    }
-
-    Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
-        item(ImageGalleryPage.Routes.folders) {
-            ImageGalleryFolders(it) { folder ->
-                viewModel.selectFolder(folder)
-            }
-        }
-        item(ImageGalleryPage.Routes.files) {
-            ImageGalleryMedia(it)
-        }
-    }
-
-}
-
-@Composable
-fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-
-    val gradient = Brush.verticalGradient(
-        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
-    )
-
-    when (val content = state.content) {
-        is Lce.Loading -> {
-            CenteredLoading()
-        }
-
-        is Lce.Content -> {
-            Column {
-                val columns = when {
-                    screenWidth > 600 -> 4
-                    else -> 2
-                }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(content.value, key = { it.bucketId }) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(2.dp).aspectRatio(1f)
-                            .clickable { onClick(it) }) {
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(it.thumbnail.toString())
-                                        .build(),
-                                ),
-                                contentDescription = "123",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.6f).background(gradient).align(Alignment.BottomStart))
-                            Row(
-                                modifier = Modifier.fillMaxWidth().align(Alignment.BottomStart).padding(4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(it.title, fontSize = 13.sp, color = Color.White)
-                                Text(it.itemCount.toString(), fontSize = 11.sp, color = Color.White)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        is Lce.Error -> GenericError { }
-    }
-}
-
-@Composable
-fun ImageGalleryMedia(state: ImageGalleryPage.Files) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-
-    Column {
-        val columns = when {
-            screenWidth > 600 -> 4
-            else -> 2
-        }
-
-        when (val content = state.content) {
-            is Lce.Loading -> {
-                CenteredLoading()
-            }
-
-            is Lce.Content -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    val modifier = Modifier.fillMaxWidth().padding(2.dp).aspectRatio(1f)
-                    items(content.value, key = { it.id }) {
-                        Box(modifier = modifier) {
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(it.uri.toString())
-                                        .crossfade(true)
-                                        .build(),
-                                ),
-                                contentDescription = "123",
-                                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-                }
-            }
-
-            is Lce.Error -> GenericError { }
-        }
-
-    }
-
-}
-
-
