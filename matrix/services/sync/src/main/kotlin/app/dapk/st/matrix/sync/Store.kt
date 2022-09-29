@@ -7,8 +7,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface RoomStore {
 
-    suspend fun persist(roomId: RoomId, state: RoomState)
+    suspend fun persist(roomId: RoomId, events: List<RoomEvent>)
     suspend fun remove(rooms: List<RoomId>)
+    suspend fun remove(eventId: EventId)
     suspend fun retrieve(roomId: RoomId): RoomState?
     fun latest(roomId: RoomId): Flow<RoomState>
     suspend fun insertUnread(roomId: RoomId, eventIds: List<EventId>)

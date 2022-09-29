@@ -45,6 +45,7 @@ sealed class ApiMessage {
             data class Info(
                 @SerialName("h") val height: Int,
                 @SerialName("w") val width: Int,
+                @SerialName("mimetype") val mimeType: String,
                 @SerialName("size") val size: Long,
             )
 

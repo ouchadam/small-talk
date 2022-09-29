@@ -1,7 +1,9 @@
 package app.dapk.st.messenger
 
 import android.content.Context
+import android.os.Environment
 import app.dapk.st.core.Base64
+import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.crypto.MediaDecrypter
 import app.dapk.st.matrix.sync.RoomEvent
 import coil.ImageLoader
@@ -14,14 +16,16 @@ import coil.request.Options
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okio.Buffer
+import okio.BufferedSource
+import okio.Path.Companion.toOkioPath
+import java.io.File
 
-class DecryptingFetcherFactory(private val context: Context, base64: Base64) : Fetcher.Factory<RoomEvent.Image> {
+class DecryptingFetcherFactory(private val context: Context, base64: Base64, private val roomId: RoomId) : Fetcher.Factory<RoomEvent.Image> {
 
     private val mediaDecrypter = MediaDecrypter(base64)
 
     override fun create(data: RoomEvent.Image, options: Options, imageLoader: ImageLoader): Fetcher {
-        return DecryptingFetcher(data, context, mediaDecrypter)
+        return DecryptingFetcher(data, context, mediaDecrypter, roomId)
     }
 }
 
@@ -31,23 +35,48 @@ class DecryptingFetcher(
     private val data: RoomEvent.Image,
     private val context: Context,
     private val mediaDecrypter: MediaDecrypter,
+    roomId: RoomId,
 ) : Fetcher {
 
-    override suspend fun fetch(): FetchResult {
-        val response = http.newCall(Request.Builder().url(data.imageMeta.url).build()).execute()
-        val outputStream = when {
-            data.imageMeta.keys != null -> handleEncrypted(response, data.imageMeta.keys!!)
-            else -> response.body?.source() ?: throw IllegalArgumentException("No bitmap response found")
-        }
-        return SourceResult(ImageSource(outputStream, context), null, DataSource.NETWORK)
+    private val directory by lazy {
+        context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!.resolve("SmallTalk/${roomId.value}").also { it.mkdirs() }
     }
 
-    private fun handleEncrypted(response: Response, keys: RoomEvent.Image.ImageMeta.Keys): Buffer {
-        return response.body?.byteStream()?.let { byteStream ->
-            Buffer().also { buffer ->
-                mediaDecrypter.decrypt(byteStream, keys.k, keys.iv).collect { buffer.write(it) }
+    override suspend fun fetch(): FetchResult {
+        val diskCacheKey = data.imageMeta.url.hashCode().toString()
+        val diskCachedFile = directory.resolve(diskCacheKey)
+        val path = diskCachedFile.toOkioPath()
+
+        return when {
+            diskCachedFile.exists() -> SourceResult(ImageSource(path), null, DataSource.DISK)
+
+            else -> {
+                diskCachedFile.createNewFile()
+                val response = http.newCall(Request.Builder().url(data.imageMeta.url).build()).execute()
+                when {
+                    data.imageMeta.keys != null -> response.writeDecrypted(diskCachedFile, data.imageMeta.keys!!)
+                    else -> response.body?.source()?.writeToFile(diskCachedFile) ?: throw IllegalArgumentException("No bitmap response found")
+                }
+
+                SourceResult(ImageSource(path), null, DataSource.NETWORK)
             }
-        } ?: Buffer()
+        }
+    }
+
+    private fun Response.writeDecrypted(file: File, keys: RoomEvent.Image.ImageMeta.Keys) {
+        this.body?.byteStream()?.let { byteStream ->
+            file.outputStream().use { output ->
+                mediaDecrypter.decrypt(byteStream, keys.k, keys.iv).collect { output.write(it) }
+            }
+        }
+    }
+}
+
+private fun BufferedSource.writeToFile(file: File) {
+    this.inputStream().use { input ->
+        file.outputStream().use { output ->
+            input.copyTo(output)
+        }
     }
 }
 

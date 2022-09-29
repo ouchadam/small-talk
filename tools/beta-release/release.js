@@ -56,12 +56,22 @@ export const release = async (github, version, applicationId, artifacts, config)
 
     console.log(releaseResult.data.id)
 
+    console.log("Uploading universal apk...")
     await github.rest.repos.uploadReleaseAsset({
         owner: config.owner,
         repo: config.repo,
         release_id: releaseResult.data.id,
         name: `universal-${version.name}.apk`,
         data: fs.readFileSync(universalApkPath)
+    })
+
+    console.log("Uploading foss apk...")
+    await github.rest.repos.uploadReleaseAsset({
+        owner: config.owner,
+        repo: config.repo,
+        release_id: releaseResult.data.id,
+        name: `foss-signed-${version.name}.apk`,
+        data: fs.readFileSync(artifacts.fossApkPath)
     })
 
     console.log("Promoting beta draft release to live...")

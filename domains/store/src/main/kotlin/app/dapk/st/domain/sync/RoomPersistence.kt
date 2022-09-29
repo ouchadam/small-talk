@@ -27,10 +27,10 @@ internal class RoomPersistence(
     private val coroutineDispatchers: CoroutineDispatchers,
 ) : RoomStore {
 
-    override suspend fun persist(roomId: RoomId, state: RoomState) {
+    override suspend fun persist(roomId: RoomId, events: List<RoomEvent>) {
         coroutineDispatchers.withIoContext {
             database.transaction {
-                state.events.forEach {
+                events.forEach {
                     database.roomEventQueries.insertRoomEvent(roomId, it)
                 }
             }
@@ -38,9 +38,16 @@ internal class RoomPersistence(
     }
 
     override suspend fun remove(rooms: List<RoomId>) {
-        coroutineDispatchers
-        database.roomEventQueries.transaction {
-            rooms.forEach { database.roomEventQueries.remove(it.value) }
+        coroutineDispatchers.withIoContext {
+            database.roomEventQueries.transaction {
+                rooms.forEach { database.roomEventQueries.remove(it.value) }
+            }
+        }
+    }
+
+    override suspend fun remove(eventId: EventId) {
+        coroutineDispatchers.withIoContext {
+            database.roomEventQueries.removeEvent(eventId.value)
         }
     }
 

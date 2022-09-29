@@ -1,6 +1,9 @@
 package app.dapk.st.matrix.message.internal
 
-import app.dapk.st.matrix.common.*
+import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.EventType
+import app.dapk.st.matrix.common.JsonString
+import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.MatrixHttpClient.HttpRequest
 import app.dapk.st.matrix.message.ApiSendResponse
@@ -57,7 +60,7 @@ internal class SendMessageUseCase(
         }
     }
 
-    private suspend fun ApiMessageMapper.imageMessageRequest(message: Message.ImageMessage): HttpRequest<ApiSendResponse> {
+    private suspend fun imageMessageRequest(message: Message.ImageMessage): HttpRequest<ApiSendResponse> {
         val imageMeta = imageContentReader.meta(message.content.uri)
 
         return when (message.sendEncrypted) {
@@ -91,10 +94,10 @@ internal class SendMessageUseCase(
                     info = ApiMessage.ImageMessage.ImageContent.Info(
                         height = imageMeta.height,
                         width = imageMeta.width,
-                        size = imageMeta.size
+                        size = imageMeta.size,
+                        mimeType = imageMeta.mimeType,
                     )
                 )
-
 
                 val json = JsonString(
                     MatrixHttpClient.jsonWithDefaults.encodeToString(
@@ -134,7 +137,8 @@ internal class SendMessageUseCase(
                         ApiMessage.ImageMessage.ImageContent.Info(
                             height = imageMeta.height,
                             width = imageMeta.width,
-                            size = imageMeta.size
+                            size = imageMeta.size,
+                            mimeType = imageMeta.mimeType,
                         )
                     ),
                 )
@@ -160,16 +164,6 @@ class ApiMessageMapper {
                 roomId = roomId,
                 type = EventType.ROOM_MESSAGE.value
             )
-        )
-    )
-
-    fun Message.ImageMessage.toContents(uri: MxUrl, image: ImageContentReader.ImageContent) = ApiMessage.ImageMessage.ImageContent(
-        url = uri,
-        filename = image.fileName,
-        ApiMessage.ImageMessage.ImageContent.Info(
-            height = image.height,
-            width = image.width,
-            size = image.size
         )
     )
 

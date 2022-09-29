@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="app.dapk.st.messenger">
+          package="app.dapk.st.messenger">
 
     <application>
 
         <activity
             android:name=".MessengerActivity"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".roomsettings.RoomSettingsActivity" />
+        <activity android:name=".roomsettings.RoomSettingsActivity"/>
+        <activity android:name=".gallery.ImageGalleryActivity"/>
 
     </application>
 

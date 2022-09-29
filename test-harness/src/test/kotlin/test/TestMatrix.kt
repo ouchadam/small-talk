@@ -14,6 +14,7 @@ import app.dapk.st.matrix.crypto.RoomMembersProvider
 import app.dapk.st.matrix.crypto.Verification
 import app.dapk.st.matrix.crypto.cryptoService
 import app.dapk.st.matrix.crypto.installCryptoService
+import app.dapk.st.matrix.device.DeviceService
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
 import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
@@ -39,6 +40,7 @@ import test.impl.PrintingErrorTracking
 import java.io.File
 import java.time.Clock
 import javax.imageio.ImageIO
+import kotlin.coroutines.resume
 
 object TestUsers {
 
@@ -93,7 +95,9 @@ class TestMatrix(
     ).also {
         it.install {
             installAuthService(storeModule.credentialsStore())
-            installEncryptionService(storeModule.knownDevicesStore())
+            installEncryptionService(storeModule.knownDevicesStore()).proxy {
+                ProxyDeviceService(it)
+            }
 
             val olmAccountStore = OlmPersistenceWrapper(storeModule.olmStore(), base64)
             val olm = OlmWrapper(
@@ -356,3 +360,22 @@ class JavaImageContentReader : ImageContentReader {
     override fun inputStream(uri: String) = File(uri).inputStream()
 
 }
+
+class ProxyDeviceService(private val deviceService: DeviceService) : DeviceService by deviceService {
+
+    private var oneTimeKeysContinuation: (() -> Unit)? = null
+
+    override suspend fun uploadOneTimeKeys(oneTimeKeys: DeviceService.OneTimeKeys) {
+        deviceService.uploadOneTimeKeys(oneTimeKeys)
+        oneTimeKeysContinuation?.invoke()?.also { oneTimeKeysContinuation = null }
+    }
+
+    suspend fun waitForOneTimeKeysToBeUploaded() {
+        suspendCancellableCoroutine { continuation ->
+            oneTimeKeysContinuation = { continuation.resume(Unit) }
+        }
+    }
+
+}
+
+fun MatrixClient.proxyDeviceService() = this.deviceService() as ProxyDeviceService

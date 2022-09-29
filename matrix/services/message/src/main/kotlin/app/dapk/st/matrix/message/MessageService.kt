@@ -1,10 +1,7 @@
 package app.dapk.st.matrix.message
 
 import app.dapk.st.core.Base64
-import app.dapk.st.matrix.MatrixService
-import app.dapk.st.matrix.MatrixServiceInstaller
-import app.dapk.st.matrix.MatrixServiceProvider
-import app.dapk.st.matrix.ServiceDepFactory
+import app.dapk.st.matrix.*
 import app.dapk.st.matrix.common.AlgorithmName
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.MessageType
@@ -132,8 +129,8 @@ fun MatrixServiceInstaller.installMessageService(
     imageContentReader: ImageContentReader,
     messageEncrypter: ServiceDepFactory<MessageEncrypter> = ServiceDepFactory { MissingMessageEncrypter },
     mediaEncrypter: ServiceDepFactory<MediaEncrypter> = ServiceDepFactory { MissingMediaEncrypter },
-) {
-    this.install { (httpClient, _, installedServices) ->
+): InstallExtender<MessageService> {
+    return this.install { (httpClient, _, installedServices) ->
         SERVICE_KEY to DefaultMessageService(
             httpClient,
             localEchoStore,

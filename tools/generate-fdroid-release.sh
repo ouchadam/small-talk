@@ -9,7 +9,7 @@ SIGNED=$WORKING_DIR/app-foss-release-signed.apk
 ZIPALIGN=$(find "$ANDROID_HOME" -iname zipalign -print -quit)
 APKSIGNER=$(find "$ANDROID_HOME" -iname apksigner -print -quit)
 
-./gradlew clean assembleRelease -Pfoss -Punsigned --no-daemon --no-configuration-cache --no-build-cache
+./gradlew assembleRelease -Pfoss -Punsigned --no-daemon --no-configuration-cache --no-build-cache
 
 $ZIPALIGN -v -p 4 $UNSIGNED $ALIGNED_UNSIGNED
 

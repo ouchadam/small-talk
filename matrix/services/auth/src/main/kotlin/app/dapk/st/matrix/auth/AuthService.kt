@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.auth
 
+import app.dapk.st.matrix.InstallExtender
 import app.dapk.st.matrix.MatrixClient
 import app.dapk.st.matrix.MatrixService
 import app.dapk.st.matrix.MatrixServiceInstaller
@@ -25,8 +26,8 @@ interface AuthService : MatrixService {
 
 fun MatrixServiceInstaller.installAuthService(
     credentialsStore: CredentialsStore,
-) {
-    this.install { (httpClient, json) ->
+): InstallExtender<AuthService> {
+    return this.install { (httpClient, json) ->
         SERVICE_KEY to DefaultAuthService(httpClient, credentialsStore, json)
     }
 }

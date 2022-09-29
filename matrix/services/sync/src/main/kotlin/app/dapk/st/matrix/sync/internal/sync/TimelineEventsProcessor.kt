@@ -32,6 +32,7 @@ internal class TimelineEventsProcessor(
                     is ApiTimelineEvent.TimelineMessage -> event.toRoomEvent(roomToProcess.userCredentials, roomToProcess.roomId) { eventId ->
                         eventLookupUseCase.lookup(eventId, decryptedTimeline, decryptedPreviousEvents)
                     }
+                    is ApiTimelineEvent.RoomRedcation -> null
                     is ApiTimelineEvent.Encryption -> null
                     is ApiTimelineEvent.RoomAvatar -> null
                     is ApiTimelineEvent.RoomCreate -> null

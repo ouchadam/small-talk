@@ -37,3 +37,7 @@ LIMIT 100;
 remove:
 DELETE FROM dbRoomEvent
 WHERE room_id = ?;
+
+removeEvent:
+DELETE FROM dbRoomEvent
+WHERE event_id = ?;

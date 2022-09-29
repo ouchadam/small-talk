@@ -1,6 +1,6 @@
 #! /bin/bash
 
-./gradlew clean bundleRelease -Punsigned --no-daemon --no-configuration-cache --no-build-cache
+./gradlew bundleRelease -Punsigned --no-daemon --no-configuration-cache --no-build-cache
 
 WORKING_DIR=app/build/outputs/bundle/release
 RELEASE_AAB=$WORKING_DIR/app-release.aab

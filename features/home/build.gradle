@@ -13,4 +13,5 @@ dependencies {
     implementation project(':domains:store')
     implementation project(":core")
     implementation project(":design-library")
+    implementation Dependencies.mavenCentral.coil
 }
