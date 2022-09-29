@@ -34,11 +34,14 @@ jobs:
           touch .secrets/service-account.json
           touch .secrets/matrix.json
           echo -n '${{ secrets.UPLOAD_KEY }}' | base64 --decode  >> .secrets/upload-key.jks
+          echo -n '${{ secrets.FDROID_KEY }}' | base64 --decode  >> .secrets/fdroid.keystore
           echo -n '${{ secrets.SERVICE_ACCOUNT }}' | base64 --decode  >> .secrets/service-account.json
           echo -n '${{ secrets.MATRIX }}' | base64 --decode  >> .secrets/matrix.json
 
       - name: Assemble release variant
-        run: ./tools/generate-release.sh ${{ secrets.STORE_PASS }}
+        run: | 
+          ./tools/generate-release.sh ${{ secrets.STORE_PASS }}
+          ./tools/generate-fdroid-release.sh ${{ secrets.FDROID_STORE_PASS }}
 
       - uses: actions/github-script@v6
         with:
@@ -48,6 +51,7 @@ jobs:
             const artifacts = {
                bundle: '${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab',
                mapping: '${{ github.workspace }}/app/build/outputs/mapping/release/mapping.txt',
+               fossApkPath: '${{ github.workspace }}/app/build/outputs/apk/release/app-foss-release-signed.apk',
             }
             await publishRelease(github, artifacts)
 
