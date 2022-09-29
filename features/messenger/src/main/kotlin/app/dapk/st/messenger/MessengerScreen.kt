@@ -427,6 +427,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                 val context = LocalContext.current
                 Column(
                     Modifier
+                        .fillMaxWidth()
                         .background(if (content.isNotSelf) SmallTalkTheme.extendedColors.otherBubbleReplyBackground else SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
                         .padding(4.dp)
                 ) {
@@ -436,13 +437,13 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         fontSize = 11.sp,
                         text = replyName,
                         maxLines = 1,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = content.textColor()
                     )
                     when (val replyingTo = content.message.replyingTo) {
                         is Message -> {
                             Text(
                                 text = replyingTo.content,
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = content.textColor(),
                                 fontSize = 15.sp,
                                 modifier = Modifier.wrapContentSize(),
                                 textAlign = TextAlign.Start,

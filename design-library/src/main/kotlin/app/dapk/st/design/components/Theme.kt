@@ -31,8 +31,8 @@ private fun createExtended(scheme: ColorScheme) = ExtendedColors(
     onSelfBubble = scheme.onPrimary,
     othersBubble = scheme.secondaryContainer,
     onOthersBubble = scheme.onSecondaryContainer,
-    selfBubbleReplyBackground = Color(0x40EAEAEA),
-    otherBubbleReplyBackground = Color(0x20EAEAEA),
+    selfBubbleReplyBackground = scheme.primary.copy(alpha = 0.2f),
+    otherBubbleReplyBackground = scheme.primary.copy(alpha = 0.2f),
     missingImageColors = listOf(
         Color(0xFFf7c7f7) to Color(0xFFdf20de),
         Color(0xFFe5d7f6) to Color(0xFF7b30cf),
