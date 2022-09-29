@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -14,13 +15,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.*
 import app.dapk.st.core.extensions.unsafeLazy
-import app.dapk.st.messenger.MessengerModule
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 
 class ImageGalleryActivity : DapkActivity() {
 
     private val module by unsafeLazy { module<ImageGalleryModule>() }
-    private val viewModel by viewModel { module.imageGalleryViewModel() }
+    private val viewModel by viewModel {
+        val payload = intent.getParcelableExtra("key") as? ImageGalleryActivityPayload
+        module.imageGalleryViewModel(payload!!.roomName)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,13 +67,20 @@ fun Activity.PermissionGuard(state: State<Lce<PermissionResult>>, onGranted: @Co
 
 }
 
-class GetImageFromGallery : ActivityResultContract<Void?, Uri?>() {
+class GetImageFromGallery : ActivityResultContract<ImageGalleryActivityPayload, Uri?>() {
 
-    override fun createIntent(context: Context, input: Void?): Intent {
+    override fun createIntent(context: Context, input: ImageGalleryActivityPayload): Intent {
         return Intent(context, ImageGalleryActivity::class.java)
+            .putExtra("key", input)
     }
 
     override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
         return intent.takeIf { resultCode == Activity.RESULT_OK }?.data
     }
 }
+
+
+@Parcelize
+data class ImageGalleryActivityPayload(
+    val roomName: String,
+) : Parcelable

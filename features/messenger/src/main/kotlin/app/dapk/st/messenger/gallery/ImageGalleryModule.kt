@@ -9,9 +9,10 @@ class ImageGalleryModule(
     private val dispatchers: CoroutineDispatchers,
 ) : ProvidableModule {
 
-    fun imageGalleryViewModel() = ImageGalleryViewModel(
+    fun imageGalleryViewModel(roomName: String) = ImageGalleryViewModel(
         FetchMediaFoldersUseCase(contentResolver, dispatchers),
         FetchMediaUseCase(contentResolver, dispatchers),
+        roomName = roomName,
     )
 
 }

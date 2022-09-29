@@ -11,11 +11,12 @@ import kotlinx.coroutines.launch
 class ImageGalleryViewModel(
     private val foldersUseCase: FetchMediaFoldersUseCase,
     private val fetchMediaUseCase: FetchMediaUseCase,
+    roomName: String,
 ) : DapkViewModel<ImageGalleryState, ImageGalleryEvent>(
     initialState = ImageGalleryState(
         page = SpiderPage(
             route = ImageGalleryPage.Routes.folders,
-            label = "",
+            label = "Send to $roomName",
             parent = null,
             state = ImageGalleryPage.Folders(Lce.Loading())
         )

@@ -13,7 +13,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +36,7 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.*
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
@@ -40,6 +44,7 @@ import app.dapk.st.matrix.sync.MessageMeta
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomEvent.Message
 import app.dapk.st.matrix.sync.RoomState
+import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
@@ -52,7 +57,7 @@ internal fun MessengerScreen(
     attachments: List<MessageAttachment>?,
     viewModel: MessengerViewModel,
     navigator: Navigator,
-    galleryLauncher: ActivityResultLauncher<*>
+    galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>
 ) {
     val state = viewModel.state
 
@@ -96,11 +101,15 @@ internal fun MessengerScreen(
 }
 
 @Composable
-private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<*>) {
+private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
-                MessengerEvent.SelectImageAttachment -> galleryLauncher.launch(null)
+                MessengerEvent.SelectImageAttachment -> {
+                    state.roomState.takeIfContent()?.let {
+                        galleryLauncher.launch(ImageGalleryActivityPayload(it.roomState.roomOverview.roomName ?: ""))
+                    }
+                }
             }
         }
     }
