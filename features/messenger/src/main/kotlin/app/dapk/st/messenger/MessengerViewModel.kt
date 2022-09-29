@@ -48,6 +48,7 @@ internal class MessengerViewModel(
             is MessengerAction.ComposerTextUpdate -> updateState { copy(composerState = ComposerState.Text(action.newValue)) }
             MessengerAction.ComposerSendText -> sendMessage()
             MessengerAction.ComposerClear -> updateState { copy(composerState = ComposerState.Text("")) }
+            is MessengerAction.ComposerImageUpdate -> updateState { copy(composerState = ComposerState.Attachments(listOf(action.newValue))) }
         }
     }
 
@@ -100,6 +101,7 @@ internal class MessengerViewModel(
                     }
                 }
             }
+
             is ComposerState.Attachments -> {
                 val copy = composerState.copy()
                 updateState { copy(composerState = ComposerState.Text("")) }
@@ -123,6 +125,10 @@ internal class MessengerViewModel(
         }
     }
 
+    fun startAttachment() {
+        _events.tryEmit(MessengerEvent.SelectImageAttachment)
+    }
+
 }
 
 private fun MessengerState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
@@ -133,6 +139,7 @@ private fun MessengerState.latestMessageEventFromOthers(self: UserId) = this.roo
 
 sealed interface MessengerAction {
     data class ComposerTextUpdate(val newValue: String) : MessengerAction
+    data class ComposerImageUpdate(val newValue: MessageAttachment) : MessengerAction
     object ComposerSendText : MessengerAction
     object ComposerClear : MessengerAction
     data class OnMessengerVisible(val roomId: RoomId, val attachments: List<MessageAttachment>?) : MessengerAction

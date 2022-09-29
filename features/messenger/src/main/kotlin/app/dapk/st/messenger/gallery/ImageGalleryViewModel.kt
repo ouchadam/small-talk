@@ -1,11 +1,9 @@
-package app.dapk.st.home.gallery
+package app.dapk.st.messenger.gallery
 
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
+import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.SpiderPage
-import app.dapk.st.home.ImageGalleryEvent
-import app.dapk.st.home.ImageGalleryPage
-import app.dapk.st.home.ImageGalleryState
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -71,3 +69,20 @@ class ImageGalleryViewModel(
     }
 
 }
+
+data class ImageGalleryState(
+    val page: SpiderPage<out ImageGalleryPage>,
+)
+
+
+sealed interface ImageGalleryPage {
+    data class Folders(val content: Lce<List<Folder>>) : ImageGalleryPage
+    data class Files(val content: Lce<List<Media>>) : ImageGalleryPage
+
+    object Routes {
+        val folders = Route<Folders>("Folders")
+        val files = Route<Files>("Files")
+    }
+}
+
+sealed interface ImageGalleryEvent

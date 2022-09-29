@@ -1,4 +1,4 @@
-package app.dapk.st.home.gallery
+package app.dapk.st.messenger.gallery
 
 import android.Manifest
 import android.app.Activity
@@ -15,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.DapkActivity
 import app.dapk.st.core.Lce
 import app.dapk.st.core.PermissionResult
-import app.dapk.st.home.ImageGalleryScreen
 import kotlinx.coroutines.launch
 
 class ImageGalleryActivity : DapkActivity() {

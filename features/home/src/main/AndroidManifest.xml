@@ -3,7 +3,6 @@
 
     <application>
         <activity android:name="app.dapk.st.home.MainActivity"/>
-        <activity android:name="app.dapk.st.home.gallery.ImageGalleryActivity"/>
     </application>
 
 </manifest>

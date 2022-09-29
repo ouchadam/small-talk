@@ -1,4 +1,4 @@
-package app.dapk.st.home.gallery
+package app.dapk.st.messenger.gallery
 
 import android.content.ContentResolver
 import android.content.ContentUris

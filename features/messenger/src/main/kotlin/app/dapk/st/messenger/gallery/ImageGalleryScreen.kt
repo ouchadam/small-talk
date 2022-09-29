@@ -1,4 +1,4 @@
-package app.dapk.st.home
+package app.dapk.st.messenger.gallery
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,9 +24,6 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
-import app.dapk.st.home.gallery.Folder
-import app.dapk.st.home.gallery.ImageGalleryViewModel
-import app.dapk.st.home.gallery.Media
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 

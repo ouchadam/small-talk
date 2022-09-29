@@ -1,9 +1,11 @@
 package app.dapk.st.messenger
 
 import android.content.res.Configuration
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,9 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,10 +47,16 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment>?, viewModel: MessengerViewModel, navigator: Navigator) {
+internal fun MessengerScreen(
+    roomId: RoomId,
+    attachments: List<MessageAttachment>?,
+    viewModel: MessengerViewModel,
+    navigator: Navigator,
+    galleryLauncher: ActivityResultLauncher<*>
+) {
     val state = viewModel.state
 
-    viewModel.ObserveEvents()
+    viewModel.ObserveEvents(galleryLauncher)
     LifecycleEffect(
         onStart = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) },
         onStop = { viewModel.post(MessengerAction.OnMessengerGone) }
@@ -74,6 +80,7 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
+                    onAttach = { viewModel.startAttachment() }
                 )
             }
 
@@ -89,10 +96,12 @@ internal fun MessengerScreen(roomId: RoomId, attachments: List<MessageAttachment
 }
 
 @Composable
-private fun MessengerViewModel.ObserveEvents() {
+private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<*>) {
     StartObserving {
         this@ObserveEvents.events.launch {
-            // TODO()
+            when (it) {
+                MessengerEvent.SelectImageAttachment -> galleryLauncher.launch(null)
+            }
         }
     }
 }
@@ -553,7 +562,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
 }
 
 @Composable
-private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -579,7 +588,16 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                     onValueChange = { onTextChange(it) },
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     textStyle = LocalTextStyle.current.copy(color = SmallTalkTheme.extendedColors.onOthersBubble),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true)
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
+                    decorationBox = {
+                        Box {
+                            Icon(
+                                modifier = Modifier.align(Alignment.CenterEnd).clickable { onAttach() },
+                                imageVector = Icons.Filled.Image,
+                                contentDescription = "",
+                            )
+                        }
+                    }
                 )
             }
         }
