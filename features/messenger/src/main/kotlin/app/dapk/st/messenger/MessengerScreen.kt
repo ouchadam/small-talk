@@ -598,10 +598,11 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     textStyle = LocalTextStyle.current.copy(color = SmallTalkTheme.extendedColors.onOthersBubble),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
-                    decorationBox = {
-                        Box {
+                    decorationBox = { innerField ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) { innerField() }
                             Icon(
-                                modifier = Modifier.align(Alignment.CenterEnd).clickable { onAttach() },
+                                modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
                                 imageVector = Icons.Filled.Image,
                                 contentDescription = "",
                             )
