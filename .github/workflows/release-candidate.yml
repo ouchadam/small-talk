@@ -40,8 +40,8 @@ jobs:
 
       - name: Assemble release variant
         run: | 
-          ./tools/generate-release.sh ${{ secrets.STORE_PASS }}
-          ./tools/generate-fdroid-release.sh ${{ secrets.FDROID_STORE_PASS }}
+          ./tools/generate-release.sh "${{ secrets.STORE_PASS }}"
+          ./tools/generate-fdroid-release.sh "${{ secrets.FDROID_STORE_PASS }}"
 
       - uses: actions/github-script@v6
         with:
