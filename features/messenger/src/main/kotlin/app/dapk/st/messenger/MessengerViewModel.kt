@@ -126,7 +126,9 @@ internal class MessengerViewModel(
     }
 
     fun startAttachment() {
-        _events.tryEmit(MessengerEvent.SelectImageAttachment)
+        viewModelScope.launch {
+            _events.emit(MessengerEvent.SelectImageAttachment)
+        }
     }
 
 }
