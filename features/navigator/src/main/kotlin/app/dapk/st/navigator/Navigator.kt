@@ -1,7 +1,6 @@
 package app.dapk.st.navigator
 
 import android.app.Activity
-import android.app.Instrumentation.ActivityResult
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -82,7 +81,7 @@ data class MessageAttachment(val uri: AndroidUri, val type: MimeType) : Parcelab
     private companion object : Parceler<MessageAttachment> {
         override fun create(parcel: Parcel): MessageAttachment {
             val uri = AndroidUri(parcel.readString()!!)
-            val type = when(parcel.readString()!!) {
+            val type = when (parcel.readString()!!) {
                 "mimetype-image" -> MimeType.Image
                 else -> throw IllegalStateException()
             }
