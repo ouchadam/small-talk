@@ -35,6 +35,7 @@ sealed class RoomEvent {
         @SerialName("meta") override val meta: MessageMeta,
         @SerialName("encrypted_content") val encryptedContent: MegOlmV1? = null,
         @SerialName("edited") val edited: Boolean = false,
+        @SerialName("redacted") val redacted: Boolean = false,
     ) : RoomEvent() {
 
         @Serializable

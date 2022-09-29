@@ -21,6 +21,10 @@ internal class RoomProcessor(
         val members = roomToProcess.apiSyncRoom.collectMembers(roomToProcess.userCredentials)
         roomMembersService.insert(roomToProcess.roomId, members)
 
+        roomToProcess.apiSyncRoom.timeline.apiTimelineEvents.filterIsInstance<ApiTimelineEvent.RoomRedcation>().forEach {
+            roomDataSource.redact(roomToProcess.roomId, it.redactedId)
+        }
+
         val previousState = roomDataSource.read(roomToProcess.roomId)
 
         val (newEvents, distinctEvents) = timelineEventsProcessor.process(
