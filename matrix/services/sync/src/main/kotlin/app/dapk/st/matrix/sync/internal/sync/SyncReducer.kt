@@ -61,8 +61,6 @@ internal class SyncReducer(
             }
         }
 
-        roomDataSource.remove(roomsLeft)
-
         return ReducerResult(
             newRooms,
             (apiRoomsToProcess + roomsWithSideEffects).awaitAll().filterNotNull(),
