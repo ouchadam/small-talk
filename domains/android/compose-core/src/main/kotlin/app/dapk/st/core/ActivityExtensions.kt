@@ -10,7 +10,7 @@ inline fun <reified VM : ViewModel> ComponentActivity.viewModel(
 ): Lazy<VM> {
     val factoryPromise = object : Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>) = when (modelClass) {
+        override fun <T : ViewModel> create(modelClass: Class<T>) = when (modelClass) {
             VM::class.java -> factory() as T
             else -> throw Error()
         }

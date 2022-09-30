@@ -19,7 +19,7 @@ fun Toolbar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val navigationIcon = foo(onNavigate)
-    SmallTopAppBar(
+    TopAppBar(
         modifier = offset?.let { Modifier.offset(it) } ?: Modifier,
         colors = TopAppBarDefaults.smallTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.background

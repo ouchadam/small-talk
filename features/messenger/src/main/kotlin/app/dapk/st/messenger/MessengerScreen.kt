@@ -37,7 +37,10 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.extensions.takeIfContent
-import app.dapk.st.design.components.*
+import app.dapk.st.design.components.MessengerUrlIcon
+import app.dapk.st.design.components.MissingAvatarIcon
+import app.dapk.st.design.components.SmallTalkTheme
+import app.dapk.st.design.components.Toolbar
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.sync.MessageMeta
