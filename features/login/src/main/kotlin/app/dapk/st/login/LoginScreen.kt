@@ -1,15 +1,16 @@
 package app.dapk.st.login
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -49,10 +50,27 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
 
     when (val state = loginViewModel.state) {
         is Error -> {
+            val openDetailsDialog = remember { mutableStateOf(false) }
+
+            if (openDetailsDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { openDetailsDialog.value = false },
+                    confirmButton = {
+                        Button(onClick = { openDetailsDialog.value = false }) {
+                            Text("OK")
+                        }
+                    },
+                    title = { Text("Details") },
+                    text = {
+                        Text(state.cause.message ?: "Unknown")
+                    }
+                )
+            }
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Something went wrong")
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Tap for more details".uppercase(), fontSize = 12.sp, modifier = Modifier.clickable { openDetailsDialog.value = true }.padding(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Button(onClick = {
                         loginViewModel.start()
                     }) {
@@ -61,11 +79,13 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                 }
             }
         }
+
         Loading -> {
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
+
         is Content ->
             Row {
                 Spacer(modifier = Modifier.weight(0.1f))
