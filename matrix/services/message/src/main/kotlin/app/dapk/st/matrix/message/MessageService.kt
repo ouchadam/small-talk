@@ -1,11 +1,7 @@
 package app.dapk.st.matrix.message
 
-import app.dapk.st.core.Base64
 import app.dapk.st.matrix.*
-import app.dapk.st.matrix.common.AlgorithmName
-import app.dapk.st.matrix.common.EventId
-import app.dapk.st.matrix.common.MessageType
-import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.message.internal.DefaultMessageService
 import app.dapk.st.matrix.message.internal.ImageContentReader
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +39,17 @@ interface MessageService : MatrixService {
             @SerialName("room_id") val roomId: RoomId,
             @SerialName("local_id") val localId: String,
             @SerialName("timestamp") val timestampUtc: Long,
-        ) : Message()
+            @SerialName("reply") val reply: Reply? = null,
+            @SerialName("reply_id") val replyId: String? = null,
+        ) : Message() {
+            @Serializable
+            data class Reply(
+                val authorId: UserId,
+                val originalMessage: String,
+                val replyContent: String,
+                val eventId: EventId
+            )
+        }
 
         @Serializable
         @SerialName("image_message")
