@@ -38,7 +38,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
@@ -637,7 +636,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             AnimatedContent(
                 targetState = state.reply,
                 transitionSpec = {
-                    slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, animationSpec = tween(500)){
+                    slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, animationSpec = tween(500)) {
                         it / 2
                     }
                         .with(slideOutOfContainer(towards = AnimatedContentScope.SlideDirection.Down))
@@ -652,9 +651,30 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                 }
             ) {
                 if (it is Message) {
-                    Column(Modifier.clipToBounds()) {
-                        Text(it.author.displayName ?: it.author.id.value)
-                        Text(it.content, maxLines = 2)
+                    Column(Modifier.padding(12.dp)) {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
+                                .padding(4.dp)
+                        ) {
+                            val replyName = it.author.displayName ?: it.author.id.value
+                            Text(
+                                fontSize = 11.sp,
+                                text = replyName,
+                                maxLines = 1,
+                                color = SmallTalkTheme.extendedColors.onSelfBubble
+                            )
+
+                            Text(
+                                text = it.content,
+                                color = SmallTalkTheme.extendedColors.onSelfBubble,
+                                fontSize = 15.sp,
+                                maxLines = 2,
+                                modifier = Modifier.wrapContentSize(),
+                                textAlign = TextAlign.Start,
+                            )
+                        }
                     }
                 }
             }
