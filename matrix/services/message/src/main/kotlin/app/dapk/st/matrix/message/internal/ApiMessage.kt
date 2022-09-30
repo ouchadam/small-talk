@@ -1,5 +1,6 @@
 package app.dapk.st.matrix.message.internal
 
+import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.MessageType
 import app.dapk.st.matrix.common.MxUrl
 import app.dapk.st.matrix.common.RoomId
@@ -20,8 +21,26 @@ sealed class ApiMessage {
         @Serializable
         data class TextContent(
             @SerialName("body") val body: String,
-            @SerialName("msgtype") val type: String = MessageType.TEXT.value,
-        ) : ApiMessageContent
+            @SerialName("m.relates_to") val relatesTo: RelatesTo? = null,
+            @SerialName("formatted_body") val formattedBody: String? = null,
+            @SerialName("format") val format: String? = null,
+        ) : ApiMessageContent {
+
+            @SerialName("msgtype")
+            val type: String = MessageType.TEXT.value
+        }
+    }
+
+    @Serializable
+    data class RelatesTo(
+        @SerialName("m.in_reply_to") val inReplyTo: InReplyTo
+    ) {
+
+        @Serializable
+        data class InReplyTo(
+            @SerialName("event_id") val eventId: EventId
+        )
+
     }
 
     @Serializable
