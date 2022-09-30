@@ -2,10 +2,7 @@ package app.dapk.st.messenger
 
 import android.content.res.Configuration
 import androidx.activity.result.ActivityResultLauncher
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -655,9 +652,6 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                 contentAlignment = Alignment.TopStart,
             ) {
                 Box(Modifier.padding(14.dp)) {
-                    if (state.value.isEmpty()) {
-                        Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
-                    }
                     BasicTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = state.value,
@@ -667,7 +661,12 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
                         decorationBox = { innerField ->
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) { innerField() }
+                                Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) {
+                                    if (state.value.isEmpty()) {
+                                        Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
+                                    }
+                                    innerField()
+                                }
                                 Icon(
                                     modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
                                     imageVector = Icons.Filled.Image,
