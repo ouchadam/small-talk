@@ -2,7 +2,9 @@ package app.dapk.st.messenger
 
 import android.content.res.Configuration
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
@@ -35,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
@@ -614,6 +618,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit) {
     Row(
@@ -623,34 +628,38 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             .fillMaxWidth()
             .height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom
     ) {
+
         Column(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight()
+                .background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp)),
         ) {
-//            AnimatedVisibility(
-//                visible = state.reply?.let { it is Message } ?: false,
-//                enter = slideInVertically { it - 50 },
-//                exit = slideOutVertically { it - 50 },
-//            ) {
-//
-//                val message = state.reply as Message
-//                Column(
-//                    modifier = Modifier
-//                        .background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-//                ) {
-//                    Text(message.author.displayName ?: message.author.id.value)
-//                    Text(message.content)
-//                    Spacer(Modifier.height(50.dp))
-//                }
-//            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.TopStart,
+            AnimatedContent(
+                targetState = state.reply,
+                transitionSpec = {
+                    slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, animationSpec = tween(500)){
+                        it / 2
+                    }
+                        .with(slideOutOfContainer(towards = AnimatedContentScope.SlideDirection.Down))
+                        .using(
+                            SizeTransform(
+                                clip = true,
+                                sizeAnimationSpec = { initialSize, targetSize ->
+                                    tween(500)
+                                })
+
+                        )
+                }
             ) {
+                if (it is Message) {
+                    Column(Modifier.clipToBounds()) {
+                        Text(it.author.displayName ?: it.author.id.value)
+                        Text(it.content, maxLines = 2)
+                    }
+                }
+            }
+
+            Box(modifier = Modifier.background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp))) {
                 BasicTextField(
                     modifier = Modifier.fillMaxWidth().padding(14.dp),
                     value = state.value,
