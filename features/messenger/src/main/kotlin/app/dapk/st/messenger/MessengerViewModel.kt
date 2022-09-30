@@ -109,7 +109,7 @@ internal class MessengerViewModel(
         when (val composerState = state.composerState) {
             is ComposerState.Text -> {
                 val copy = composerState.copy()
-                updateState { copy(composerState = composerState.copy(value = "")) }
+                updateState { copy(composerState = composerState.copy(value = "", reply = null)) }
 
                 state.roomState.takeIfContent()?.let { content ->
                     val roomState = content.roomState
@@ -121,6 +121,18 @@ internal class MessengerViewModel(
                                 sendEncrypted = roomState.roomOverview.isEncrypted,
                                 localId = localIdFactory.create(),
                                 timestampUtc = clock.millis(),
+                                reply = copy.reply?.let {
+                                    MessageService.Message.TextMessage.Reply(
+                                        authorId = it.author.id,
+                                        originalMessage = when (it) {
+                                            is RoomEvent.Image -> TODO()
+                                            is RoomEvent.Reply -> TODO()
+                                            is RoomEvent.Message -> it.content
+                                        },
+                                        copy.value,
+                                        it.eventId
+                                    )
+                                }
                             )
                         )
                     }
