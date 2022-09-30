@@ -34,7 +34,7 @@ internal class MessengerViewModel(
     initialState = MessengerScreenState(
         roomId = null,
         roomState = Lce.Loading(),
-        composerState = ComposerState.Text(value = "")
+        composerState = ComposerState.Text(value = "", reply = null)
     ),
     factory = factory,
 ) {
@@ -45,15 +45,40 @@ internal class MessengerViewModel(
         when (action) {
             is MessengerAction.OnMessengerVisible -> start(action)
             MessengerAction.OnMessengerGone -> syncJob?.cancel()
-            is MessengerAction.ComposerTextUpdate -> updateState { copy(composerState = ComposerState.Text(action.newValue)) }
+            is MessengerAction.ComposerTextUpdate -> updateState { copy(composerState = ComposerState.Text(action.newValue, composerState.reply)) }
             MessengerAction.ComposerSendText -> sendMessage()
-            MessengerAction.ComposerClear -> updateState { copy(composerState = ComposerState.Text("")) }
-            is MessengerAction.ComposerImageUpdate -> updateState { copy(composerState = ComposerState.Attachments(listOf(action.newValue))) }
+            MessengerAction.ComposerClear -> resetComposer()
+            is MessengerAction.ComposerImageUpdate -> updateState {
+                copy(
+                    composerState = ComposerState.Attachments(
+                        listOf(action.newValue),
+                        composerState.reply
+                    )
+                )
+            }
+
+            is MessengerAction.ComposerEnterReplyMode -> updateState {
+                copy(
+                    composerState = when (composerState) {
+                        is ComposerState.Attachments -> composerState.copy(reply = action.replyingTo)
+                        is ComposerState.Text -> composerState.copy(reply = action.replyingTo)
+                    }
+                )
+            }
+
+            MessengerAction.ComposerExitReplyMode -> updateState {
+                copy(
+                    composerState = when (composerState) {
+                        is ComposerState.Attachments -> composerState.copy(reply = null)
+                        is ComposerState.Text -> composerState.copy(reply = null)
+                    }
+                )
+            }
         }
     }
 
     private fun start(action: MessengerAction.OnMessengerVisible) {
-        updateState { copy(roomId = action.roomId, composerState = action.attachments?.let { ComposerState.Attachments(it) } ?: composerState) }
+        updateState { copy(roomId = action.roomId, composerState = action.attachments?.let { ComposerState.Attachments(it, null) } ?: composerState) }
         syncJob = viewModelScope.launch {
             roomStore.markRead(action.roomId)
 
@@ -104,7 +129,7 @@ internal class MessengerViewModel(
 
             is ComposerState.Attachments -> {
                 val copy = composerState.copy()
-                updateState { copy(composerState = ComposerState.Text("")) }
+                resetComposer()
 
                 state.roomState.takeIfContent()?.let { content ->
                     val roomState = content.roomState
@@ -125,6 +150,10 @@ internal class MessengerViewModel(
         }
     }
 
+    private fun resetComposer() {
+        updateState { copy(composerState = ComposerState.Text("", reply = null)) }
+    }
+
     fun startAttachment() {
         viewModelScope.launch {
             _events.emit(MessengerEvent.SelectImageAttachment)
@@ -141,6 +170,8 @@ private fun MessengerState.latestMessageEventFromOthers(self: UserId) = this.roo
 
 sealed interface MessengerAction {
     data class ComposerTextUpdate(val newValue: String) : MessengerAction
+    data class ComposerEnterReplyMode(val replyingTo: RoomEvent) : MessengerAction
+    object ComposerExitReplyMode : MessengerAction
     data class ComposerImageUpdate(val newValue: MessageAttachment) : MessengerAction
     object ComposerSendText : MessengerAction
     object ComposerClear : MessengerAction
