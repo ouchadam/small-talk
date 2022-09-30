@@ -651,31 +651,29 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                     .background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.TopStart,
             ) {
-                Box(Modifier.padding(14.dp)) {
-                    BasicTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = state.value,
-                        onValueChange = { onTextChange(it) },
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        textStyle = LocalTextStyle.current.copy(color = SmallTalkTheme.extendedColors.onOthersBubble),
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
-                        decorationBox = { innerField ->
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) {
-                                    if (state.value.isEmpty()) {
-                                        Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
-                                    }
-                                    innerField()
+                BasicTextField(
+                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                    value = state.value,
+                    onValueChange = { onTextChange(it) },
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    textStyle = LocalTextStyle.current.copy(color = SmallTalkTheme.extendedColors.onOthersBubble),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
+                    decorationBox = { innerField ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) {
+                                if (state.value.isEmpty()) {
+                                    Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
                                 }
-                                Icon(
-                                    modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
-                                    imageVector = Icons.Filled.Image,
-                                    contentDescription = "",
-                                )
+                                innerField()
                             }
+                            Icon(
+                                modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
+                                imageVector = Icons.Filled.Image,
+                                contentDescription = "",
+                            )
                         }
-                    )
-                }
+                    }
+                )
             }
         }
         Spacer(modifier = Modifier.width(6.dp))
