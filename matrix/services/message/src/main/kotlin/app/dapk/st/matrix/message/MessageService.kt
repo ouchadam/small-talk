@@ -30,7 +30,7 @@ interface MessageService : MatrixService {
     }
 
     @Serializable
-    sealed class Message {
+    sealed interface Message {
         @Serializable
         @SerialName("text_message")
         data class TextMessage(
@@ -40,7 +40,7 @@ interface MessageService : MatrixService {
             @SerialName("local_id") val localId: String,
             @SerialName("timestamp") val timestampUtc: Long,
             @SerialName("reply") val reply: Reply? = null,
-        ) : Message() {
+        ) : Message {
             @Serializable
             data class Reply(
                 val authorId: UserId,
@@ -58,7 +58,7 @@ interface MessageService : MatrixService {
             @SerialName("room_id") val roomId: RoomId,
             @SerialName("local_id") val localId: String,
             @SerialName("timestamp") val timestampUtc: Long,
-        ) : Message()
+        ) : Message
 
         @Serializable
         sealed class Content {
