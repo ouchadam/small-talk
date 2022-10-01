@@ -1,20 +1,17 @@
 package app.dapk.st.matrix.message
 
 import app.dapk.st.matrix.common.*
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 fun interface MessageEncrypter {
 
     suspend fun encrypt(message: ClearMessagePayload): EncryptedMessagePayload
 
-    @Serializable
     data class EncryptedMessagePayload(
-        @SerialName("algorithm") val algorithmName: AlgorithmName,
-        @SerialName("sender_key") val senderKey: String,
-        @SerialName("ciphertext") val cipherText: CipherText,
-        @SerialName("session_id") val sessionId: SessionId,
-        @SerialName("device_id") val deviceId: DeviceId
+        val algorithmName: AlgorithmName,
+        val senderKey: String,
+        val cipherText: CipherText,
+        val sessionId: SessionId,
+        val deviceId: DeviceId
     )
 
     data class ClearMessagePayload(
