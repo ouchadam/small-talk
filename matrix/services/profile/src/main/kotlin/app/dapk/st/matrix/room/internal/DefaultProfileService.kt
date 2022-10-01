@@ -5,6 +5,8 @@ import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.room.ProfileService
 import app.dapk.st.matrix.room.ProfileStore
+import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -29,12 +31,29 @@ internal class DefaultProfileService(
     private suspend fun fetchMe(): ProfileService.Me {
         val credentials = credentialsStore.credentials()!!
         val userId = credentials.userId
-        val result = httpClient.execute(profileRequest(userId))
-        return ProfileService.Me(
-            userId,
-            result.displayName,
-            result.avatarUrl?.convertMxUrToUrl(credentials.homeServer)?.let { AvatarUrl(it) },
-            homeServerUrl = credentials.homeServer,
+        return runCatching { httpClient.execute(profileRequest(userId)) }.fold(
+            onSuccess = {
+                ProfileService.Me(
+                    userId,
+                    it.displayName,
+                    it.avatarUrl?.convertMxUrToUrl(credentials.homeServer)?.let { AvatarUrl(it) },
+                    homeServerUrl = credentials.homeServer,
+                )
+            },
+            onFailure = {
+                when {
+                    it is ClientRequestException && it.response.status.value == 404 -> {
+                        ProfileService.Me(
+                            userId,
+                            displayName = null,
+                            avatarUrl = null,
+                            homeServerUrl = credentials.homeServer,
+                        )
+                    }
+
+                    else -> throw it
+                }
+            }
         )
     }
 }
