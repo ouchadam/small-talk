@@ -2,10 +2,16 @@ package app.dapk.st.messenger
 
 import android.content.res.Configuration
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -22,6 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
@@ -37,7 +44,10 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.extensions.takeIfContent
-import app.dapk.st.design.components.*
+import app.dapk.st.design.components.MessengerUrlIcon
+import app.dapk.st.design.components.MissingAvatarIcon
+import app.dapk.st.design.components.SmallTalkTheme
+import app.dapk.st.design.components.Toolbar
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.sync.MessageMeta
@@ -50,6 +60,7 @@ import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 internal fun MessengerScreen(
@@ -80,7 +91,9 @@ internal fun MessengerScreen(
         })
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState)
+                Room(state.roomState, onReply = {
+                    viewModel.post(MessengerAction.ComposerEnterReplyMode(it))
+                })
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
@@ -116,11 +129,11 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, onReply: (RoomEvent) -> Unit) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
-            RoomContent(state.value.self, state.value.roomState)
+            RoomContent(state.value.self, state.value.roomState, onReply)
             val eventBarHeight = 14.dp
             val typing = state.value.typing
             when {
@@ -163,7 +176,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>) {
 }
 
 @Composable
-private fun ColumnScope.RoomContent(self: UserId, state: RoomState) {
+private fun ColumnScope.RoomContent(self: UserId, state: RoomState, onReply: (RoomEvent) -> Unit) {
     val listState: LazyListState = rememberLazyListState(
         initialFirstVisibleItemIndex = 0
     )
@@ -189,7 +202,7 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState) {
         ) { index, item ->
             val previousEvent = if (index != 0) state.events[index - 1] else null
             val wasPreviousMessageSameSender = previousEvent?.author?.id == item.author.id
-            AlignedBubble(item, self, wasPreviousMessageSameSender) {
+            AlignedBubble(item, self, wasPreviousMessageSameSender, onReply) {
                 when (item) {
                     is RoomEvent.Image -> MessageImage(it as BubbleContent<RoomEvent.Image>)
                     is Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
@@ -212,6 +225,7 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
     message: T,
     self: UserId,
     wasPreviousMessageSameSender: Boolean,
+    onReply: (RoomEvent) -> Unit,
     content: @Composable (BubbleContent<T>) -> Unit
 ) {
     when (message.author.id == self) {
@@ -221,7 +235,8 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
                     Bubble(
                         message = message,
                         isNotSelf = false,
-                        wasPreviousMessageSameSender = wasPreviousMessageSameSender
+                        wasPreviousMessageSameSender = wasPreviousMessageSameSender,
+                        onReply = onReply,
                     ) {
                         content(BubbleContent(selfBackgroundShape, SmallTalkTheme.extendedColors.selfBubble, false, message))
                     }
@@ -234,7 +249,8 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
                 Bubble(
                     message = message,
                     isNotSelf = true,
-                    wasPreviousMessageSameSender = wasPreviousMessageSameSender
+                    wasPreviousMessageSameSender = wasPreviousMessageSameSender,
+                    onReply = onReply,
                 ) {
                     content(BubbleContent(othersBackgroundShape, SmallTalkTheme.extendedColors.othersBubble, true, message))
                 }
@@ -329,9 +345,39 @@ private fun Bubble(
     message: RoomEvent,
     isNotSelf: Boolean,
     wasPreviousMessageSameSender: Boolean,
+    onReply: (RoomEvent) -> Unit,
     content: @Composable () -> Unit
 ) {
-    Row(Modifier.padding(horizontal = 12.dp)) {
+
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+    val localDensity = LocalDensity.current
+
+    val coroutineScope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+
+    Row(
+        Modifier.padding(horizontal = 12.dp)
+            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+            .draggable(
+                orientation = Orientation.Horizontal,
+                state = rememberDraggableState {
+                    if ((offsetX.value + it) > 0) {
+                        coroutineScope.launch { offsetX.snapTo(offsetX.value + it) }
+                    }
+                },
+                onDragStopped = {
+                    with(localDensity) {
+                        if (offsetX.value > (screenWidthDp.toPx() * 0.15)) {
+                            onReply(message)
+                        }
+                    }
+
+                    coroutineScope.launch {
+                        offsetX.animateTo(targetValue = 0f)
+                    }
+                }
+            )
+    ) {
         when {
             isNotSelf -> {
                 val displayImageSize = 32.dp
@@ -571,6 +617,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit) {
     Row(
@@ -580,20 +627,61 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             .fillMaxWidth()
             .height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom
     ) {
-        Box(
+
+        Column(
             modifier = Modifier
-                .align(Alignment.Bottom)
                 .weight(1f)
-                .fillMaxHeight()
                 .background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp)),
-            contentAlignment = Alignment.TopStart,
         ) {
-            Box(Modifier.padding(14.dp)) {
-                if (state.value.isEmpty()) {
-                    Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
+            AnimatedContent(
+                targetState = state.reply,
+                transitionSpec = {
+                    slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, animationSpec = tween(500)) {
+                        it / 2
+                    }
+                        .with(slideOutOfContainer(towards = AnimatedContentScope.SlideDirection.Down))
+                        .using(
+                            SizeTransform(
+                                clip = true,
+                                sizeAnimationSpec = { initialSize, targetSize ->
+                                    tween(500)
+                                })
+
+                        )
                 }
+            ) {
+                if (it is Message) {
+                    Column(Modifier.padding(12.dp)) {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
+                                .padding(4.dp)
+                        ) {
+                            val replyName = it.author.displayName ?: it.author.id.value
+                            Text(
+                                fontSize = 11.sp,
+                                text = replyName,
+                                maxLines = 1,
+                                color = SmallTalkTheme.extendedColors.onSelfBubble
+                            )
+
+                            Text(
+                                text = it.content,
+                                color = SmallTalkTheme.extendedColors.onSelfBubble,
+                                fontSize = 15.sp,
+                                maxLines = 2,
+                                modifier = Modifier.wrapContentSize(),
+                                textAlign = TextAlign.Start,
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box(modifier = Modifier.background(SmallTalkTheme.extendedColors.othersBubble, RoundedCornerShape(24.dp))) {
                 BasicTextField(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(14.dp),
                     value = state.value,
                     onValueChange = { onTextChange(it) },
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -601,7 +689,12 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrect = true),
                     decorationBox = { innerField ->
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) { innerField() }
+                            Box(modifier = Modifier.weight(1f).padding(end = 4.dp)) {
+                                if (state.value.isEmpty()) {
+                                    Text("Message", color = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f))
+                                }
+                                innerField()
+                            }
                             Icon(
                                 modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
                                 imageVector = Icons.Filled.Image,

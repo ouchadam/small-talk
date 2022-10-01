@@ -1,9 +1,6 @@
 package app.dapk.st.matrix.message.internal
 
-import app.dapk.st.matrix.common.EventId
-import app.dapk.st.matrix.common.EventType
-import app.dapk.st.matrix.common.JsonString
-import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.http.MatrixHttpClient.HttpRequest
 import app.dapk.st.matrix.message.ApiSendResponse
@@ -37,7 +34,7 @@ internal class SendMessageUseCase(
     }
 
     private suspend fun ApiMessageMapper.textMessageRequest(message: Message.TextMessage): HttpRequest<ApiSendResponse> {
-        val contents = message.toContents()
+        val contents = message.toContents(message.reply)
         return when (message.sendEncrypted) {
             true -> sendRequest(
                 roomId = message.roomId,
@@ -49,6 +46,7 @@ internal class SendMessageUseCase(
                         contents.toMessageJson(message.roomId)
                     )
                 ),
+                relatesTo = contents.relatesTo
             )
 
             false -> sendRequest(
@@ -115,6 +113,7 @@ internal class SendMessageUseCase(
                     eventType = EventType.ENCRYPTED,
                     txId = message.localId,
                     content = messageEncrypter.encrypt(MessageEncrypter.ClearMessagePayload(message.roomId, json)),
+                    relatesTo = null
                 )
             }
 
@@ -148,13 +147,22 @@ internal class SendMessageUseCase(
 
 }
 
+private val MX_REPLY_REGEX = "<mx-reply>.*</mx-reply>".toRegex()
 
 class ApiMessageMapper {
 
-    fun Message.TextMessage.toContents() = ApiMessage.TextMessage.TextContent(
-        this.content.body,
-        this.content.type,
-    )
+    fun Message.TextMessage.toContents(reply: Message.TextMessage.Reply?) = when (reply) {
+        null -> ApiMessage.TextMessage.TextContent(
+            body = this.content.body,
+        )
+
+        else -> ApiMessage.TextMessage.TextContent(
+            body = buildReplyFallback(reply.originalMessage, reply.authorId, reply.replyContent),
+            relatesTo = ApiMessage.RelatesTo(ApiMessage.RelatesTo.InReplyTo(reply.eventId)),
+            formattedBody = buildFormattedReply(reply.authorId, reply.originalMessage, reply.replyContent, this.roomId, reply.eventId),
+            format = "org.matrix.custom.html"
+        )
+    }
 
     fun ApiMessage.TextMessage.TextContent.toMessageJson(roomId: RoomId) = JsonString(
         MatrixHttpClient.jsonWithDefaults.encodeToString(
@@ -166,5 +174,34 @@ class ApiMessageMapper {
             )
         )
     )
+
+    private fun buildReplyFallback(originalMessage: String, originalSenderId: UserId, reply: String): String {
+        return buildString {
+            append("> <")
+            append(originalSenderId.value)
+            append(">")
+
+            val lines = originalMessage.split("\n")
+            lines.forEachIndexed { index, s ->
+                if (index == 0) {
+                    append(" $s")
+                } else {
+                    append("\n> $s")
+                }
+            }
+            append("\n\n")
+            append(reply)
+        }
+    }
+
+    private fun buildFormattedReply(userId: UserId, originalMessage: String, reply: String, roomId: RoomId, eventId: EventId): String {
+        val permalink = "https://matrix.to/#/${roomId.value}/${eventId.value}"
+        val userLink = "https://matrix.to/#/${userId.value}"
+        val cleanOriginalMessage = originalMessage.replace(MX_REPLY_REGEX, "")
+        return """
+            <mx-reply><blockquote><a href="$permalink">In reply to</a> <a href="$userLink">${userId.value}</a><br>${cleanOriginalMessage}</blockquote></mx-reply>$reply
+        """.trimIndent()
+
+    }
 
 }

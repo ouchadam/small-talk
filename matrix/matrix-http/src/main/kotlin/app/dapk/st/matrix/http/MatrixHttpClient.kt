@@ -3,6 +3,7 @@ package app.dapk.st.matrix.http
 import io.ktor.client.utils.*
 import io.ktor.http.content.*
 import io.ktor.util.reflect.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 
 interface MatrixHttpClient {
@@ -47,7 +48,11 @@ interface MatrixHttpClient {
 
     companion object {
         val json = Json
-        val jsonWithDefaults = Json { encodeDefaults = true }
+        @OptIn(ExperimentalSerializationApi::class)
+        val jsonWithDefaults = Json {
+            encodeDefaults = true
+            explicitNulls = false
+        }
     }
 
     fun interface Factory {
