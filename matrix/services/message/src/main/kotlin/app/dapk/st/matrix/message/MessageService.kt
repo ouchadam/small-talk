@@ -43,10 +43,11 @@ interface MessageService : MatrixService {
         ) : Message {
             @Serializable
             data class Reply(
-                val authorId: UserId,
+                val author: RoomMember,
                 val originalMessage: String,
                 val replyContent: String,
-                val eventId: EventId
+                val eventId: EventId,
+                val timestampUtc: Long,
             )
         }
 
