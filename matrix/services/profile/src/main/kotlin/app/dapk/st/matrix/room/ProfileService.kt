@@ -10,6 +10,7 @@ import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.internal.DefaultProfileService
+import app.dapk.st.matrix.room.internal.FetchMeUseCase
 
 private val SERVICE_KEY = ProfileService::class
 
@@ -31,8 +32,9 @@ fun MatrixServiceInstaller.installProfileService(
     singletonFlows: SingletonFlows,
     credentialsStore: CredentialsStore,
 ): InstallExtender<ProfileService> {
-    return this.install { (httpClient, _, _, logger) ->
-        SERVICE_KEY to DefaultProfileService(httpClient, logger, profileStore, singletonFlows, credentialsStore)
+    return this.install { (httpClient, _, _, _) ->
+        val fetchMeUseCase = FetchMeUseCase(httpClient, credentialsStore)
+        SERVICE_KEY to DefaultProfileService(profileStore, singletonFlows, fetchMeUseCase)
     }
 }
 
