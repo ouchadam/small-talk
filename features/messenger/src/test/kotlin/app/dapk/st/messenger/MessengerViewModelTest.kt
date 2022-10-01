@@ -59,7 +59,7 @@ class MessengerViewModelTest {
             MessengerScreenState(
                 roomId = null,
                 roomState = Lce.Loading(),
-                composerState = ComposerState.Text(value = "")
+                composerState = ComposerState.Text(value = "", reply = null)
             )
         )
     }
@@ -85,7 +85,7 @@ class MessengerViewModelTest {
         viewModel.test().post(MessengerAction.ComposerTextUpdate(A_MESSAGE_CONTENT))
 
         assertStates<MessengerScreenState>({
-            copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT))
+            copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = null))
         })
     }
 
@@ -95,7 +95,7 @@ class MessengerViewModelTest {
 
         viewModel.test(initialState = initialStateWithComposerMessage(A_ROOM_ID, A_MESSAGE_CONTENT)).post(MessengerAction.ComposerSendText)
 
-        assertStates<MessengerScreenState>({ copy(composerState = ComposerState.Text("")) })
+        assertStates<MessengerScreenState>({ copy(composerState = ComposerState.Text("", reply = null)) })
         verifyExpects()
     }
 
@@ -126,7 +126,7 @@ class MessengerViewModelTest {
 fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerState, messageContent: String?) = MessengerScreenState(
     roomId = roomId,
     roomState = Lce.Content(roomState),
-    composerState = ComposerState.Text(value = messageContent ?: "")
+    composerState = ComposerState.Text(value = messageContent ?: "", reply = null)
 )
 
 fun aMessengerState(
