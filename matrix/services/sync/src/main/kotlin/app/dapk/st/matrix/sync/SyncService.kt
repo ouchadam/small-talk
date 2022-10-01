@@ -19,7 +19,7 @@ interface SyncService : MatrixService {
     fun overview(): Flow<OverviewState>
     fun room(roomId: RoomId): Flow<RoomState>
     fun startSyncing(): Flow<Unit>
-    fun events(): Flow<List<SyncEvent>>
+    fun events(roomId: RoomId? = null): Flow<List<SyncEvent>>
     suspend fun observeEvent(eventId: EventId): Flow<EventId>
     suspend fun forceManualRefresh(roomIds: List<RoomId>)
 
@@ -27,7 +27,9 @@ interface SyncService : MatrixService {
     value class FilterId(val value: String)
 
     sealed interface SyncEvent {
-        data class Typing(val roomId: RoomId, val members: List<RoomMember>) : SyncEvent
+        val roomId: RoomId
+
+        data class Typing(override val roomId: RoomId, val members: List<RoomMember>) : SyncEvent
     }
 }
 
