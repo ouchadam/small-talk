@@ -123,14 +123,15 @@ internal class MessengerViewModel(
                                 timestampUtc = clock.millis(),
                                 reply = copy.reply?.let {
                                     MessageService.Message.TextMessage.Reply(
-                                        authorId = it.author.id,
+                                        author = it.author,
                                         originalMessage = when (it) {
                                             is RoomEvent.Image -> TODO()
                                             is RoomEvent.Reply -> TODO()
                                             is RoomEvent.Message -> it.content
                                         },
-                                        copy.value,
-                                        it.eventId
+                                        replyContent = copy.value,
+                                        eventId = it.eventId,
+                                        timestampUtc = it.utcTimestamp,
                                     )
                                 }
                             )
