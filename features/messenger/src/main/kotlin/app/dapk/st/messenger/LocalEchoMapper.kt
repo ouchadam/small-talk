@@ -39,7 +39,7 @@ internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
                     author = member,
                     utcTimestamp = message.timestampUtc,
                     meta = metaMapper.toMeta(this),
-                    imageMeta = RoomEvent.Image.ImageMeta(100, 100, message.content.uri, null),
+                    imageMeta = RoomEvent.Image.ImageMeta(message.content.meta.width, message.content.meta.height, message.content.uri, null),
                 )
             }
         }

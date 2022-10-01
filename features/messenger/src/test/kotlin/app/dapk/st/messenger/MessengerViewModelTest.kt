@@ -6,6 +6,7 @@ import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
+import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.matrix.sync.SyncService
@@ -47,6 +48,7 @@ class MessengerViewModelTest {
         fakeCredentialsStore,
         fakeObserveTimelineUseCase,
         localIdFactory = FakeLocalIdFactory().also { it.givenCreate().returns(A_LOCAL_ID) }.instance,
+        imageContentReader = FakeImageContentReader(),
         clock = fixedClock(A_CURRENT_TIMESTAMP),
         factory = runViewModelTest.testMutableStateFactory(),
     )
@@ -150,3 +152,5 @@ class FakeRoomService : RoomService by mockk() {
 }
 
 fun fixedClock(timestamp: Long = 0) = Clock.fixed(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC)
+
+class FakeImageContentReader: ImageContentReader by mockk()

@@ -54,7 +54,7 @@ interface MessageService : MatrixService {
         @Serializable
         @SerialName("image_message")
         data class ImageMessage(
-            @SerialName("content") val content: Content.ApiImageContent,
+            @SerialName("content") val content: Content.ImageContent,
             @SerialName("send_encrypted") val sendEncrypted: Boolean,
             @SerialName("room_id") val roomId: RoomId,
             @SerialName("local_id") val localId: String,
@@ -70,9 +70,21 @@ interface MessageService : MatrixService {
             ) : Content()
 
             @Serializable
-            data class ApiImageContent(
+            data class ImageContent(
                 @SerialName("uri") val uri: String,
-            ) : Content()
+                @SerialName("meta") val meta: Meta,
+            ) : Content() {
+
+                @Serializable
+                data class Meta(
+                    val height: Int,
+                    val width: Int,
+                    val size: Long,
+                    val fileName: String,
+                    val mimeType: String,
+                )
+
+            }
 
         }
     }

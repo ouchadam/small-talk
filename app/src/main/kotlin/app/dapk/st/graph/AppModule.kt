@@ -93,7 +93,9 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
-    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, context.contentResolver, base64, buildMeta)
+    private val imageContentReader by unsafeLazy { AndroidImageContentReader(context.contentResolver) }
+    private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, imageContentReader, base64, buildMeta)
+
     val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(
@@ -133,6 +135,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         trackingModule,
         coreAndroidModule,
         imageLoaderModule,
+        imageContentReader,
         context,
         buildMeta,
         deviceMeta,
@@ -149,6 +152,7 @@ internal class FeatureModules internal constructor(
     private val trackingModule: TrackingModule,
     private val coreAndroidModule: CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
+    imageContentReader: ImageContentReader,
     context: Context,
     buildMeta: BuildMeta,
     deviceMeta: DeviceMeta,
@@ -185,6 +189,7 @@ internal class FeatureModules internal constructor(
             clock,
             context,
             base64,
+            imageContentReader,
         )
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
@@ -238,7 +243,7 @@ internal class MatrixModules(
     private val workModule: WorkModule,
     private val logger: MatrixLogger,
     private val coroutineDispatchers: CoroutineDispatchers,
-    private val contentResolver: ContentResolver,
+    private val imageContentReader: ImageContentReader,
     private val base64: Base64,
     private val buildMeta: BuildMeta,
 ) {
@@ -280,7 +285,6 @@ internal class MatrixModules(
                     base64 = base64,
                     coroutineDispatchers = coroutineDispatchers,
                 )
-                val imageContentReader = AndroidImageContentReader(contentResolver)
                 installMessageService(
                     store.localEchoStore,
                     BackgroundWorkAdapter(workModule.workScheduler()),
