@@ -7,10 +7,7 @@ import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.matrix.sync.SyncService
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.*
 
 internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerState>
 
@@ -25,7 +22,7 @@ internal class TimelineUseCaseImpl(
         return combine(
             roomDatasource(roomId),
             messageService.localEchos(roomId),
-            syncService.events()
+            syncService.events(roomId)
         ) { roomState, localEchos, events ->
             MessengerState(
                 roomState = when {
@@ -45,7 +42,7 @@ internal class TimelineUseCaseImpl(
     }
 
     private fun roomDatasource(roomId: RoomId) = combine(
-        syncService.startSyncing().map { false }.onStart { emit(true) },
+        syncService.startSyncing().map { false }.onStart { emit(true) }.filter { it },
         syncService.room(roomId)
     ) { _, room -> room }
 }
