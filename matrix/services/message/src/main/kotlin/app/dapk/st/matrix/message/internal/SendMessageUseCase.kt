@@ -157,9 +157,9 @@ class ApiMessageMapper {
         )
 
         else -> ApiMessage.TextMessage.TextContent(
-            body = buildReplyFallback(reply.originalMessage, reply.authorId, reply.replyContent),
+            body = buildReplyFallback(reply.originalMessage, reply.author.id, reply.replyContent),
             relatesTo = ApiMessage.RelatesTo(ApiMessage.RelatesTo.InReplyTo(reply.eventId)),
-            formattedBody = buildFormattedReply(reply.authorId, reply.originalMessage, reply.replyContent, this.roomId, reply.eventId),
+            formattedBody = buildFormattedReply(reply.author.id, reply.originalMessage, reply.replyContent, this.roomId, reply.eventId),
             format = "org.matrix.custom.html"
         )
     }

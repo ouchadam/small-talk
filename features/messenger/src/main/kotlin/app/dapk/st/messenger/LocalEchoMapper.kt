@@ -11,14 +11,28 @@ internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
     fun MessageService.LocalEcho.toMessage(member: RoomMember): RoomEvent {
         return when (val message = this.message) {
             is MessageService.Message.TextMessage -> {
-                RoomEvent.Message(
+                val mappedMessage = RoomEvent.Message(
                     eventId = this.eventId ?: EventId(this.localId),
                     content = message.content.body,
                     author = member,
                     utcTimestamp = message.timestampUtc,
                     meta = metaMapper.toMeta(this)
                 )
+
+                when (val reply = message.reply) {
+                    null -> mappedMessage
+                    else -> RoomEvent.Reply(
+                        mappedMessage, RoomEvent.Message(
+                            eventId = reply.eventId,
+                            content = reply.originalMessage,
+                            author = reply.author,
+                            utcTimestamp = reply.timestampUtc,
+                            meta = MessageMeta.FromServer
+                        )
+                    )
+                }
             }
+
             is MessageService.Message.ImageMessage -> {
                 RoomEvent.Image(
                     eventId = this.eventId ?: EventId(this.localId),
