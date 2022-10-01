@@ -183,7 +183,7 @@ class MatrixTestScope(private val testScope: TestScope) {
         println("sending ${file.name}")
         this.client.messageService().scheduleMessage(
             MessageService.Message.ImageMessage(
-                content = MessageService.Message.Content.ApiImageContent(
+                content = MessageService.Message.Content.ImageContent(
                     uri = file.absolutePath,
                 ),
                 roomId = roomId,
