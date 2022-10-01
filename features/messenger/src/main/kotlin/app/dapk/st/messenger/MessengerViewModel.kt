@@ -8,6 +8,7 @@ import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
+import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
@@ -28,6 +29,7 @@ internal class MessengerViewModel(
     private val credentialsStore: CredentialsStore,
     private val observeTimeline: ObserveTimelineUseCase,
     private val localIdFactory: LocalIdFactory,
+    private val imageContentReader: ImageContentReader,
     private val clock: Clock,
     factory: MutableStateFactory<MessengerScreenState> = defaultStateFactory(),
 ) : DapkViewModel<MessengerScreenState, MessengerEvent>(
@@ -147,9 +149,20 @@ internal class MessengerViewModel(
                 state.roomState.takeIfContent()?.let { content ->
                     val roomState = content.roomState
                     viewModelScope.launch {
+                        val imageUri = copy.values.first().uri.value
+                        val meta = imageContentReader.meta(imageUri)
+
                         messageService.scheduleMessage(
                             MessageService.Message.ImageMessage(
-                                MessageService.Message.Content.ApiImageContent(uri = copy.values.first().uri.value),
+                                MessageService.Message.Content.ImageContent(
+                                    uri = imageUri, MessageService.Message.Content.ImageContent.Meta(
+                                        height = meta.height,
+                                        width = meta.width,
+                                        size = meta.size,
+                                        fileName = meta.fileName,
+                                        mimeType = meta.mimeType,
+                                    )
+                                ),
                                 roomId = roomState.roomOverview.roomId,
                                 sendEncrypted = roomState.roomOverview.isEncrypted,
                                 localId = localIdFactory.create(),

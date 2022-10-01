@@ -59,7 +59,7 @@ internal class SendMessageUseCase(
     }
 
     private suspend fun imageMessageRequest(message: Message.ImageMessage): HttpRequest<ApiSendResponse> {
-        val imageMeta = imageContentReader.meta(message.content.uri)
+        val imageMeta = message.content.meta
 
         return when (message.sendEncrypted) {
             true -> {
