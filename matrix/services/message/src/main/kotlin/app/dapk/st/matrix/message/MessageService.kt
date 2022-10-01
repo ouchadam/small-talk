@@ -40,7 +40,6 @@ interface MessageService : MatrixService {
             @SerialName("local_id") val localId: String,
             @SerialName("timestamp") val timestampUtc: Long,
             @SerialName("reply") val reply: Reply? = null,
-            @SerialName("reply_id") val replyId: String? = null,
         ) : Message() {
             @Serializable
             data class Reply(
