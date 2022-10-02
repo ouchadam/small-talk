@@ -65,7 +65,7 @@ internal sealed class ApiTimelineEvent {
 
         @Serializable
         internal data class Content(
-            @SerialName("alias") val alias: String
+            @SerialName("alias") val alias: String? = null
         )
     }
 
