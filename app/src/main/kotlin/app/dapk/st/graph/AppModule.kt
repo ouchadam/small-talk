@@ -521,8 +521,7 @@ internal class AndroidImageContentReader(private val contentResolver: ContentRes
 
 internal class SmallTalkDeviceNameGenerator : DeviceDisplayNameGenerator {
     override fun generate(): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        val randomIdentifier = (1..4).map { allowedChars.random() }.joinToString("")
+        val randomIdentifier = (('A'..'Z') + ('a'..'z') + ('0'..'9')).shuffled().take(4).joinToString("")
         return "SmallTalk Android ($randomIdentifier)"
     }
 }
