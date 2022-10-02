@@ -477,8 +477,8 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .background(if (content.isNotSelf) SmallTalkTheme.extendedColors.otherBubbleReplyBackground else SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
-                        .padding(4.dp)
+                        .background(if (content.isNotSelf) SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.1f) else SmallTalkTheme.extendedColors.onSelfBubble.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                        .padding(8.dp)
                 ) {
                     val replyName = if (!content.isNotSelf && content.message.replyingToSelf) "You" else content.message.replyingTo.author.displayName
                         ?: content.message.replyingTo.author.id.value
@@ -488,12 +488,13 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         maxLines = 1,
                         color = content.textColor()
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     when (val replyingTo = content.message.replyingTo) {
                         is Message -> {
                             Text(
                                 text = replyingTo.content,
-                                color = content.textColor(),
-                                fontSize = 15.sp,
+                                color = content.textColor().copy(alpha = 0.8f),
+                                fontSize = 14.sp,
                                 modifier = Modifier.wrapContentSize(),
                                 textAlign = TextAlign.Start,
                             )
