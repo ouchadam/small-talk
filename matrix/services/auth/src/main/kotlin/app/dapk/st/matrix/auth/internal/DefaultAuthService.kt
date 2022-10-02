@@ -1,6 +1,7 @@
 package app.dapk.st.matrix.auth.internal
 
 import app.dapk.st.matrix.auth.AuthService
+import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.UserCredentials
@@ -13,11 +14,12 @@ internal class DefaultAuthService(
     httpClient: MatrixHttpClient,
     credentialsStore: CredentialsStore,
     json: Json,
+    deviceDisplayNameGenerator: DeviceDisplayNameGenerator,
 ) : AuthService {
 
     private val fetchWellKnownUseCase = FetchWellKnownUseCaseImpl(httpClient, json)
-    private val loginUseCase = LoginWithUserPasswordUseCase(httpClient, credentialsStore, fetchWellKnownUseCase)
-    private val loginServerUseCase = LoginWithUserPasswordServerUseCase(httpClient, credentialsStore)
+    private val loginUseCase = LoginWithUserPasswordUseCase(httpClient, credentialsStore, fetchWellKnownUseCase, deviceDisplayNameGenerator)
+    private val loginServerUseCase = LoginWithUserPasswordServerUseCase(httpClient, credentialsStore, deviceDisplayNameGenerator)
     private val registerCase = RegisterUseCase(httpClient, credentialsStore, json, fetchWellKnownUseCase)
 
     override suspend fun login(request: AuthService.LoginRequest): AuthService.LoginResult {
