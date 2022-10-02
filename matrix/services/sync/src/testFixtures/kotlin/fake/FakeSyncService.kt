@@ -14,6 +14,6 @@ class FakeSyncService : SyncService by mockk() {
 
     fun givenRoom(roomId: RoomId) = every { room(roomId) }.delegateReturn()
 
-    fun givenEvents(roomId: RoomId) = every { events() }.delegateReturn()
+    fun givenEvents(roomId: RoomId) = every { events(roomId) }.delegateReturn()
 
 }
