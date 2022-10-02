@@ -477,7 +477,11 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .background(if (content.isNotSelf) SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.1f) else SmallTalkTheme.extendedColors.onSelfBubble.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                        .background(
+                            if (content.isNotSelf) SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.1f) else SmallTalkTheme.extendedColors.onSelfBubble.copy(
+                                alpha = 0.2f
+                            ), RoundedCornerShape(12.dp)
+                        )
                         .padding(8.dp)
                 ) {
                     val replyName = if (!content.isNotSelf && content.message.replyingToSelf) "You" else content.message.replyingTo.author.displayName
@@ -642,7 +646,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                 transitionSpec = {
                     val durationMillis = 300
                     slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, tween(durationMillis)) { it / 2 }
-                        .with(slideOutVertically(tween(durationMillis)) { it / 2})
+                        .with(slideOutVertically(tween(durationMillis)) { it / 2 })
                         .using(
                             SizeTransform(
                                 clip = true,
@@ -652,7 +656,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             ) {
                 if (it is Message) {
                     Box(Modifier.padding(12.dp)) {
-                        Box(Modifier.padding(4.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
+                        Box(Modifier.padding(8.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
                             Icon(
                                 modifier = Modifier.size(16.dp),
                                 imageVector = Icons.Filled.Close,
@@ -662,8 +666,8 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                         Column(
                             Modifier
                                 .fillMaxWidth()
-                                .background(SmallTalkTheme.extendedColors.selfBubbleReplyBackground)
-                                .padding(4.dp)
+                                .background(SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                                .padding(8.dp)
                         ) {
                             val replyName = it.author.displayName ?: it.author.id.value
                             Text(
@@ -676,7 +680,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                             Text(
                                 text = it.content,
                                 color = SmallTalkTheme.extendedColors.onSelfBubble,
-                                fontSize = 15.sp,
+                                fontSize = 14.sp,
                                 maxLines = 2,
                                 modifier = Modifier.wrapContentSize(),
                                 textAlign = TextAlign.Start,
