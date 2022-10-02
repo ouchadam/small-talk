@@ -58,7 +58,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
             storeModule.credentialsStore().credentials()?.let {
                 featureModules.pushModule.pushTokenRegistrar().registerCurrentToken()
             }
-            storeModule.localEchoStore.preload()
+            runCatching { storeModule.localEchoStore.preload() }
         }
 
         applicationScope.launch {
