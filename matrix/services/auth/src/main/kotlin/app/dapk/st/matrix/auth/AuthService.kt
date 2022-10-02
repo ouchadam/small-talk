@@ -26,16 +26,17 @@ interface AuthService : MatrixService {
 
 fun MatrixServiceInstaller.installAuthService(
     credentialsStore: CredentialsStore,
+    deviceDisplayNameGenerator: DeviceDisplayNameGenerator = DefaultDeviceDisplayNameGenerator,
 ): InstallExtender<AuthService> {
     return this.install { (httpClient, json) ->
-        SERVICE_KEY to DefaultAuthService(httpClient, credentialsStore, json)
+        SERVICE_KEY to DefaultAuthService(httpClient, credentialsStore, json, deviceDisplayNameGenerator)
     }
 }
 
 fun MatrixClient.authService(): AuthService = this.getService(key = SERVICE_KEY)
 
+fun interface DeviceDisplayNameGenerator {
+    fun generate(): String?
+}
 
-data class AuthConfig(
-    val forceHttp: Boolean = false,
-    val forceHomeserver: String? = null
-)
+val DefaultDeviceDisplayNameGenerator = DeviceDisplayNameGenerator { null }

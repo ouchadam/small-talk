@@ -1,6 +1,7 @@
 package app.dapk.st.matrix.auth.internal
 
 import app.dapk.st.matrix.auth.AuthService
+import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.st.matrix.common.UserCredentials
@@ -14,6 +15,7 @@ class LoginWithUserPasswordUseCase(
     private val httpClient: MatrixHttpClient,
     private val credentialsProvider: CredentialsStore,
     private val fetchWellKnownUseCase: FetchWellKnownUseCase,
+    private val deviceDisplayNameGenerator: DeviceDisplayNameGenerator,
 ) {
 
     suspend fun login(userName: String, password: String): AuthService.LoginResult {
@@ -27,6 +29,7 @@ class LoginWithUserPasswordUseCase(
                     onFailure = { AuthService.LoginResult.Error(it) }
                 )
             }
+
             WellKnownResult.InvalidWellKnown -> AuthService.LoginResult.MissingWellKnown
             WellKnownResult.MissingWellKnown -> AuthService.LoginResult.MissingWellKnown
             is WellKnownResult.Error -> AuthService.LoginResult.Error(wellKnownResult.cause)
@@ -42,7 +45,7 @@ class LoginWithUserPasswordUseCase(
     }
 
     private suspend fun authenticate(baseUrl: HomeServerUrl, fullUserId: UserId, password: String): UserCredentials {
-        val authResponse = httpClient.execute(loginRequest(fullUserId, password, baseUrl.value))
+        val authResponse = httpClient.execute(loginRequest(fullUserId, password, baseUrl.value, deviceDisplayNameGenerator.generate()))
         return UserCredentials(
             authResponse.accessToken,
             baseUrl,

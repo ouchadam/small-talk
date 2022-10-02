@@ -23,6 +23,7 @@ import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.matrix.MatrixClient
+import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
@@ -259,7 +260,7 @@ internal class MatrixModules(
             logger
         ).also {
             it.install {
-                installAuthService(credentialsStore)
+                installAuthService(credentialsStore, SmallTalkDeviceNameGenerator())
                 installEncryptionService(store.knownDevicesStore())
 
                 val olmAccountStore = OlmPersistenceWrapper(store.olmStore(), base64)
@@ -516,4 +517,12 @@ internal class AndroidImageContentReader(private val contentResolver: ContentRes
     }
 
     override fun inputStream(uri: String): InputStream = contentResolver.openInputStream(Uri.parse(uri))!!
+}
+
+internal class SmallTalkDeviceNameGenerator : DeviceDisplayNameGenerator {
+    override fun generate(): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        val randomIdentifier = (1..4).map { allowedChars.random() }.joinToString("")
+        return "SmallTalk Android ($randomIdentifier)"
+    }
 }
