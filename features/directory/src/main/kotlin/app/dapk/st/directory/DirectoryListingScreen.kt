@@ -60,7 +60,8 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     )
 
     val toolbarHeight = 72.dp
-    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.roundToPx().toFloat() }
+    val density = LocalDensity.current
+    val toolbarHeightPx = remember { with(density) { toolbarHeight.roundToPx().toFloat() } }
     val toolbarOffsetHeightPx = remember { mutableStateOf(0f) }
 
     directoryViewModel.ObserveEvents(listState, toolbarOffsetHeightPx)
