@@ -108,7 +108,7 @@ internal class DefaultSyncService(
     override fun invites() = overviewStore.latestInvites()
     override fun overview() = overviewStore.latest()
     override fun room(roomId: RoomId) = roomStore.latest(roomId)
-    override fun events() = syncEventsFlow
+    override fun events(roomId: RoomId?) = roomId?.let { syncEventsFlow.map { it.filter { it.roomId == roomId } }.distinctUntilChanged() } ?: syncEventsFlow
     override suspend fun observeEvent(eventId: EventId) = roomStore.observeEvent(eventId)
     override suspend fun forceManualRefresh(roomIds: List<RoomId>) {
         coroutineDispatchers.withIoContext {

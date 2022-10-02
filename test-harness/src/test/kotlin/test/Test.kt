@@ -183,8 +183,17 @@ class MatrixTestScope(private val testScope: TestScope) {
         println("sending ${file.name}")
         this.client.messageService().scheduleMessage(
             MessageService.Message.ImageMessage(
-                content = MessageService.Message.Content.ApiImageContent(
+                content = MessageService.Message.Content.ImageContent(
                     uri = file.absolutePath,
+                    meta = JavaImageContentReader().meta(file.absolutePath).let {
+                        MessageService.Message.Content.ImageContent.Meta(
+                            height = it.height,
+                            width = it.width,
+                            size = it.size,
+                            fileName = it.fileName,
+                            mimeType = it.mimeType,
+                        )
+                    }
                 ),
                 roomId = roomId,
                 sendEncrypted = isEncrypted,

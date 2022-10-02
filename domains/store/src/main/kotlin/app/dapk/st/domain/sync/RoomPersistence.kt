@@ -13,10 +13,7 @@ import app.dapk.st.matrix.sync.RoomStore
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import com.squareup.sqldelight.runtime.coroutines.mapToOneNotNull
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 
 private val json = Json
@@ -54,12 +51,13 @@ internal class RoomPersistence(
     override fun latest(roomId: RoomId): Flow<RoomState> {
         val overviewFlow = database.overviewStateQueries.selectRoom(roomId.value).asFlow().mapToOneNotNull().map {
             json.decodeFromString(RoomOverview.serializer(), it)
-        }
+        }.distinctUntilChanged()
 
         return database.roomEventQueries.selectRoom(roomId.value)
             .asFlow()
             .mapToList()
             .map { it.map { json.decodeFromString(RoomEvent.serializer(), it) } }
+            .distinctUntilChanged()
             .combine(overviewFlow) { events, overview ->
                 RoomState(overview, events)
             }
