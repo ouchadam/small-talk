@@ -11,12 +11,12 @@ import app.dapk.st.matrix.http.jsonBody
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-fun loginRequest(userId: UserId, password: String, baseUrl: String) = httpRequest<ApiAuthResponse>(
+fun loginRequest(userId: UserId, password: String, baseUrl: String, deviceDisplayName: String?) = httpRequest<ApiAuthResponse>(
     path = "_matrix/client/r0/login",
     method = MatrixHttpClient.Method.POST,
     body = jsonBody(
         PasswordLoginRequest.serializer(),
-        PasswordLoginRequest(PasswordLoginRequest.UserIdentifier(userId), password),
+        PasswordLoginRequest(PasswordLoginRequest.UserIdentifier(userId), password, deviceDisplayName),
         MatrixHttpClient.jsonWithDefaults
     ),
     authenticated = false,
@@ -81,6 +81,7 @@ data class ApiWellKnown(
 internal data class PasswordLoginRequest(
     @SerialName("identifier") val userName: UserIdentifier,
     @SerialName("password") val password: String,
+    @SerialName("initial_device_display_name") val deviceDisplayName: String?,
     @SerialName("type") val type: String = "m.login.password",
 ) {
 
