@@ -28,7 +28,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
@@ -83,6 +82,11 @@ internal fun MessengerScreen(
         else -> null
     }
 
+    val replyActions = ReplyActions(
+        onReply = { viewModel.post(MessengerAction.ComposerEnterReplyMode(it)) },
+        onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) }
+    )
+
     Column {
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
 //            OverflowMenu {
@@ -91,14 +95,13 @@ internal fun MessengerScreen(
         })
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState, onReply = {
-                    viewModel.post(MessengerAction.ComposerEnterReplyMode(it))
-                })
+                Room(state.roomState, replyActions)
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
-                    onAttach = { viewModel.startAttachment() }
+                    onAttach = { viewModel.startAttachment() },
+                    replyActions = replyActions,
                 )
             }
 
@@ -129,11 +132,11 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, onReply: (RoomEvent) -> Unit) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
-            RoomContent(state.value.self, state.value.roomState, onReply)
+            RoomContent(state.value.self, state.value.roomState, replyActions)
             val eventBarHeight = 14.dp
             val typing = state.value.typing
             when {
@@ -176,7 +179,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, onReply: (RoomEv
 }
 
 @Composable
-private fun ColumnScope.RoomContent(self: UserId, state: RoomState, onReply: (RoomEvent) -> Unit) {
+private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions: ReplyActions) {
     val listState: LazyListState = rememberLazyListState(
         initialFirstVisibleItemIndex = 0
     )
@@ -202,7 +205,7 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, onReply: (Ro
         ) { index, item ->
             val previousEvent = if (index != 0) state.events[index - 1] else null
             val wasPreviousMessageSameSender = previousEvent?.author?.id == item.author.id
-            AlignedBubble(item, self, wasPreviousMessageSameSender, onReply) {
+            AlignedBubble(item, self, wasPreviousMessageSameSender, replyActions) {
                 when (item) {
                     is RoomEvent.Image -> MessageImage(it as BubbleContent<RoomEvent.Image>)
                     is Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
@@ -225,7 +228,7 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
     message: T,
     self: UserId,
     wasPreviousMessageSameSender: Boolean,
-    onReply: (RoomEvent) -> Unit,
+    replyActions: ReplyActions,
     content: @Composable (BubbleContent<T>) -> Unit
 ) {
     when (message.author.id == self) {
@@ -236,7 +239,7 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
                         message = message,
                         isNotSelf = false,
                         wasPreviousMessageSameSender = wasPreviousMessageSameSender,
-                        onReply = onReply,
+                        replyActions = replyActions,
                     ) {
                         content(BubbleContent(selfBackgroundShape, SmallTalkTheme.extendedColors.selfBubble, false, message))
                     }
@@ -250,7 +253,7 @@ private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
                     message = message,
                     isNotSelf = true,
                     wasPreviousMessageSameSender = wasPreviousMessageSameSender,
-                    onReply = onReply,
+                    replyActions = replyActions,
                 ) {
                     content(BubbleContent(othersBackgroundShape, SmallTalkTheme.extendedColors.othersBubble, true, message))
                 }
@@ -345,7 +348,7 @@ private fun Bubble(
     message: RoomEvent,
     isNotSelf: Boolean,
     wasPreviousMessageSameSender: Boolean,
-    onReply: (RoomEvent) -> Unit,
+    replyActions: ReplyActions,
     content: @Composable () -> Unit
 ) {
 
@@ -368,7 +371,7 @@ private fun Bubble(
                 onDragStopped = {
                     with(localDensity) {
                         if (offsetX.value > (screenWidthDp.toPx() * 0.15)) {
-                            onReply(message)
+                            replyActions.onReply(message)
                         }
                     }
 
@@ -619,7 +622,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit) {
+private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit, replyActions: ReplyActions) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -636,22 +639,25 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             AnimatedContent(
                 targetState = state.reply,
                 transitionSpec = {
-                    slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, animationSpec = tween(500)) {
-                        it / 2
-                    }
-                        .with(slideOutOfContainer(towards = AnimatedContentScope.SlideDirection.Down))
+                    val durationMillis = 300
+                    slideIntoContainer(towards = AnimatedContentScope.SlideDirection.Up, tween(durationMillis)) { it / 2 }
+                        .with(slideOutVertically(tween(durationMillis)) { it / 2})
                         .using(
                             SizeTransform(
                                 clip = true,
-                                sizeAnimationSpec = { initialSize, targetSize ->
-                                    tween(500)
-                                })
-
+                                sizeAnimationSpec = { _, _ -> tween(durationMillis) })
                         )
                 }
             ) {
                 if (it is Message) {
-                    Column(Modifier.padding(12.dp)) {
+                    Box(Modifier.padding(12.dp)) {
+                        Box(Modifier.padding(4.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
+                            Icon(
+                                modifier = Modifier.size(16.dp),
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "",
+                            )
+                        }
                         Column(
                             Modifier
                                 .fillMaxWidth()
@@ -776,3 +782,7 @@ private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> U
     }
 }
 
+class ReplyActions(
+    val onReply: (RoomEvent) -> Unit,
+    val onDismiss: () -> Unit,
+)
