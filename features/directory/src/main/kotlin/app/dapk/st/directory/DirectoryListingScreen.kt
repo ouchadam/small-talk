@@ -91,6 +91,7 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
             is Error -> GenericError {
                 // TODO
             }
+
             is Content -> Content(listState, state)
         }
         Toolbar(title = "Messages", offset = { IntOffset(x = 0, y = toolbarOffsetHeightPx.value.roundToInt()) })
@@ -106,6 +107,7 @@ private fun DirectoryViewModel.ObserveEvents(listState: LazyListState, toolbarPo
                 is OpenDownloadUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it.url)))
                 }
+
                 DirectoryEvent.ScrollToTop -> {
                     toolbarPosition.value = 0f
                     listState.scrollToItem(0)
@@ -121,8 +123,10 @@ val clock = Clock.systemUTC()
 @Composable
 private fun Content(listState: LazyListState, state: Content) {
     val context = LocalContext.current
-    val navigateToRoom = { roomId: RoomId ->
-        context.startActivity(MessengerActivity.newInstance(context, roomId))
+    val navigateToRoom = remember {
+        { roomId: RoomId ->
+            context.startActivity(MessengerActivity.newInstance(context, roomId))
+        }
     }
     val scope = rememberCoroutineScope()
 
@@ -247,6 +251,7 @@ private fun body(overview: RoomOverview, secondaryText: Color, typing: SyncServi
                 color = MaterialTheme.colorScheme.primary
             )
         }
+
         else -> when (val lastMessage = overview.lastMessage) {
             null -> {
                 Text(
@@ -256,6 +261,7 @@ private fun body(overview: RoomOverview, secondaryText: Color, typing: SyncServi
                     color = secondaryText
                 )
             }
+
             else -> {
                 when (overview.isGroup) {
                     true -> {
@@ -268,6 +274,7 @@ private fun body(overview: RoomOverview, secondaryText: Color, typing: SyncServi
                             color = secondaryText
                         )
                     }
+
                     false -> {
                         Text(
                             overflow = TextOverflow.Ellipsis,
