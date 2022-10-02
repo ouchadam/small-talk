@@ -16,11 +16,6 @@ android {
 
         if (isDebugBuild) {
             resConfigs "en", "xxhdpi"
-            variantFilter { variant ->
-                if (variant.buildType.name == "release") {
-                    setIgnore(true)
-                }
-            }
         } else {
             resConfigs "en"
         }
@@ -64,6 +59,13 @@ android {
 
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
+    }
+}
+
+if (isDebugBuild) {
+    androidComponents {
+        def release = selector().withBuildType("release")
+        beforeVariants(release) { it.enabled = false }
     }
 }
 
