@@ -66,7 +66,7 @@ internal class RoomOverviewProcessor(
 
     private suspend fun roomDisplayName(roomToProcess: RoomToProcess, combinedEvents: List<ApiTimelineEvent>): String? {
         val roomName = combinedEvents.filterIsInstance<ApiTimelineEvent.RoomName>().lastOrNull()?.content?.name
-            ?: combinedEvents.filterIsInstance<ApiTimelineEvent.CanonicalAlias>().lastOrNull()?.content?.alias
+            ?: combinedEvents.filterIsInstance<ApiTimelineEvent.CanonicalAlias>().lastOrNull()?.content?.alias?.takeIf { it.isNotEmpty() }
             ?: roomToProcess.heroes?.let {
                 roomMembersService.find(roomToProcess.roomId, it).joinToString { it.displayName ?: it.id.value }
             }
