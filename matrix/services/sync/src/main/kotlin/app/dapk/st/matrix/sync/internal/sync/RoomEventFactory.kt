@@ -64,10 +64,17 @@ fun String.stripTags() = this
     }
     .trim()
     .replaceLinks()
-    .replace("<em>", "")
-    .replace("</em>", "")
+    .removeTag("p")
+    .removeTag("em")
+    .removeTag("strong")
+    .removeTag("code")
+    .removeTag("pre")
     .replace("&quot;", "\"")
     .replace("&#39;", "'")
+    .replace("<br />", "\n")
+    .replace("<br/>", "\n")
+
+private fun String.removeTag(name: String) = this.replace("<$name>", "").replace("/$name>", "")
 
 private fun String.replaceLinks(): String {
     return this.indexOfOrNull("<a href=")?.let { start ->
