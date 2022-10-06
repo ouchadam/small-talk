@@ -674,12 +674,12 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                                 fontSize = 11.sp,
                                 text = replyName,
                                 maxLines = 1,
-                                color = SmallTalkTheme.extendedColors.onSelfBubble
+                                color = SmallTalkTheme.extendedColors.onOthersBubble
                             )
 
                             Text(
                                 text = it.content,
-                                color = SmallTalkTheme.extendedColors.onSelfBubble,
+                                color = SmallTalkTheme.extendedColors.onOthersBubble,
                                 fontSize = 14.sp,
                                 maxLines = 2,
                                 modifier = Modifier.wrapContentSize(),
