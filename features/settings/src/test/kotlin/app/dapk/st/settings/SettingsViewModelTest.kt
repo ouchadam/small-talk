@@ -5,7 +5,7 @@ import app.dapk.st.core.Lce
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.matrix.crypto.ImportResult
 import fake.*
-import fixture.FakeStoreCleaner
+import fake.FakeStoreCleaner
 import fixture.aRoomId
 import internalfake.FakeSettingsItemFactory
 import internalfake.FakeUriFilenameResolver
@@ -41,6 +41,8 @@ internal class SettingsViewModelTest {
     private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeSettingsItemFactory = FakeSettingsItemFactory()
     private val fakeThemeStore = FakeThemeStore()
+    private val fakeLoggingStore = FakeLoggingStore()
+    private val fakeMessageOptionsStore = FakeMessageOptionsStore()
 
     private val viewModel = SettingsViewModel(
         fakeStoreCleaner,
@@ -51,6 +53,8 @@ internal class SettingsViewModelTest {
         fakeSettingsItemFactory.instance,
         fakePushTokenRegistrars.instance,
         fakeThemeStore.instance,
+        fakeLoggingStore.instance,
+        fakeMessageOptionsStore.instance,
         runViewModelTest.testMutableStateFactory(),
     )
 

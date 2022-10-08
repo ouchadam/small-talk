@@ -126,7 +126,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
                 attachments
             )
         },
-        unsafeLazy { storeModule.value.preferences }
+        unsafeLazy { storeModule.value.cachingPreferences },
     )
 
     val featureModules = FeatureModules(
@@ -191,6 +191,7 @@ internal class FeatureModules internal constructor(
             context,
             base64,
             imageContentReader,
+            storeModule.value.messageStore(),
         )
     }
     val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
@@ -205,6 +206,8 @@ internal class FeatureModules internal constructor(
             deviceMeta,
             coroutineDispatchers,
             coreAndroidModule.themeStore(),
+            storeModule.value.loggingStore(),
+            storeModule.value.messageStore(),
         )
     }
     val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }

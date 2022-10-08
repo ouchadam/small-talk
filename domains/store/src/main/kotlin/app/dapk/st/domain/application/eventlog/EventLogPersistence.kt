@@ -1,8 +1,8 @@
-package app.dapk.st.domain.eventlog
+package app.dapk.st.domain.application.eventlog
 
+import app.dapk.db.DapkDb
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.withIoContext
-import app.dapk.db.DapkDb
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +42,7 @@ class EventLogPersistence(
                         )
                     }
                 }
+
             else -> database.eventLoggerQueries.selectLatestByLogFiltered(logKey, filter)
                 .asFlow()
                 .mapToList(context = coroutineDispatchers.io)

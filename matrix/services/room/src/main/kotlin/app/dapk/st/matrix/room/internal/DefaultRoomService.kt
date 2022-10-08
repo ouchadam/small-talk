@@ -30,9 +30,9 @@ class DefaultRoomService(
         }
     }
 
-    override suspend fun markFullyRead(roomId: RoomId, eventId: EventId) {
+    override suspend fun markFullyRead(roomId: RoomId, eventId: EventId, isPrivate: Boolean) {
         logger.matrixLog(ROOM, "marking room fully read ${roomId.value}")
-        httpClient.execute(markFullyReadRequest(roomId, eventId))
+        httpClient.execute(markFullyReadRequest(roomId, eventId, isPrivate))
     }
 
     override suspend fun findMember(roomId: RoomId, userId: UserId): RoomMember? {
@@ -97,10 +97,10 @@ internal fun joinedMembersRequest(roomId: RoomId) = httpRequest<JoinedMembersRes
     method = MatrixHttpClient.Method.GET,
 )
 
-internal fun markFullyReadRequest(roomId: RoomId, eventId: EventId) = httpRequest<Unit>(
+internal fun markFullyReadRequest(roomId: RoomId, eventId: EventId, isPrivate: Boolean) = httpRequest<Unit>(
     path = "_matrix/client/r0/rooms/${roomId.value}/read_markers",
     method = MatrixHttpClient.Method.POST,
-    body = jsonBody(MarkFullyReadRequest(eventId, eventId, hidden = true))
+    body = jsonBody(MarkFullyReadRequest(eventId, eventId, hidden = isPrivate))
 )
 
 internal fun createRoomRequest(invites: List<UserId>, isDM: Boolean, visibility: RoomVisibility, name: String? = null) = httpRequest<ApiCreateRoomResponse>(
