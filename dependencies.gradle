@@ -97,7 +97,7 @@ ext.Dependencies.with {
         }
     }
 
-    def kotlinVer = "1.7.10"
+    def kotlinVer = "1.7.20"
     def sqldelightVer = "1.5.4"
     def composeVer = "1.2.1"
     def ktorVer = "2.1.2"
