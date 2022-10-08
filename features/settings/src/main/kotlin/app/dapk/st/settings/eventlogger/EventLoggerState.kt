@@ -1,7 +1,7 @@
 package app.dapk.st.settings.eventlogger
 
 import app.dapk.st.core.Lce
-import app.dapk.st.domain.eventlog.LogLine
+import app.dapk.st.domain.application.eventlog.LogLine
 
 data class EventLoggerState(
     val logs: Lce<List<String>>,

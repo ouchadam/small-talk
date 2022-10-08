@@ -1,6 +1,6 @@
-package app.dapk.st.settings
+package fake
 
-import app.dapk.st.domain.eventlog.LoggingStore
+import app.dapk.st.domain.application.eventlog.LoggingStore
 import io.mockk.coEvery
 import io.mockk.mockk
 import test.delegateReturn

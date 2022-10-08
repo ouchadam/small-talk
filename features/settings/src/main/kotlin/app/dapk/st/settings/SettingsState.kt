@@ -44,7 +44,7 @@ internal sealed interface SettingItem {
 
     data class Header(val label: String, override val id: Id = Id.Ignored) : SettingItem
     data class Text(override val id: Id, val content: String, val subtitle: String? = null, val enabled: Boolean = true) : SettingItem
-    data class Toggle(override val id: Id, val content: String, val state: Boolean) : SettingItem
+    data class Toggle(override val id: Id, val content: String, val subtitle: String? = null, val state: Boolean) : SettingItem
     data class AccessToken(override val id: Id, val content: String, val accessToken: String) : SettingItem
 
     enum class Id {
@@ -58,6 +58,7 @@ internal sealed interface SettingItem {
         Ignored,
         ToggleDynamicTheme,
         ToggleEnableLogs,
+        ToggleSendReadReceipts,
     }
 }
 

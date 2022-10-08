@@ -1,4 +1,4 @@
-package app.dapk.st.domain.eventlog
+package app.dapk.st.domain.application.eventlog
 
 import app.dapk.db.DapkDb
 import app.dapk.st.core.CoroutineDispatchers

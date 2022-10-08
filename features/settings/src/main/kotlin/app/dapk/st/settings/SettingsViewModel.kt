@@ -7,7 +7,8 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.ThemeStore
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
-import app.dapk.st.domain.eventlog.LoggingStore
+import app.dapk.st.domain.application.eventlog.LoggingStore
+import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.matrix.crypto.CryptoService
 import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.matrix.sync.SyncService
@@ -34,6 +35,7 @@ internal class SettingsViewModel(
     private val pushTokenRegistrars: PushTokenRegistrars,
     private val themeStore: ThemeStore,
     private val loggingStore: LoggingStore,
+    private val messageOptionsStore: MessageOptionsStore,
     factory: MutableStateFactory<SettingsScreenState> = defaultStateFactory(),
 ) : DapkViewModel<SettingsScreenState, SettingsEvent>(
     initialState = SettingsScreenState(SpiderPage(Page.Routes.root, "Settings", null, Page.Root(Lce.Loading()))),
@@ -103,6 +105,10 @@ internal class SettingsViewModel(
             ToggleEnableLogs -> viewModelScope.launch {
                 loggingStore.setEnabled(!loggingStore.isEnabled())
                 refreshRoot()
+            }
+
+            ToggleSendReadReceipts -> viewModelScope.launch {
+                messageOptionsStore.setReadReceiptsDisabled(!messageOptionsStore.isReadReceiptsDisabled())
             }
         }
     }

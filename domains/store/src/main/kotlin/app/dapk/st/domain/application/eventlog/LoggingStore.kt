@@ -1,4 +1,4 @@
-package app.dapk.st.domain.eventlog
+package app.dapk.st.domain.application.eventlog
 
 import app.dapk.st.core.CachedPreferences
 import app.dapk.st.core.readBoolean

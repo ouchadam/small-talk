@@ -25,4 +25,5 @@ dependencies {
     implementation "com.squareup.sqldelight:coroutines-extensions:1.5.3"
 
     kotlinFixtures(it)
-}
+    testImplementation(testFixtures(project(":core")))
+    testFixturesImplementation(testFixtures(project(":core")))}

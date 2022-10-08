@@ -8,6 +8,7 @@ dependencies {
     implementation project(":matrix:services:room")
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
+    implementation project(":domains:store")
     implementation project(":core")
     implementation project(":features:navigator")
     implementation project(":design-library")

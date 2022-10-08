@@ -3,6 +3,7 @@ package app.dapk.st.messenger
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
+import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
@@ -30,6 +31,7 @@ internal class MessengerViewModel(
     private val observeTimeline: ObserveTimelineUseCase,
     private val localIdFactory: LocalIdFactory,
     private val imageContentReader: ImageContentReader,
+    private val messageOptionsStore: MessageOptionsStore,
     private val clock: Clock,
     factory: MutableStateFactory<MessengerScreenState> = defaultStateFactory(),
 ) : DapkViewModel<MessengerScreenState, MessengerEvent>(
@@ -101,7 +103,7 @@ internal class MessengerViewModel(
     private fun CoroutineScope.updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerState): Deferred<Unit> {
         return async {
             runCatching {
-                roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent, isPrivate = true)
+                roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent, isPrivate = messageOptionsStore.isReadReceiptsDisabled())
                 roomStore.markRead(state.roomState.roomOverview.roomId)
             }
         }

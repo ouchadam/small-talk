@@ -5,8 +5,9 @@ import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.Preferences
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
-import app.dapk.st.domain.eventlog.EventLogPersistence
-import app.dapk.st.domain.eventlog.LoggingStore
+import app.dapk.st.domain.application.eventlog.EventLogPersistence
+import app.dapk.st.domain.application.eventlog.LoggingStore
+import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.domain.localecho.LocalEchoPersistence
 import app.dapk.st.domain.preference.CachingPreferences
 import app.dapk.st.domain.preference.PropertyCache
@@ -64,6 +65,8 @@ class StoreModule(
     }
 
     fun loggingStore(): LoggingStore = LoggingStore(cachingPreferences)
+
+    fun messageStore(): MessageOptionsStore = MessageOptionsStore(cachingPreferences)
 
     fun memberStore(): MemberStore {
         return MemberPersistence(database, coroutineDispatchers)

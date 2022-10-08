@@ -4,7 +4,8 @@ import app.dapk.st.core.BuildMeta
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.ThemeStore
 import app.dapk.st.core.isAtLeastS
-import app.dapk.st.domain.eventlog.LoggingStore
+import app.dapk.st.domain.application.eventlog.LoggingStore
+import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.push.PushTokenRegistrars
 
 internal class SettingsItemFactory(
@@ -13,6 +14,7 @@ internal class SettingsItemFactory(
     private val pushTokenRegistrars: PushTokenRegistrars,
     private val themeStore: ThemeStore,
     private val loggingStore: LoggingStore,
+    private val messageOptionsStore: MessageOptionsStore,
 ) {
 
     suspend fun root() = general() + theme() + data() + account() + advanced() + about()
@@ -44,6 +46,12 @@ internal class SettingsItemFactory(
         val loggingIsEnabled = loggingStore.isEnabled()
         return listOf(
             SettingItem.Header("Advanced"),
+            SettingItem.Toggle(
+                SettingItem.Id.ToggleSendReadReceipts,
+                "Don't send message read receipts",
+                subtitle = "Requires the Homeserver to be running Synapse 1.65+",
+                state = messageOptionsStore.isReadReceiptsDisabled()
+            ),
             SettingItem.Toggle(SettingItem.Id.ToggleEnableLogs, "Enable local logging", state = loggingIsEnabled),
             SettingItem.Text(SettingItem.Id.EventLog, "Event log", enabled = loggingIsEnabled),
         )

@@ -11,6 +11,7 @@ import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.matrix.sync.SyncService
 import fake.FakeCredentialsStore
+import fake.FakeMessageOptionsStore
 import fake.FakeRoomStore
 import fixture.*
 import internalfake.FakeLocalIdFactory
@@ -25,6 +26,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 private const val A_CURRENT_TIMESTAMP = 10000L
+private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
 private const val A_MESSAGE_CONTENT = "message content"
 private const val A_LOCAL_ID = "local.1111-2222-3333"
@@ -40,6 +42,7 @@ class MessengerViewModelTest {
     private val fakeRoomStore = FakeRoomStore()
     private val fakeCredentialsStore = FakeCredentialsStore().also { it.givenCredentials().returns(aUserCredentials(userId = A_SELF_ID)) }
     private val fakeObserveTimelineUseCase = FakeObserveTimelineUseCase()
+    private val fakeMessageOptionsStore = FakeMessageOptionsStore()
 
     private val viewModel = MessengerViewModel(
         fakeMessageService,
@@ -49,6 +52,7 @@ class MessengerViewModelTest {
         fakeObserveTimelineUseCase,
         localIdFactory = FakeLocalIdFactory().also { it.givenCreate().returns(A_LOCAL_ID) }.instance,
         imageContentReader = FakeImageContentReader(),
+        messageOptionsStore = fakeMessageOptionsStore.instance,
         clock = fixedClock(A_CURRENT_TIMESTAMP),
         factory = runViewModelTest.testMutableStateFactory(),
     )
@@ -68,8 +72,9 @@ class MessengerViewModelTest {
 
     @Test
     fun `given timeline emits state, when starting, then updates state and marks room and events as read`() = runViewModelTest {
+        fakeMessageOptionsStore.givenReadReceiptsDisabled().returns(READ_RECEIPTS_ARE_DISABLED)
         fakeRoomStore.expectUnit(times = 2) { it.markRead(A_ROOM_ID) }
-        fakeRoomService.expectUnit { it.markFullyRead(A_ROOM_ID, AN_EVENT_ID, isPrivate = true) }
+        fakeRoomService.expectUnit { it.markFullyRead(A_ROOM_ID, AN_EVENT_ID, isPrivate = READ_RECEIPTS_ARE_DISABLED) }
         val state = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
         fakeObserveTimelineUseCase.given(A_ROOM_ID, A_SELF_ID).returns(flowOf(state))
 
@@ -153,4 +158,4 @@ class FakeRoomService : RoomService by mockk() {
 
 fun fixedClock(timestamp: Long = 0) = Clock.fixed(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC)
 
-class FakeImageContentReader: ImageContentReader by mockk()
+class FakeImageContentReader : ImageContentReader by mockk()
