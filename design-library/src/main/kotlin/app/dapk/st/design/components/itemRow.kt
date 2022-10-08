@@ -2,9 +2,7 @@ package app.dapk.st.design.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,12 +20,13 @@ fun TextRow(
     enabled: Boolean = true,
     body: @Composable () -> Unit = {}
 ) {
+    val verticalPadding = 24.dp
     val modifier = Modifier.padding(horizontal = 24.dp)
     Column(
         Modifier
             .fillMaxWidth()
             .clickable(enabled = onClick != null) { onClick?.invoke() }) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(verticalPadding))
         Column(modifier) {
             val textModifier = when (enabled) {
                 true -> Modifier
@@ -45,7 +44,7 @@ fun TextRow(
                 }
             }
             body()
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(verticalPadding))
         }
         if (includeDivider) {
             Divider(modifier = Modifier.fillMaxWidth())
@@ -72,3 +71,36 @@ fun IconRow(icon: ImageVector, title: String, onClick: (() -> Unit)? = null) {
 fun SettingsTextRow(title: String, subtitle: String?, onClick: (() -> Unit)?, enabled: Boolean) {
     TextRow(title = title, subtitle, includeDivider = false, onClick, enabled = enabled)
 }
+
+@Composable
+fun SettingsToggleRow(title: String, subtitle: String?, state: Boolean, onToggle: () -> Unit) {
+    Toggle(title, subtitle, state, onToggle)
+}
+
+@Composable
+private fun Toggle(title: String, subtitle: String?, state: Boolean, onToggle: () -> Unit) {
+    val verticalPadding = 16.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = verticalPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        if  (subtitle == null) {
+            Text(text = title)
+        } else {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title)
+                Spacer(Modifier.height(4.dp))
+                Text(text = subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f))
+            }
+        }
+        Switch(
+            modifier = Modifier.wrapContentWidth(),
+            checked = state,
+            onCheckedChange = { onToggle() }
+        )
+    }
+}
+

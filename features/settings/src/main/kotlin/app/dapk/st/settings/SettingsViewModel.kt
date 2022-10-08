@@ -109,6 +109,7 @@ internal class SettingsViewModel(
 
             ToggleSendReadReceipts -> viewModelScope.launch {
                 messageOptionsStore.setReadReceiptsDisabled(!messageOptionsStore.isReadReceiptsDisabled())
+                refreshRoot()
             }
         }
     }

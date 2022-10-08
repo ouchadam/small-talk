@@ -41,10 +41,7 @@ import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
 import app.dapk.st.core.getActivity
-import app.dapk.st.design.components.SettingsTextRow
-import app.dapk.st.design.components.Spider
-import app.dapk.st.design.components.SpiderPage
-import app.dapk.st.design.components.TextRow
+import app.dapk.st.design.components.*
 import app.dapk.st.matrix.crypto.ImportResult
 import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
@@ -222,7 +219,7 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
                         }
 
                         is SettingItem.Header -> Header(item.label)
-                        is SettingItem.Toggle -> Toggle(item, onToggle = {
+                        is SettingItem.Toggle -> SettingsToggleRow(item.content, item.subtitle, item.state, onToggle = {
                             onClick(item)
                         })
                     }
@@ -238,23 +235,6 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
         is Lce.Loading -> {
             // TODO
         }
-    }
-}
-
-@Composable
-private fun Toggle(item: SettingItem.Toggle, onToggle: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = item.content)
-        Switch(
-            checked = item.state,
-            onCheckedChange = { onToggle() }
-        )
     }
 }
 
