@@ -40,6 +40,7 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
+import app.dapk.st.core.extensions.takeAs
 import app.dapk.st.core.getActivity
 import app.dapk.st.design.components.*
 import app.dapk.st.matrix.crypto.ImportResult
@@ -149,22 +150,21 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                 }
 
                 is ImportResult.Error -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            val message = when (val type = result.cause) {
-                                ImportResult.Error.Type.NoKeysFound -> "No keys found in the file"
-                                ImportResult.Error.Type.UnexpectedDecryptionOutput -> "Unable to decrypt file, double check your passphrase"
-                                is ImportResult.Error.Type.Unknown -> "${type.cause::class.java.simpleName}: ${type.cause.message}"
-                                ImportResult.Error.Type.UnableToOpenFile -> "Unable to open file"
-                                ImportResult.Error.Type.InvalidFile -> "Unable to process file"
-                            }
-
-                            Text(text = "Import failed\n$message", textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { navigator.navigate.upToHome() }) {
-                                Text(text = "Close".uppercase())
-                            }
+                    val message = when (result.cause) {
+                        ImportResult.Error.Type.NoKeysFound -> "No keys found in the file"
+                        ImportResult.Error.Type.UnexpectedDecryptionOutput -> "Unable to decrypt file, double check your passphrase"
+                        is ImportResult.Error.Type.Unknown -> "Unknown error"
+                        ImportResult.Error.Type.UnableToOpenFile -> "Unable to open file"
+                        ImportResult.Error.Type.InvalidFile -> "Unable to process file"
+                    }
+                    GenericError(
+                        message = message,
+                        label = "Close",
+                        moreDetails = result.cause.takeAs<ImportResult.Error.Type.Unknown>()?.let {
+                            "${it.cause::class.java.simpleName}: ${it.cause.message}"
                         }
+                    ) {
+                        navigator.navigate.upToHome()
                     }
                 }
 
