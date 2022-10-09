@@ -4,31 +4,24 @@ import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.domain.application.message.MessageOptionsStore
-import app.dapk.st.matrix.common.CredentialsStore
-import app.dapk.st.matrix.common.EventId
+import app.dapk.st.engine.ChatEngine
+import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.internal.ImageContentReader
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
 import app.dapk.st.viewmodel.defaultStateFactory
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.time.Clock
 
 internal class MessengerViewModel(
+    private val chatEngine: ChatEngine,
     private val messageService: MessageService,
-    private val roomService: RoomService,
-    private val roomStore: RoomStore,
-    private val credentialsStore: CredentialsStore,
-    private val observeTimeline: ObserveTimelineUseCase,
     private val localIdFactory: LocalIdFactory,
     private val imageContentReader: ImageContentReader,
     private val messageOptionsStore: MessageOptionsStore,
@@ -83,29 +76,10 @@ internal class MessengerViewModel(
 
     private fun start(action: MessengerAction.OnMessengerVisible) {
         updateState { copy(roomId = action.roomId, composerState = action.attachments?.let { ComposerState.Attachments(it, null) } ?: composerState) }
-        syncJob = viewModelScope.launch {
-            roomStore.markRead(action.roomId)
-
-            val credentials = credentialsStore.credentials()!!
-            var lastKnownReadEvent: EventId? = null
-            observeTimeline.invoke(action.roomId, credentials.userId).distinctUntilChanged().onEach { state ->
-                state.latestMessageEventFromOthers(self = credentials.userId)?.let {
-                    if (lastKnownReadEvent != it) {
-                        updateRoomReadStateAsync(latestReadEvent = it, state)
-                        lastKnownReadEvent = it
-                    }
-                }
-                updateState { copy(roomState = Lce.Content(state)) }
-            }.collect()
-        }
-    }
-
-    private fun CoroutineScope.updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerState): Deferred<Unit> {
-        return async {
-            runCatching {
-                roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent, isPrivate = messageOptionsStore.isReadReceiptsDisabled())
-                roomStore.markRead(state.roomState.roomOverview.roomId)
-            }
+        viewModelScope.launch {
+            syncJob = chatEngine.messages(action.roomId, disableReadReceipts = messageOptionsStore.isReadReceiptsDisabled())
+                .onEach { updateState { copy(roomState = Lce.Content(it)) } }
+                .launchIn(this)
         }
     }
 
@@ -189,12 +163,6 @@ internal class MessengerViewModel(
     }
 
 }
-
-private fun MessengerState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
-    .filterIsInstance<RoomEvent.Message>()
-    .filterNot { it.author.id == self }
-    .firstOrNull()
-    ?.eventId
 
 sealed interface MessengerAction {
     data class ComposerTextUpdate(val newValue: String) : MessengerAction

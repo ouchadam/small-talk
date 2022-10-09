@@ -2,6 +2,7 @@ applyAndroidComposeLibraryModule(project)
 apply plugin: 'kotlin-parcelize'
 
 dependencies {
+    implementation project(":chat-engine")
     implementation project(":matrix:services:sync")
     implementation project(":matrix:services:message")
     implementation project(":matrix:services:crypto")

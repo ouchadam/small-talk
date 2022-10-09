@@ -36,11 +36,16 @@ import java.time.Clock
 class MatrixEngine internal constructor(
     private val directoryUseCase: Lazy<DirectoryUseCase>,
     private val matrix: Lazy<MatrixClient>,
+    private val timelineUseCase: Lazy<ReadMarkingTimeline>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
     override fun invites(): Flow<InviteState> {
         return matrix.value.syncService().invites().map { it.map { it.engine() } }
+    }
+
+    override suspend fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState> {
+        return timelineUseCase.value.foo(roomId, isReadReceiptsDisabled = disableReadReceipts)
     }
 
     override suspend fun login(request: LoginRequest): LoginResult {
@@ -116,8 +121,14 @@ class MatrixEngine internal constructor(
                     roomStore
                 )
             }
+            val timelineUseCase = unsafeLazy {
+                val matrix = lazyMatrix.value
+                val mergeWithLocalEchosUseCase = MergeWithLocalEchosUseCaseImpl(LocalEchoMapper(MetaMapper()))
+                val timeline = TimelineUseCaseImpl(matrix.syncService(), matrix.messageService(), matrix.roomService(), mergeWithLocalEchosUseCase)
+                ReadMarkingTimeline(roomStore, credentialsStore, timeline, matrix.roomService())
+            }
 
-            return MatrixEngine(directoryUseCase, lazyMatrix)
+            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase)
 
         }
 

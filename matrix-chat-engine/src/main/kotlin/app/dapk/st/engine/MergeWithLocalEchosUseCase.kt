@@ -1,10 +1,8 @@
-package app.dapk.st.messenger
+package app.dapk.st.engine
 
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomState
 
 internal typealias MergeWithLocalEchosUseCase = (RoomState, RoomMember, List<MessageService.LocalEcho>) -> RoomState
 

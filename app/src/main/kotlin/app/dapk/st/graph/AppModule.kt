@@ -177,11 +177,8 @@ internal class FeatureModules internal constructor(
     }
     val messengerModule by unsafeLazy {
         MessengerModule(
-            matrixModules.sync,
+            matrixModules.engine,
             matrixModules.message,
-            matrixModules.room,
-            storeModule.value.credentialsStore(),
-            storeModule.value.roomStore(),
             clock,
             context,
             base64,

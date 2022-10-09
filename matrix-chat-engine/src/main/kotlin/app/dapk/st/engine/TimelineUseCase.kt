@@ -1,4 +1,4 @@
-package app.dapk.st.messenger
+package app.dapk.st.engine
 
 import app.dapk.st.core.extensions.startAndIgnoreEmissions
 import app.dapk.st.matrix.common.RoomId
@@ -6,10 +6,10 @@ import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.matrix.sync.SyncService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerState>
 
@@ -37,7 +37,7 @@ internal class TimelineUseCaseImpl(
                         )
                     }
                 },
-                typing = events.filterIsInstance<SyncService.SyncEvent.Typing>().firstOrNull { it.roomId == roomId },
+                typing = events.filterIsInstance<SyncService.SyncEvent.Typing>().firstOrNull { it.roomId == roomId }?.engine(),
                 self = userId,
             )
         }
@@ -45,14 +45,8 @@ internal class TimelineUseCaseImpl(
 
     private fun roomDatasource(roomId: RoomId) = combine(
         syncService.startSyncing().startAndIgnoreEmissions(),
-        syncService.room(roomId)
+        syncService.room(roomId).map { it.engine()  }
     ) { _, room -> room }
 }
 
 private fun UserId.toFallbackMember() = RoomMember(this, displayName = null, avatarUrl = null)
-
-data class MessengerState(
-    val self: UserId,
-    val roomState: RoomState,
-    val typing: SyncService.SyncEvent.Typing?
-)

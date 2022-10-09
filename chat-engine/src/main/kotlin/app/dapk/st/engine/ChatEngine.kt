@@ -10,6 +10,8 @@ interface ChatEngine {
 
     fun invites(): Flow<InviteState>
 
+    suspend fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState>
+
     suspend fun login(request: LoginRequest): LoginResult
 
     suspend fun me(forceRefresh: Boolean): Me
