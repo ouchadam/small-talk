@@ -37,7 +37,6 @@ import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.*
 import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.push.installPushService
-import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.internal.request.ApiToDeviceEvent
@@ -47,13 +46,14 @@ import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.messenger.gallery.ImageGalleryModule
 import app.dapk.st.navigator.IntentFactory
 import app.dapk.st.navigator.MessageAttachment
-import app.dapk.st.notifications.MatrixPushHandler
 import app.dapk.st.notifications.NotificationsModule
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
 import app.dapk.st.profile.ProfileModule
+import app.dapk.st.push.PushHandler
 import app.dapk.st.push.PushModule
+import app.dapk.st.push.PushTokenPayload
 import app.dapk.st.push.messaging.MessagingServiceAdapter
 import app.dapk.st.settings.SettingsModule
 import app.dapk.st.share.ShareEntryModule
@@ -62,6 +62,7 @@ import app.dapk.st.work.TaskRunnerModule
 import app.dapk.st.work.WorkModule
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.time.Clock
 
@@ -77,7 +78,6 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
 
     private val driver = AndroidSqliteDriver(DapkDb.Schema, context, "dapk.db")
     private val database = DapkDb(driver)
-    private val clock = Clock.systemUTC()
     val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
     val base64 = AndroidBase64()
 
@@ -97,7 +97,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     private val imageContentReader by unsafeLazy { AndroidImageContentReader(context.contentResolver) }
     private val matrixModules = MatrixModules(storeModule, trackingModule, workModule, logger, coroutineDispatchers, imageContentReader, base64, buildMeta)
 
-    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, workModule, storeModule, context, coroutineDispatchers)
+    val domainModules = DomainModules(matrixModules, trackingModule.errorTracker, context, coroutineDispatchers)
 
     val coreAndroidModule = CoreAndroidModule(
         intentFactory = object : IntentFactory {
@@ -136,13 +136,10 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
         trackingModule,
         coreAndroidModule,
         imageLoaderModule,
-        imageContentReader,
         context,
         buildMeta,
         deviceMeta,
         coroutineDispatchers,
-        clock,
-        base64,
     )
 }
 
@@ -153,13 +150,10 @@ internal class FeatureModules internal constructor(
     private val trackingModule: TrackingModule,
     private val coreAndroidModule: CoreAndroidModule,
     imageLoaderModule: ImageLoaderModule,
-    imageContentReader: ImageContentReader,
     context: Context,
     buildMeta: BuildMeta,
     deviceMeta: DeviceMeta,
     coroutineDispatchers: CoroutineDispatchers,
-    clock: Clock,
-    base64: Base64,
 ) {
 
     val directoryModule by unsafeLazy {
@@ -463,7 +457,6 @@ internal class MatrixModules(
         }
     }
 
-    val push by unsafeLazy { matrix.pushService() }
     val sync by unsafeLazy { matrix.syncService() }
     val room by unsafeLazy { matrix.roomService() }
     val profile by unsafeLazy { matrix.profileService() }
@@ -472,20 +465,19 @@ internal class MatrixModules(
 internal class DomainModules(
     private val matrixModules: MatrixModules,
     private val errorTracker: ErrorTracker,
-    private val workModule: WorkModule,
-    private val storeModule: Lazy<StoreModule>,
     private val context: Application,
     private val dispatchers: CoroutineDispatchers,
 ) {
 
-    val pushHandler by unsafeLazy {
-        val store = storeModule.value
-        MatrixPushHandler(
-            workScheduler = workModule.workScheduler(),
-            credentialsStore = store.credentialsStore(),
-            matrixModules.sync,
-            store.roomStore(),
-        )
+    private val pushHandler by unsafeLazy {
+        val enginePushHandler = matrixModules.engine.pushHandler()
+        object : PushHandler {
+            override fun onNewToken(payload: PushTokenPayload) {
+                enginePushHandler.onNewToken(JsonString(Json.encodeToString(PushTokenPayload.serializer(), payload)))
+            }
+
+            override fun onMessageReceived(eventId: EventId?, roomId: RoomId?) = enginePushHandler.onMessageReceived(eventId, roomId)
+        }
     }
 
     val messaging by unsafeLazy { MessagingModule(MessagingServiceAdapter(pushHandler), context) }
@@ -500,7 +492,7 @@ internal class DomainModules(
             messaging.messaging,
         )
     }
-    val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.push))) }
+    val taskRunnerModule by unsafeLazy { TaskRunnerModule(TaskRunnerAdapter(matrixModules.matrix::run, AppTaskRunner(matrixModules.engine))) }
 
 }
 

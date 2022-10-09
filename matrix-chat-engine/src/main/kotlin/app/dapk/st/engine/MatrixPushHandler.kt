@@ -1,36 +1,34 @@
-package app.dapk.st.notifications
+package app.dapk.st.engine
 
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.message.BackgroundScheduler
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
-import app.dapk.st.push.PushHandler
-import app.dapk.st.push.PushTokenPayload
-import app.dapk.st.work.WorkScheduler
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.json.Json
 
 private var previousJob: Job? = null
 
 @OptIn(DelicateCoroutinesApi::class)
 class MatrixPushHandler(
-    private val workScheduler: WorkScheduler,
+    private val backgroundScheduler: BackgroundScheduler,
     private val credentialsStore: CredentialsStore,
     private val syncService: SyncService,
     private val roomStore: RoomStore,
 ) : PushHandler {
 
-    override fun onNewToken(payload: PushTokenPayload) {
+    override fun onNewToken(payload: JsonString) {
         log(AppLogTag.PUSH, "new push token received")
-        workScheduler.schedule(
-            WorkScheduler.WorkTask(
+        backgroundScheduler.schedule(
+            key = "2",
+            task = BackgroundScheduler.Task(
                 type = "push_token",
-                jobId = 2,
-                jsonPayload = Json.encodeToString(PushTokenPayload.serializer(), payload)
+                jsonPayload = payload
             )
         )
     }

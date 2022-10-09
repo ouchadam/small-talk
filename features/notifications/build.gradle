@@ -1,8 +1,6 @@
 applyAndroidLibraryModule(project)
 
 dependencies {
-    implementation project(":matrix:services:push")
-    implementation project(":matrix:services:sync")
     implementation project(':domains:store')
     implementation project(":domains:android:work")
     implementation project(':domains:android:push')

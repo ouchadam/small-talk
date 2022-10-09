@@ -9,7 +9,7 @@ class BackgroundWorkAdapter(private val workScheduler: WorkScheduler) : Backgrou
             WorkScheduler.WorkTask(
                 jobId = 1,
                 type = task.type,
-                jsonPayload = task.jsonPayload,
+                jsonPayload = task.jsonPayload.value,
             )
         )
     }

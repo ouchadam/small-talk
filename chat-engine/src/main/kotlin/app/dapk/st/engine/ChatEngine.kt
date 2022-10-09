@@ -1,5 +1,7 @@
 package app.dapk.st.engine
 
+import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.common.RoomId
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
@@ -20,7 +22,11 @@ interface ChatEngine {
 
     suspend fun send(message: SendMessage, room: RoomOverview)
 
+    suspend fun registerPushToken(token: String, gatewayUrl: String)
+
     fun mediaDecrypter(): MediaDecrypter
+
+    fun pushHandler(): PushHandler
 }
 
 interface MediaDecrypter {
@@ -31,4 +37,9 @@ interface MediaDecrypter {
         fun collect(partial: (ByteArray) -> Unit)
     }
 
+}
+
+interface PushHandler {
+    fun onNewToken(payload: JsonString)
+    fun onMessageReceived(eventId: EventId?, roomId: RoomId?)
 }

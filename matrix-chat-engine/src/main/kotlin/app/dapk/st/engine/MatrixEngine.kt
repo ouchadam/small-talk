@@ -18,6 +18,7 @@ import app.dapk.st.matrix.http.ktor.KtorMatrixHttpClientFactory
 import app.dapk.st.matrix.message.*
 import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.push.installPushService
+import app.dapk.st.matrix.push.pushService
 import app.dapk.st.matrix.room.*
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.internal.request.ApiToDeviceEvent
@@ -37,6 +38,7 @@ class MatrixEngine internal constructor(
     private val timelineUseCase: Lazy<ReadMarkingTimeline>,
     private val sendMessageUseCase: Lazy<SendMessageUseCase>,
     private val matrixMediaDecrypter: Lazy<MatrixMediaDecrypter>,
+    private val matrixPushHandler: Lazy<MatrixPushHandler>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
@@ -75,6 +77,10 @@ class MatrixEngine internal constructor(
         sendMessageUseCase.value.send(message, room)
     }
 
+    override suspend fun registerPushToken(token: String, gatewayUrl: String) {
+        matrix.value.pushService().registerPush(token, gatewayUrl)
+    }
+
     override fun mediaDecrypter(): MediaDecrypter {
         val mediaDecrypter = matrixMediaDecrypter.value
         return object : MediaDecrypter {
@@ -85,6 +91,8 @@ class MatrixEngine internal constructor(
             }
         }
     }
+
+    override fun pushHandler() = matrixPushHandler.value
 
     class Factory {
 
@@ -153,8 +161,9 @@ class MatrixEngine internal constructor(
             }
 
             val mediaDecrypter = unsafeLazy { MatrixMediaDecrypter(base64) }
+            val pushHandler = unsafeLazy { MatrixPushHandler(backgroundScheduler, credentialsStore, lazyMatrix.value.syncService(), roomStore) }
 
-            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase, sendMessageUseCase, mediaDecrypter)
+            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase, sendMessageUseCase, mediaDecrypter, pushHandler)
         }
 
     }
