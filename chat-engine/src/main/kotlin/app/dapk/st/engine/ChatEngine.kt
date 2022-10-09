@@ -7,7 +7,7 @@ import app.dapk.st.matrix.common.RoomMember
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
 
-interface ChatEngine {
+interface ChatEngine: TaskRunner {
 
     fun directory(): Flow<DirectoryState>
 
@@ -34,7 +34,23 @@ interface ChatEngine {
     fun mediaDecrypter(): MediaDecrypter
 
     fun pushHandler(): PushHandler
+
 }
+
+interface TaskRunner {
+
+    suspend fun runTask(task: ChatEngineTask): TaskResult
+
+    sealed interface TaskResult {
+        object Success : TaskResult
+        data class Failure(val canRetry: Boolean) : TaskResult
+    }
+
+}
+
+
+
+data class ChatEngineTask(val type: String, val jsonPayload: String)
 
 interface MediaDecrypter {
 

@@ -6,6 +6,7 @@ import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.SingletonFlows
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.matrix.MatrixClient
+import app.dapk.st.matrix.MatrixTaskRunner
 import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
@@ -102,6 +103,13 @@ class MatrixEngine internal constructor(
     }
 
     override fun pushHandler() = matrixPushHandler.value
+
+    override suspend fun runTask(task: ChatEngineTask): TaskRunner.TaskResult {
+        return when (val result = matrix.value.run(MatrixTaskRunner.MatrixTask(task.type, task.jsonPayload))) {
+            is MatrixTaskRunner.TaskResult.Failure -> TaskRunner.TaskResult.Failure(result.canRetry)
+            MatrixTaskRunner.TaskResult.Success -> TaskRunner.TaskResult.Success
+        }
+    }
 
     class Factory {
 
