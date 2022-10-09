@@ -4,6 +4,7 @@ import app.dapk.st.matrix.auth.AuthService
 import app.dapk.st.matrix.sync.InviteMeta
 import app.dapk.st.matrix.auth.AuthService.LoginRequest as MatrixLoginRequest
 import app.dapk.st.matrix.auth.AuthService.LoginResult as MatrixLoginResult
+import app.dapk.st.matrix.crypto.ImportResult as MatrixImportResult
 import app.dapk.st.matrix.room.ProfileService.Me as MatrixMe
 import app.dapk.st.matrix.sync.LastMessage as MatrixLastMessage
 import app.dapk.st.matrix.sync.RoomInvite as MatrixRoomInvite
@@ -62,3 +63,17 @@ fun InviteMeta.engine() = when (this) {
     is InviteMeta.Room -> RoomInvite.InviteMeta.Room(this.roomName)
 }
 
+fun MatrixImportResult.engine() = when (this) {
+    is MatrixImportResult.Error -> ImportResult.Error(
+        when (val error = this.cause) {
+            MatrixImportResult.Error.Type.InvalidFile -> ImportResult.Error.Type.InvalidFile
+            MatrixImportResult.Error.Type.NoKeysFound -> ImportResult.Error.Type.NoKeysFound
+            MatrixImportResult.Error.Type.UnableToOpenFile -> ImportResult.Error.Type.UnableToOpenFile
+            MatrixImportResult.Error.Type.UnexpectedDecryptionOutput -> ImportResult.Error.Type.UnexpectedDecryptionOutput
+            is MatrixImportResult.Error.Type.Unknown -> ImportResult.Error.Type.Unknown(error.cause)
+        }
+    )
+
+    is MatrixImportResult.Success -> ImportResult.Success(this.roomIds, this.totalImportedKeysCount)
+    is MatrixImportResult.Update -> ImportResult.Update(this.importedKeysCount)
+}

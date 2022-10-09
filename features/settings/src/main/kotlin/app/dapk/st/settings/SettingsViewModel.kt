@@ -9,9 +9,8 @@ import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.domain.application.eventlog.LoggingStore
 import app.dapk.st.domain.application.message.MessageOptionsStore
-import app.dapk.st.matrix.crypto.CryptoService
-import app.dapk.st.matrix.crypto.ImportResult
-import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.engine.ChatEngine
+import app.dapk.st.engine.ImportResult
 import app.dapk.st.push.PushTokenRegistrars
 import app.dapk.st.push.Registrar
 import app.dapk.st.settings.SettingItem.Id.*
@@ -26,10 +25,9 @@ import kotlinx.coroutines.launch
 private const val PRIVACY_POLICY_URL = "https://ouchadam.github.io/small-talk/privacy/"
 
 internal class SettingsViewModel(
+    private val chatEngine: ChatEngine,
     private val cacheCleaner: StoreCleaner,
     private val contentResolver: ContentResolver,
-    private val cryptoService: CryptoService,
-    private val syncService: SyncService,
     private val uriFilenameResolver: UriFilenameResolver,
     private val settingsItemFactory: SettingsItemFactory,
     private val pushTokenRegistrars: PushTokenRegistrars,
@@ -142,7 +140,7 @@ internal class SettingsViewModel(
     fun importFromFileKeys(file: Uri, passphrase: String) {
         updatePageState<Page.ImportRoomKey> { copy(importProgress = ImportResult.Update(0)) }
         viewModelScope.launch {
-            with(cryptoService) {
+            with(chatEngine) {
                 runCatching { contentResolver.openInputStream(file)!! }
                     .fold(
                         onSuccess = { fileStream ->
@@ -159,7 +157,7 @@ internal class SettingsViewModel(
                                         }
 
                                         is ImportResult.Success -> {
-                                            syncService.forceManualRefresh(it.roomIds.toList())
+                                            chatEngine.refresh(it.roomIds.toList())
                                         }
                                     }
                                 }

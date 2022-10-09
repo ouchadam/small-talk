@@ -62,3 +62,20 @@ data class Me(
     val avatarUrl: AvatarUrl?,
     val homeServerUrl: HomeServerUrl,
 )
+
+sealed interface ImportResult {
+    data class Success(val roomIds: Set<RoomId>, val totalImportedKeysCount: Long) : ImportResult
+    data class Error(val cause: Type) : ImportResult {
+
+        sealed interface Type {
+            data class Unknown(val cause: Throwable) : Type
+            object NoKeysFound : Type
+            object UnexpectedDecryptionOutput : Type
+            object UnableToOpenFile : Type
+            object InvalidFile : Type
+        }
+
+    }
+
+    data class Update(val importedKeysCount: Long) : ImportResult
+}

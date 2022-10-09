@@ -4,5 +4,5 @@ apply plugin: 'kotlin-parcelize'
 dependencies {
     compileOnly project(":domains:android:stub")
     implementation project(":core")
-    implementation project(":matrix:common")
+    implementation project(":chat-engine")
 }

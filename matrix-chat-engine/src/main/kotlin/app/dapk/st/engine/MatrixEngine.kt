@@ -30,6 +30,7 @@ import app.dapk.st.olm.OlmStore
 import app.dapk.st.olm.OlmWrapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.InputStream
 import java.time.Clock
 
 class MatrixEngine internal constructor(
@@ -48,6 +49,17 @@ class MatrixEngine internal constructor(
 
     override suspend fun me(forceRefresh: Boolean): Me {
         return matrix.value.profileService().me(forceRefresh).engine()
+    }
+
+    override suspend fun refresh(roomIds: List<RoomId>) {
+        matrix.value.syncService().forceManualRefresh(roomIds)
+
+    }
+
+    override suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult> {
+        return with(matrix.value.cryptoService()) {
+            importRoomKeys(password).map { it.engine() }
+        }
     }
 
     class Factory {
@@ -72,7 +84,7 @@ class MatrixEngine internal constructor(
             knownDeviceStore: KnownDeviceStore,
             olmStore: OlmStore,
         ): ChatEngine {
-            val lazyMatrix = unsafeLazy {
+            val lazyMatrix = lazy {
                 MatrixFactory.createMatrix(
                     base64,
                     buildMeta,

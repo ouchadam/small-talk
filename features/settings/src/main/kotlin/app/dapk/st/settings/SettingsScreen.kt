@@ -42,7 +42,7 @@ import app.dapk.st.core.components.Header
 import app.dapk.st.core.extensions.takeAs
 import app.dapk.st.core.getActivity
 import app.dapk.st.design.components.*
-import app.dapk.st.matrix.crypto.ImportResult
+import app.dapk.st.engine.ImportResult
 import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity

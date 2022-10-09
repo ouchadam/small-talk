@@ -1,8 +1,7 @@
 applyAndroidComposeLibraryModule(project)
 
 dependencies {
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:crypto")
+    implementation project(":chat-engine")
     implementation project(":features:navigator")
     implementation project(':domains:store')
     implementation project(':domains:android:push')
