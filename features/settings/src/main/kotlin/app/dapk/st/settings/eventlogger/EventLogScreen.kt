@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.Lce
+import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.design.components.GenericError
 import app.dapk.st.matrix.common.MatrixLogTag
 
 private val filterItems = listOf<String?>(null) + (MatrixLogTag.values().map { it.key } + AppLogTag.values().map { it.key }).distinct()
@@ -33,11 +35,13 @@ fun EventLogScreen(viewModel: EventLoggerViewModel) {
                         viewModel.selectLog(it, filter = null)
                     }
                 }
+
                 else -> {
                     Events(
                         selectedPageContent = state.selectedState,
                         onExit = { viewModel.exitLog() },
-                        onSelectTag = { viewModel.selectLog(state.selectedState.selectedPage, it) }
+                        onSelectTag = { viewModel.selectLog(state.selectedState.selectedPage, it) },
+                        onRetry = { viewModel.start() },
                     )
                 }
             }
@@ -46,6 +50,7 @@ fun EventLogScreen(viewModel: EventLoggerViewModel) {
         is Lce.Error -> {
             // TODO
         }
+
         is Lce.Loading -> {
             // TODO
         }
@@ -69,7 +74,7 @@ private fun LogKeysList(keys: List<String>, onSelected: (String) -> Unit) {
 }
 
 @Composable
-private fun Events(selectedPageContent: SelectedState, onExit: () -> Unit, onSelectTag: (String?) -> Unit) {
+private fun Events(selectedPageContent: SelectedState, onExit: () -> Unit, onSelectTag: (String?) -> Unit, onRetry: () -> Unit) {
     BackHandler(onBack = onExit)
     when (val content = selectedPageContent.content) {
         is Lce.Content -> {
@@ -112,9 +117,8 @@ private fun Events(selectedPageContent: SelectedState, onExit: () -> Unit, onSel
                 }
             }
         }
-        is Lce.Error -> TODO()
-        is Lce.Loading -> {
-            // TODO
-        }
+
+        is Lce.Error -> GenericError(cause = content.cause, action = onRetry)
+        is Lce.Loading -> CenteredLoading()
     }
 }

@@ -86,18 +86,24 @@ class RoomKeyImporter(
             val line = it.joinToString(separator = "").replace("\n", "")
             val toByteArray = base64.decode(line)
             if (index == 0) {
-                decryptCipher.initialize(toByteArray, password)
-                toByteArray
-                    .copyOfRange(37, toByteArray.size)
-                    .decrypt(decryptCipher)
-                    .also {
-                        if (!it.startsWith("[{")) {
-                            throw ImportException(ImportResult.Error.Type.UnexpectedDecryptionOutput)
-                        }
+                toByteArray.ensureHasCipherPayloadOrThrow()
+                val initializer = toByteArray.copyOfRange(0, 37)
+                decryptCipher.initialize(initializer, password)
+                val content = toByteArray.copyOfRange(37, toByteArray.size)
+                content.decrypt(decryptCipher).also {
+                    if (!it.startsWith("[{")) {
+                        throw ImportException(ImportResult.Error.Type.UnexpectedDecryptionOutput)
                     }
+                }
             } else {
                 toByteArray.decrypt(decryptCipher)
             }
+        }
+    }
+
+    private fun ByteArray.ensureHasCipherPayloadOrThrow() {
+        if (this.size < 37) {
+            throw ImportException(ImportResult.Error.Type.InvalidFile)
         }
     }
 
@@ -176,6 +182,7 @@ private class JsonAccumulator {
                     jsonSegment = withLatest
                     null
                 }
+
                 else -> {
                     val string = withLatest.substring(objectRange)
                     importJson.decodeFromString(ElementMegolmExportObject.serializer(), string).also {
@@ -200,6 +207,7 @@ private class JsonAccumulator {
                     }
                     opens++
                 }
+
                 c == '}' -> {
                     opens--
                     if (opens == 0) {

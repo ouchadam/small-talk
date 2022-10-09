@@ -3,6 +3,13 @@ package app.dapk.st.core.extensions
 inline fun <T> T?.ifNull(block: () -> T): T = this ?: block()
 inline fun <T> ifOrNull(condition: Boolean, block: () -> T): T? = if (condition) block() else null
 
+inline fun <reified T> Any.takeAs(): T? {
+    return when (this) {
+        is T -> this
+        else -> null
+    }
+}
+
 @Suppress("UNCHECKED_CAST")
 inline fun <T, T1 : T, T2 : T> Iterable<T>.firstOrNull(predicate: (T) -> Boolean, predicate2: (T) -> Boolean): Pair<T1, T2>? {
     var firstValue: T1? = null

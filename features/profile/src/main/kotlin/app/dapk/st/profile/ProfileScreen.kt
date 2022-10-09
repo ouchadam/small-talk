@@ -119,7 +119,7 @@ private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: 
 }
 
 @Composable
-private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitations) {
+private fun SpiderItemScope.Invitations(viewModel: ProfileViewModel, invitations: Page.Invitations) {
     when (val state = invitations.content) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
@@ -147,7 +147,7 @@ private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitatio
             }
         }
 
-        is Lce.Error -> TODO()
+        is Lce.Error -> GenericError(label = "Go back", cause = state.cause) { goBack() }
     }
 }
 

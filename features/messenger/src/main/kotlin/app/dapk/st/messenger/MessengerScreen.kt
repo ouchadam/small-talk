@@ -43,10 +43,7 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.extensions.takeIfContent
-import app.dapk.st.design.components.MessengerUrlIcon
-import app.dapk.st.design.components.MissingAvatarIcon
-import app.dapk.st.design.components.SmallTalkTheme
-import app.dapk.st.design.components.Toolbar
+import app.dapk.st.design.components.*
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.sync.MessageMeta
@@ -95,7 +92,7 @@ internal fun MessengerScreen(
         })
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState, replyActions)
+                Room(state.roomState, replyActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
@@ -132,7 +129,7 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions, onRetry: () -> Unit) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
@@ -165,16 +162,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: Re
             }
         }
 
-        is Lce.Error -> {
-            Box(contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Something went wrong...")
-                    Button(onClick = {}) {
-                        Text("Retry")
-                    }
-                }
-            }
-        }
+        is Lce.Error -> GenericError(cause = state.cause, action = onRetry)
     }
 }
 

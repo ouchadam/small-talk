@@ -184,6 +184,7 @@ sealed interface ImportResult {
             object NoKeysFound : Type
             object UnexpectedDecryptionOutput : Type
             object UnableToOpenFile : Type
+            object InvalidFile : Type
         }
 
     }
