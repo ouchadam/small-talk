@@ -191,7 +191,7 @@ internal class FeatureModules internal constructor(
             storeModule.value.messageStore(),
         )
     }
-    val profileModule by unsafeLazy { ProfileModule(matrixModules.profile, matrixModules.sync, matrixModules.room, trackingModule.errorTracker) }
+    val profileModule by unsafeLazy { ProfileModule(matrixModules.engine, trackingModule.errorTracker) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
             imageLoaderModule.iconLoader(),
@@ -459,7 +459,6 @@ internal class MatrixModules(
 
     val sync by unsafeLazy { matrix.syncService() }
     val room by unsafeLazy { matrix.roomService() }
-    val profile by unsafeLazy { matrix.profileService() }
 }
 
 internal class DomainModules(

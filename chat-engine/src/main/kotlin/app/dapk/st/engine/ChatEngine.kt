@@ -24,6 +24,10 @@ interface ChatEngine {
 
     suspend fun registerPushToken(token: String, gatewayUrl: String)
 
+    suspend fun joinRoom(roomId: RoomId)
+
+    suspend fun rejectJoinRoom(roomId: RoomId)
+
     fun mediaDecrypter(): MediaDecrypter
 
     fun pushHandler(): PushHandler

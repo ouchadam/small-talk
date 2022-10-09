@@ -5,25 +5,20 @@ import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.design.components.SpiderPage
+import app.dapk.st.engine.ChatEngine
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.room.ProfileService
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(
-    private val profileService: ProfileService,
-    private val syncService: SyncService,
-    private val roomService: RoomService,
+    private val chatEngine: ChatEngine,
     private val errorTracker: ErrorTracker,
 ) : DapkViewModel<ProfileScreenState, ProfileEvent>(
     ProfileScreenState(SpiderPage(Page.Routes.profile, "Profile", null, Page.Profile(Lce.Loading()), hasToolbar = false))
 ) {
 
-    private var syncingJob: Job? = null
     private var currentPageJob: Job? = null
 
     fun start() {
@@ -31,15 +26,13 @@ class ProfileViewModel(
     }
 
     private fun goToProfile() {
-        syncingJob = syncService.startSyncing().launchIn(viewModelScope)
-
         combine(
             flow {
-                val result = runCatching { profileService.me(forceRefresh = true) }
+                val result = runCatching { chatEngine.me(forceRefresh = true) }
                     .onFailure { errorTracker.track(it, "Loading profile") }
                 emit(result)
             },
-            syncService.invites(),
+            chatEngine.invites(),
             transform = { me, invites -> me to invites }
         )
             .onEach { (me, invites) ->
@@ -57,7 +50,7 @@ class ProfileViewModel(
     fun goToInvitations() {
         updateState { copy(page = SpiderPage(Page.Routes.invitation, "Invitations", Page.Routes.profile, Page.Invitations(Lce.Loading()))) }
 
-        syncService.invites()
+        chatEngine.invites()
             .onEach {
                 updatePageState<Page.Invitations> {
                     copy(content = Lce.Content(it))
@@ -89,13 +82,13 @@ class ProfileViewModel(
     }
 
     fun acceptRoomInvite(roomId: RoomId) {
-        launchCatching { roomService.joinRoom(roomId) }.fold(
+        launchCatching { chatEngine.joinRoom(roomId) }.fold(
             onError = {}
         )
     }
 
     fun rejectRoomInvite(roomId: RoomId) {
-        launchCatching { roomService.rejectJoinRoom(roomId) }.fold(
+        launchCatching { chatEngine.rejectJoinRoom(roomId) }.fold(
             onError = {
                 Log.e("!!!", it.message, it)
             }
@@ -115,7 +108,7 @@ class ProfileViewModel(
     }
 
     fun stop() {
-        syncingJob?.cancel()
+        currentPageJob?.cancel()
     }
 
 }

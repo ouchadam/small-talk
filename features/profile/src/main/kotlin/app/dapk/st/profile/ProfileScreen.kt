@@ -21,8 +21,8 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.*
-import app.dapk.st.matrix.sync.InviteMeta
-import app.dapk.st.matrix.sync.RoomInvite
+import app.dapk.st.engine.RoomInvite
+import app.dapk.st.engine.RoomInvite.InviteMeta
 import app.dapk.st.settings.SettingsActivity
 
 @Composable

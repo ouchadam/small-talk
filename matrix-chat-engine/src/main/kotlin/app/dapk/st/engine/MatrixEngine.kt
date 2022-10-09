@@ -39,12 +39,11 @@ class MatrixEngine internal constructor(
     private val sendMessageUseCase: Lazy<SendMessageUseCase>,
     private val matrixMediaDecrypter: Lazy<MatrixMediaDecrypter>,
     private val matrixPushHandler: Lazy<MatrixPushHandler>,
+    private val inviteUseCase: Lazy<InviteUseCase>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
-    override fun invites(): Flow<InviteState> {
-        return matrix.value.syncService().invites().map { it.map { it.engine() } }
-    }
+    override fun invites() = inviteUseCase.value.invites()
 
     override suspend fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState> {
         return timelineUseCase.value.foo(roomId, isReadReceiptsDisabled = disableReadReceipts)
@@ -79,6 +78,14 @@ class MatrixEngine internal constructor(
 
     override suspend fun registerPushToken(token: String, gatewayUrl: String) {
         matrix.value.pushService().registerPush(token, gatewayUrl)
+    }
+
+    override suspend fun joinRoom(roomId: RoomId) {
+        matrix.value.roomService().joinRoom(roomId)
+    }
+
+    override suspend fun rejectJoinRoom(roomId: RoomId) {
+        matrix.value.roomService().rejectJoinRoom(roomId)
     }
 
     override fun mediaDecrypter(): MediaDecrypter {
@@ -163,7 +170,17 @@ class MatrixEngine internal constructor(
             val mediaDecrypter = unsafeLazy { MatrixMediaDecrypter(base64) }
             val pushHandler = unsafeLazy { MatrixPushHandler(backgroundScheduler, credentialsStore, lazyMatrix.value.syncService(), roomStore) }
 
-            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase, sendMessageUseCase, mediaDecrypter, pushHandler)
+            val invitesUseCase = unsafeLazy { InviteUseCase(lazyMatrix.value.syncService()) }
+
+            return MatrixEngine(
+                directoryUseCase,
+                lazyMatrix,
+                timelineUseCase,
+                sendMessageUseCase,
+                mediaDecrypter,
+                pushHandler,
+                invitesUseCase,
+            )
         }
 
     }
