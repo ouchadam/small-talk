@@ -3,6 +3,7 @@ package app.dapk.st.engine
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.RoomMember
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
 
@@ -27,6 +28,8 @@ interface ChatEngine {
     suspend fun joinRoom(roomId: RoomId)
 
     suspend fun rejectJoinRoom(roomId: RoomId)
+
+    suspend fun findMembersSummary(roomId: RoomId): List<RoomMember>
 
     fun mediaDecrypter(): MediaDecrypter
 

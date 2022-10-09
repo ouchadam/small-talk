@@ -205,7 +205,7 @@ internal class FeatureModules internal constructor(
     }
 
     val shareEntryModule by unsafeLazy {
-        ShareEntryModule(matrixModules.sync, matrixModules.room)
+        ShareEntryModule(matrixModules.engine)
     }
 
     val imageGalleryModule by unsafeLazy {
@@ -457,8 +457,6 @@ internal class MatrixModules(
         }
     }
 
-    val sync by unsafeLazy { matrix.syncService() }
-    val room by unsafeLazy { matrix.roomService() }
 }
 
 internal class DomainModules(

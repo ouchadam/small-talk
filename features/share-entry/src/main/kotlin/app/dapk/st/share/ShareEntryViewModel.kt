@@ -22,7 +22,7 @@ class ShareEntryViewModel(
 
     fun start() {
         syncJob = viewModelScope.launch {
-            state = DirectoryScreenState.Content(fetchRoomsUseCase.bar())
+            state = DirectoryScreenState.Content(fetchRoomsUseCase.fetch())
         }
     }
 

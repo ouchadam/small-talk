@@ -88,6 +88,8 @@ class MatrixEngine internal constructor(
         matrix.value.roomService().rejectJoinRoom(roomId)
     }
 
+    override suspend fun findMembersSummary(roomId: RoomId) = matrix.value.roomService().findMembersSummary(roomId)
+
     override fun mediaDecrypter(): MediaDecrypter {
         val mediaDecrypter = matrixMediaDecrypter.value
         return object : MediaDecrypter {

@@ -1,21 +1,20 @@
 package app.dapk.st.share
 
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.engine.ChatEngine
 import kotlinx.coroutines.flow.first
 
 class FetchRoomsUseCase(
-    private val syncSyncService: SyncService,
-    private val roomService: RoomService,
+    private val chatEngine: ChatEngine,
 ) {
 
-    suspend fun bar(): List<Item> {
-        return syncSyncService.overview().first().map {
+    suspend fun fetch(): List<Item> {
+        return chatEngine.directory().first().map {
+            val overview = it.overview
             Item(
-                it.roomId,
-                it.roomAvatarUrl,
-                it.roomName ?: "",
-                roomService.findMembersSummary(it.roomId).map { it.displayName ?: it.id.value }
+                overview.roomId,
+                overview.roomAvatarUrl,
+                overview.roomName ?: "",
+                chatEngine.findMembersSummary(overview.roomId).map { it.displayName ?: it.id.value }
             )
         }
     }
