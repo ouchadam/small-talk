@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun GenericError(message: String = "Something went wrong...", label: String = "Retry", moreDetails: String? = null, action: () -> Unit) {
+fun GenericError(message: String = "Something went wrong...", label: String = "Retry", cause: Throwable? = null, action: () -> Unit) {
+    val moreDetails = cause?.let { "${it::class.java.simpleName}: ${it.message}" }
+
     val openDetailsDialog = remember { mutableStateOf(false) }
     if (openDetailsDialog.value) {
         AlertDialog(

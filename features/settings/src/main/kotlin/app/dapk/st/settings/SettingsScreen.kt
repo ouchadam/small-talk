@@ -31,7 +31,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -160,9 +159,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                     GenericError(
                         message = message,
                         label = "Close",
-                        moreDetails = result.cause.takeAs<ImportResult.Error.Type.Unknown>()?.let {
-                            "${it.cause::class.java.simpleName}: ${it.cause.message}"
-                        }
+                        cause = result.cause.takeAs<ImportResult.Error.Type.Unknown>()?.cause
                     ) {
                         navigator.navigate.upToHome()
                     }

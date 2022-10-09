@@ -42,12 +42,10 @@ fun ImageGalleryScreen(viewModel: ImageGalleryViewModel, onTopLevelBack: () -> U
 
     Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
         item(ImageGalleryPage.Routes.folders) {
-            ImageGalleryFolders(it) { folder ->
-                viewModel.selectFolder(folder)
-            }
+            ImageGalleryFolders(it, onClick = { viewModel.selectFolder(it) }, onRetry = { viewModel.start() })
         }
         item(ImageGalleryPage.Routes.files) {
-            ImageGalleryMedia(it, onImageSelected)
+            ImageGalleryMedia(it, onImageSelected, onRetry = { viewModel.selectFolder(it.folder) })
         }
     }
 
@@ -55,7 +53,7 @@ fun ImageGalleryScreen(viewModel: ImageGalleryViewModel, onTopLevelBack: () -> U
 
 
 @Composable
-fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit) {
+fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit, onRetry: () -> Unit) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
 
     val gradient = Brush.verticalGradient(
@@ -106,12 +104,12 @@ fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Un
             }
         }
 
-        is Lce.Error -> GenericError { }
+        is Lce.Error -> GenericError(cause = content.cause, action = onRetry)
     }
 }
 
 @Composable
-fun ImageGalleryMedia(state: ImageGalleryPage.Files, onFileSelected: (Media) -> Unit) {
+fun ImageGalleryMedia(state: ImageGalleryPage.Files, onFileSelected: (Media) -> Unit, onRetry: () -> Unit) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
 
     Column {
@@ -149,7 +147,7 @@ fun ImageGalleryMedia(state: ImageGalleryPage.Files, onFileSelected: (Media) -> 
                 }
             }
 
-            is Lce.Error -> GenericError { }
+            is Lce.Error -> GenericError(cause = content.cause, action = onRetry)
         }
 
     }

@@ -48,7 +48,7 @@ class ImageGalleryViewModel(
                     route = ImageGalleryPage.Routes.files,
                     label = page.label,
                     parent = ImageGalleryPage.Routes.folders,
-                    state = ImageGalleryPage.Files(Lce.Loading())
+                    state = ImageGalleryPage.Files(Lce.Loading(), folder)
                 )
             )
         }
@@ -78,7 +78,7 @@ data class ImageGalleryState(
 
 sealed interface ImageGalleryPage {
     data class Folders(val content: Lce<List<Folder>>) : ImageGalleryPage
-    data class Files(val content: Lce<List<Media>>) : ImageGalleryPage
+    data class Files(val content: Lce<List<Media>>, val folder: Folder) : ImageGalleryPage
 
     object Routes {
         val folders = Route<Folders>("Folders")
