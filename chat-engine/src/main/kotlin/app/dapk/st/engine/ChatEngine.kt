@@ -20,4 +20,5 @@ interface ChatEngine {
 
     suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult>
 
+    suspend fun send(message: SendMessage, room: RoomOverview)
 }

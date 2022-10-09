@@ -6,9 +6,8 @@ import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.SendMessage
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
@@ -17,15 +16,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.time.Clock
 
 internal class MessengerViewModel(
     private val chatEngine: ChatEngine,
-    private val messageService: MessageService,
-    private val localIdFactory: LocalIdFactory,
-    private val imageContentReader: ImageContentReader,
     private val messageOptionsStore: MessageOptionsStore,
-    private val clock: Clock,
     factory: MutableStateFactory<MessengerScreenState> = defaultStateFactory(),
 ) : DapkViewModel<MessengerScreenState, MessengerEvent>(
     initialState = MessengerScreenState(
@@ -83,6 +77,7 @@ internal class MessengerViewModel(
         }
     }
 
+
     private fun sendMessage() {
         when (val composerState = state.composerState) {
             is ComposerState.Text -> {
@@ -92,27 +87,23 @@ internal class MessengerViewModel(
                 state.roomState.takeIfContent()?.let { content ->
                     val roomState = content.roomState
                     viewModelScope.launch {
-                        messageService.scheduleMessage(
-                            MessageService.Message.TextMessage(
-                                MessageService.Message.Content.TextContent(body = copy.value),
-                                roomId = roomState.roomOverview.roomId,
-                                sendEncrypted = roomState.roomOverview.isEncrypted,
-                                localId = localIdFactory.create(),
-                                timestampUtc = clock.millis(),
+                        chatEngine.send(
+                            message = SendMessage.TextMessage(
+                                content = copy.value,
                                 reply = copy.reply?.let {
-                                    MessageService.Message.TextMessage.Reply(
+                                    SendMessage.TextMessage.Reply(
                                         author = it.author,
                                         originalMessage = when (it) {
                                             is RoomEvent.Image -> TODO()
                                             is RoomEvent.Reply -> TODO()
                                             is RoomEvent.Message -> it.content
                                         },
-                                        replyContent = copy.value,
                                         eventId = it.eventId,
                                         timestampUtc = it.utcTimestamp,
                                     )
                                 }
-                            )
+                            ),
+                            room = roomState.roomOverview,
                         )
                     }
                 }
@@ -125,26 +116,7 @@ internal class MessengerViewModel(
                 state.roomState.takeIfContent()?.let { content ->
                     val roomState = content.roomState
                     viewModelScope.launch {
-                        val imageUri = copy.values.first().uri.value
-                        val meta = imageContentReader.meta(imageUri)
-
-                        messageService.scheduleMessage(
-                            MessageService.Message.ImageMessage(
-                                MessageService.Message.Content.ImageContent(
-                                    uri = imageUri, MessageService.Message.Content.ImageContent.Meta(
-                                        height = meta.height,
-                                        width = meta.width,
-                                        size = meta.size,
-                                        fileName = meta.fileName,
-                                        mimeType = meta.mimeType,
-                                    )
-                                ),
-                                roomId = roomState.roomOverview.roomId,
-                                sendEncrypted = roomState.roomOverview.isEncrypted,
-                                localId = localIdFactory.create(),
-                                timestampUtc = clock.millis(),
-                            )
-                        )
+                        chatEngine.send(SendMessage.ImageMessage(uri = copy.values.first().uri.value), roomState.roomOverview)
                     }
                 }
 

@@ -5,33 +5,19 @@ import app.dapk.st.core.Base64
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
-import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.message.internal.ImageContentReader
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.RoomStore
-import app.dapk.st.matrix.sync.SyncService
-import java.time.Clock
 
 class MessengerModule(
     private val chatEngine: ChatEngine,
-    private val messageService: MessageService,
-    private val clock: Clock,
     private val context: Context,
     private val base64: Base64,
-    private val imageMetaReader: ImageContentReader,
     private val messageOptionsStore: MessageOptionsStore,
 ) : ProvidableModule {
 
     internal fun messengerViewModel(): MessengerViewModel {
         return MessengerViewModel(
             chatEngine,
-            messageService,
-            LocalIdFactory(),
-            imageMetaReader,
             messageOptionsStore,
-            clock
         )
     }
 

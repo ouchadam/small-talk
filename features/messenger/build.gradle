@@ -3,10 +3,6 @@ apply plugin: 'kotlin-parcelize'
 
 dependencies {
     implementation project(":chat-engine")
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:message")
-    implementation project(":matrix:services:crypto")
-    implementation project(":matrix:services:room")
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
     implementation project(":domains:store")

@@ -37,6 +37,7 @@ class MatrixEngine internal constructor(
     private val directoryUseCase: Lazy<DirectoryUseCase>,
     private val matrix: Lazy<MatrixClient>,
     private val timelineUseCase: Lazy<ReadMarkingTimeline>,
+    private val sendMessageUseCase: Lazy<SendMessageUseCase>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
@@ -65,6 +66,10 @@ class MatrixEngine internal constructor(
         return with(matrix.value.cryptoService()) {
             importRoomKeys(password).map { it.engine() }
         }
+    }
+
+    override suspend fun send(message: SendMessage, room: RoomOverview) {
+        sendMessageUseCase.value.send(message, room)
     }
 
     class Factory {
@@ -128,7 +133,12 @@ class MatrixEngine internal constructor(
                 ReadMarkingTimeline(roomStore, credentialsStore, timeline, matrix.roomService())
             }
 
-            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase)
+            val sendMessageUseCase = unsafeLazy {
+                val matrix = lazyMatrix.value
+                SendMessageUseCase(matrix.messageService(), LocalIdFactory(), imageContentReader, Clock.systemUTC())
+            }
+
+            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase, sendMessageUseCase)
 
         }
 

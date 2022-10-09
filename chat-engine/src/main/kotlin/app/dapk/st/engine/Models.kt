@@ -198,3 +198,24 @@ sealed class MessageMeta {
         }
     }
 }
+
+sealed interface SendMessage {
+
+    data class TextMessage(
+        val content: String,
+        val reply: Reply? = null,
+    ) : SendMessage {
+
+        data class Reply(
+            val author: RoomMember,
+            val originalMessage: String,
+            val eventId: EventId,
+            val timestampUtc: Long,
+        )
+    }
+
+    data class ImageMessage(
+        val uri: String,
+    ) : SendMessage
+
+}
