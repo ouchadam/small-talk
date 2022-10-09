@@ -1,12 +1,10 @@
 applyAndroidComposeLibraryModule(project)
 
 dependencies {
+    implementation project(":chat-engine")
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:push")
     implementation project(":domains:android:viewmodel")
-    implementation project(":matrix:services:auth")
-    implementation project(":matrix:services:profile")
-    implementation project(":matrix:services:crypto")
     implementation project(":design-library")
     implementation project(":core")
 }

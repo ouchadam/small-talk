@@ -7,6 +7,7 @@ import app.dapk.st.core.SingletonFlows
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.matrix.MatrixClient
 import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
+import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.crypto.RoomMembersProvider
@@ -27,13 +28,27 @@ import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmStore
 import app.dapk.st.olm.OlmWrapper
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.Clock
 
 class MatrixEngine internal constructor(
     private val directoryUseCase: Lazy<DirectoryUseCase>,
+    private val matrix: Lazy<MatrixClient>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
+    override fun invites(): Flow<InviteState> {
+        return matrix.value.syncService().invites().map { it.map { it.engine() } }
+    }
+
+    override suspend fun login(request: LoginRequest): LoginResult {
+        return matrix.value.authService().login(request.engine()).engine()
+    }
+
+    override suspend fun me(forceRefresh: Boolean): Me {
+        return matrix.value.profileService().me(forceRefresh).engine()
+    }
 
     class Factory {
 
@@ -57,28 +72,30 @@ class MatrixEngine internal constructor(
             knownDeviceStore: KnownDeviceStore,
             olmStore: OlmStore,
         ): ChatEngine {
-            val matrix = MatrixFactory.createMatrix(
-                base64,
-                buildMeta,
-                logger,
-                nameGenerator,
-                coroutineDispatchers,
-                errorTracker,
-                imageContentReader,
-                backgroundScheduler,
-                memberStore,
-                roomStore,
-                profileStore,
-                syncStore,
-                overviewStore,
-                filterStore,
-                localEchoStore,
-                credentialsStore,
-                knownDeviceStore,
-                olmStore
-            )
-
+            val lazyMatrix = unsafeLazy {
+                MatrixFactory.createMatrix(
+                    base64,
+                    buildMeta,
+                    logger,
+                    nameGenerator,
+                    coroutineDispatchers,
+                    errorTracker,
+                    imageContentReader,
+                    backgroundScheduler,
+                    memberStore,
+                    roomStore,
+                    profileStore,
+                    syncStore,
+                    overviewStore,
+                    filterStore,
+                    localEchoStore,
+                    credentialsStore,
+                    knownDeviceStore,
+                    olmStore
+                )
+            }
             val directoryUseCase = unsafeLazy {
+                val matrix = lazyMatrix.value
                 DirectoryUseCase(
                     matrix.syncService(),
                     matrix.messageService(),
@@ -88,7 +105,7 @@ class MatrixEngine internal constructor(
                 )
             }
 
-            return MatrixEngine(directoryUseCase)
+            return MatrixEngine(directoryUseCase, lazyMatrix)
 
         }
 

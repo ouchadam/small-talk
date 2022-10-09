@@ -25,7 +25,6 @@ import app.dapk.st.imageloader.ImageLoaderModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.matrix.MatrixClient
 import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
-import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.crypto.RoomMembersProvider
@@ -171,9 +170,8 @@ internal class FeatureModules internal constructor(
     }
     val loginModule by unsafeLazy {
         LoginModule(
-            matrixModules.auth,
+            matrixModules.engine,
             domainModules.pushModule,
-            matrixModules.profile,
             trackingModule.errorTracker
         )
     }
@@ -191,7 +189,7 @@ internal class FeatureModules internal constructor(
             storeModule.value.messageStore(),
         )
     }
-    val homeModule by unsafeLazy { HomeModule(storeModule.value, matrixModules.profile, matrixModules.sync, buildMeta) }
+    val homeModule by unsafeLazy { HomeModule(matrixModules.engine, storeModule.value, buildMeta) }
     val settingsModule by unsafeLazy {
         SettingsModule(
             storeModule.value,
@@ -473,7 +471,6 @@ internal class MatrixModules(
         }
     }
 
-    val auth by unsafeLazy { matrix.authService() }
     val push by unsafeLazy { matrix.pushService() }
     val sync by unsafeLazy { matrix.syncService() }
     val message by unsafeLazy { matrix.messageService() }

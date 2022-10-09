@@ -5,8 +5,4 @@ plugins {
 dependencies {
     api Dependencies.mavenCentral.kotlinCoroutinesCore
     api project(":matrix:common")
-
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:message")
-    implementation project(":matrix:services:room")
 }
