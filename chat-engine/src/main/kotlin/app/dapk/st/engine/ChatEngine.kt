@@ -16,9 +16,19 @@ interface ChatEngine {
 
     suspend fun me(forceRefresh: Boolean): Me
 
-    suspend fun refresh(roomIds: List<RoomId>)
-
     suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult>
 
     suspend fun send(message: SendMessage, room: RoomOverview)
+
+    fun mediaDecrypter(): MediaDecrypter
+}
+
+interface MediaDecrypter {
+
+    fun decrypt(input: InputStream, k: String, iv: String): Collector
+
+    fun interface Collector {
+        fun collect(partial: (ByteArray) -> Unit)
+    }
+
 }

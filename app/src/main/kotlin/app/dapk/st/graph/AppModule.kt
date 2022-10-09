@@ -179,7 +179,6 @@ internal class FeatureModules internal constructor(
         MessengerModule(
             matrixModules.engine,
             context,
-            base64,
             storeModule.value.messageStore(),
         )
     }
@@ -466,10 +465,8 @@ internal class MatrixModules(
 
     val push by unsafeLazy { matrix.pushService() }
     val sync by unsafeLazy { matrix.syncService() }
-    val message by unsafeLazy { matrix.messageService() }
     val room by unsafeLazy { matrix.roomService() }
     val profile by unsafeLazy { matrix.profileService() }
-    val crypto by unsafeLazy { matrix.cryptoService() }
 }
 
 internal class DomainModules(

@@ -21,7 +21,7 @@ interface SyncService : MatrixService {
     fun startSyncing(): Flow<Unit>
     fun events(roomId: RoomId? = null): Flow<List<SyncEvent>>
     suspend fun observeEvent(eventId: EventId): Flow<EventId>
-    suspend fun forceManualRefresh(roomIds: List<RoomId>)
+    suspend fun forceManualRefresh(roomIds: Set<RoomId>)
 
     @JvmInline
     value class FilterId(val value: String)

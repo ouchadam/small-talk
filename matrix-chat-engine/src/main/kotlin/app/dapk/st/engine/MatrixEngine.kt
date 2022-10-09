@@ -10,10 +10,7 @@ import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
 import app.dapk.st.matrix.auth.authService
 import app.dapk.st.matrix.auth.installAuthService
 import app.dapk.st.matrix.common.*
-import app.dapk.st.matrix.crypto.RoomMembersProvider
-import app.dapk.st.matrix.crypto.Verification
-import app.dapk.st.matrix.crypto.cryptoService
-import app.dapk.st.matrix.crypto.installCryptoService
+import app.dapk.st.matrix.crypto.*
 import app.dapk.st.matrix.device.KnownDeviceStore
 import app.dapk.st.matrix.device.deviceService
 import app.dapk.st.matrix.device.installEncryptionService
@@ -30,6 +27,7 @@ import app.dapk.st.olm.OlmStore
 import app.dapk.st.olm.OlmWrapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import java.io.InputStream
 import java.time.Clock
 
@@ -38,6 +36,7 @@ class MatrixEngine internal constructor(
     private val matrix: Lazy<MatrixClient>,
     private val timelineUseCase: Lazy<ReadMarkingTimeline>,
     private val sendMessageUseCase: Lazy<SendMessageUseCase>,
+    private val matrixMediaDecrypter: Lazy<MatrixMediaDecrypter>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
@@ -57,19 +56,34 @@ class MatrixEngine internal constructor(
         return matrix.value.profileService().me(forceRefresh).engine()
     }
 
-    override suspend fun refresh(roomIds: List<RoomId>) {
-        matrix.value.syncService().forceManualRefresh(roomIds)
-
-    }
-
     override suspend fun InputStream.importRoomKeys(password: String): Flow<ImportResult> {
         return with(matrix.value.cryptoService()) {
-            importRoomKeys(password).map { it.engine() }
+            importRoomKeys(password).map { it.engine() }.onEach {
+                when (it) {
+                    is ImportResult.Error,
+                    is ImportResult.Update -> {
+                        // do nothing
+                    }
+
+                    is ImportResult.Success -> matrix.value.syncService().forceManualRefresh(it.roomIds)
+                }
+            }
         }
     }
 
     override suspend fun send(message: SendMessage, room: RoomOverview) {
         sendMessageUseCase.value.send(message, room)
+    }
+
+    override fun mediaDecrypter(): MediaDecrypter {
+        val mediaDecrypter = matrixMediaDecrypter.value
+        return object : MediaDecrypter {
+            override fun decrypt(input: InputStream, k: String, iv: String): MediaDecrypter.Collector {
+                return MediaDecrypter.Collector {
+                    mediaDecrypter.decrypt(input, k, iv).collect(it)
+                }
+            }
+        }
     }
 
     class Factory {
@@ -138,8 +152,9 @@ class MatrixEngine internal constructor(
                 SendMessageUseCase(matrix.messageService(), LocalIdFactory(), imageContentReader, Clock.systemUTC())
             }
 
-            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase, sendMessageUseCase)
+            val mediaDecrypter = unsafeLazy { MatrixMediaDecrypter(base64) }
 
+            return MatrixEngine(directoryUseCase, lazyMatrix, timelineUseCase, sendMessageUseCase, mediaDecrypter)
         }
 
     }

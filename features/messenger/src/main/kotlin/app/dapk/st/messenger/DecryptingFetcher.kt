@@ -2,10 +2,9 @@ package app.dapk.st.messenger
 
 import android.content.Context
 import android.os.Environment
-import app.dapk.st.core.Base64
+import app.dapk.st.engine.MediaDecrypter
+import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.crypto.MediaDecrypter
-import app.dapk.st.matrix.sync.RoomEvent
 import coil.ImageLoader
 import coil.decode.DataSource
 import coil.decode.ImageSource
@@ -20,9 +19,11 @@ import okio.BufferedSource
 import okio.Path.Companion.toOkioPath
 import java.io.File
 
-class DecryptingFetcherFactory(private val context: Context, base64: Base64, private val roomId: RoomId) : Fetcher.Factory<RoomEvent.Image> {
-
-    private val mediaDecrypter = MediaDecrypter(base64)
+class DecryptingFetcherFactory(
+    private val context: Context,
+    private val roomId: RoomId,
+    private val mediaDecrypter: MediaDecrypter,
+) : Fetcher.Factory<RoomEvent.Image> {
 
     override fun create(data: RoomEvent.Image, options: Options, imageLoader: ImageLoader): Fetcher {
         return DecryptingFetcher(data, context, mediaDecrypter, roomId)

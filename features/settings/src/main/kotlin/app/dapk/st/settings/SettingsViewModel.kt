@@ -147,19 +147,6 @@ internal class SettingsViewModel(
                             fileStream.importRoomKeys(passphrase)
                                 .onEach {
                                     updatePageState<Page.ImportRoomKey> { copy(importProgress = it) }
-                                    when (it) {
-                                        is ImportResult.Error -> {
-                                            // do nothing
-                                        }
-
-                                        is ImportResult.Update -> {
-                                            // do nothing
-                                        }
-
-                                        is ImportResult.Success -> {
-                                            chatEngine.refresh(it.roomIds.toList())
-                                        }
-                                    }
                                 }
                                 .launchIn(viewModelScope)
                         },

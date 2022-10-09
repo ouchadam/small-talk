@@ -12,7 +12,7 @@ private const val CIPHER_ALGORITHM = "AES/CTR/NoPadding"
 private const val SECRET_KEY_SPEC_ALGORITHM = "AES"
 private const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"
 
-class MediaDecrypter(private val base64: Base64) {
+class MatrixMediaDecrypter(private val base64: Base64) {
 
     fun decrypt(input: InputStream, k: String, iv: String): Collector {
         val key = base64.decode(k.replace('-', '+').replace('_', '/'))
