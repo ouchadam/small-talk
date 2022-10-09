@@ -63,7 +63,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
     }
     Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
         item(Page.Routes.root) {
-            RootSettings(it) { viewModel.onClick(it) }
+            RootSettings(it, onClick = { viewModel.onClick(it) }, onRetry = { viewModel.start() })
         }
         item(Page.Routes.encryption) {
             Encryption(viewModel, it)
@@ -180,7 +180,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
 }
 
 @Composable
-private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
+private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit, onRetry: () -> Unit) {
     when (val content = page.content) {
         is Lce.Content -> {
             LazyColumn(
@@ -226,12 +226,10 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit) {
             }
         }
 
-        is Lce.Error -> {
-            // TODO
-        }
+        is Lce.Error -> GenericError(cause = content.cause, action = onRetry)
 
         is Lce.Loading -> {
-            // TODO
+            // Should be quick enough to avoid needing a loading state
         }
     }
 }
@@ -264,7 +262,7 @@ private fun PushProviders(viewModel: SettingsViewModel, state: Page.PushProvider
             }
         }
 
-        is Lce.Error -> TODO()
+        is Lce.Error -> GenericError(cause = lce.cause) { viewModel.fetchPushProviders() }
     }
 }
 

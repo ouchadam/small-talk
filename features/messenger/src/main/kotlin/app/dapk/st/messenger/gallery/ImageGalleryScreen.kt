@@ -51,7 +51,6 @@ fun ImageGalleryScreen(viewModel: ImageGalleryViewModel, onTopLevelBack: () -> U
 
 }
 
-
 @Composable
 fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit, onRetry: () -> Unit) {
     val screenWidth = LocalConfiguration.current.screenWidthDp

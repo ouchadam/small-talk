@@ -10,20 +10,25 @@ fun <T : Any> Spider(currentPage: SpiderPage<T>, onNavigate: (SpiderPage<out T>?
     val pageCache = remember { mutableMapOf<Route<*>, SpiderPage<out T>>() }
     pageCache[currentPage.route] = currentPage
 
+    val navigateAndPopStack = {
+        pageCache.remove(currentPage.route)
+        onNavigate(pageCache[currentPage.parent])
+    }
+    val itemScope = object : SpiderItemScope {
+        override fun goBack() {
+            navigateAndPopStack()
+        }
+    }
+
     val computedWeb = remember(true) {
         mutableMapOf<Route<*>, @Composable (T) -> Unit>().also { computedWeb ->
             val scope = object : SpiderScope {
-                override fun <T> item(route: Route<T>, content: @Composable (T) -> Unit) {
-                    computedWeb[route] = { content(it as T) }
+                override fun <T> item(route: Route<T>, content: @Composable SpiderItemScope.(T) -> Unit) {
+                    computedWeb[route] = { content(itemScope, it as T) }
                 }
             }
             graph.invoke(scope)
         }
-    }
-
-    val navigateAndPopStack = {
-        pageCache.remove(currentPage.route)
-        onNavigate(pageCache[currentPage.parent])
     }
 
     Column {
@@ -40,7 +45,11 @@ fun <T : Any> Spider(currentPage: SpiderPage<T>, onNavigate: (SpiderPage<out T>?
 
 
 interface SpiderScope {
-    fun <T> item(route: Route<T>, content: @Composable (T) -> Unit)
+    fun <T> item(route: Route<T>, content: @Composable SpiderItemScope.(T) -> Unit)
+}
+
+interface SpiderItemScope {
+    fun goBack()
 }
 
 data class SpiderPage<T>(
