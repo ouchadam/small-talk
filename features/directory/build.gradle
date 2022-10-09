@@ -1,9 +1,7 @@
 applyAndroidComposeLibraryModule(project)
 
 dependencies {
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:message")
-    implementation project(":matrix:services:room")
+    implementation project(":chat-engine")
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
     implementation project(":features:messenger")

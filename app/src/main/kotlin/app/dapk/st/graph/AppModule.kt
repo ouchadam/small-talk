@@ -17,6 +17,7 @@ import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
+import app.dapk.st.engine.MatrixEngine
 import app.dapk.st.firebase.messaging.MessagingModule
 import app.dapk.st.home.HomeModule
 import app.dapk.st.home.MainActivity
@@ -164,12 +165,8 @@ internal class FeatureModules internal constructor(
 
     val directoryModule by unsafeLazy {
         DirectoryModule(
-            syncService = matrixModules.sync,
-            messageService = matrixModules.message,
             context = context,
-            credentialsStore = storeModule.value.credentialsStore(),
-            roomStore = storeModule.value.roomStore(),
-            roomService = matrixModules.room,
+            chatEngine = matrixModules.engine,
         )
     }
     val loginModule by unsafeLazy {
@@ -251,6 +248,30 @@ internal class MatrixModules(
     private val base64: Base64,
     private val buildMeta: BuildMeta,
 ) {
+
+    val engine by unsafeLazy {
+        val store = storeModule.value
+        MatrixEngine.Factory().create(
+            base64,
+            buildMeta,
+            logger,
+            SmallTalkDeviceNameGenerator(),
+            coroutineDispatchers,
+            trackingModule.errorTracker,
+            imageContentReader,
+            BackgroundWorkAdapter(workModule.workScheduler()),
+            store.memberStore(),
+            store.roomStore(),
+            store.profileStore(),
+            store.syncStore(),
+            store.overviewStore(),
+            store.filterStore(),
+            store.localEchoStore,
+            store.credentialsStore(),
+            store.knownDevicesStore(),
+            OlmPersistenceWrapper(store.olmStore(), base64),
+        )
+    }
 
     val matrix by unsafeLazy {
         val store = storeModule.value

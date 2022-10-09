@@ -106,6 +106,9 @@ dependencies {
 
     implementation project(":core")
 
+    implementation project(":chat-engine")
+    implementation project(":matrix-chat-engine")
+
     implementation Dependencies.google.androidxComposeUi
     implementation Dependencies.mavenCentral.ktorAndroid
     implementation Dependencies.mavenCentral.sqldelightAndroid

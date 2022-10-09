@@ -1,0 +1,23 @@
+plugins {
+    id 'kotlin'
+}
+
+dependencies {
+    api Dependencies.mavenCentral.kotlinCoroutinesCore
+
+    implementation project(":core")
+    implementation project(":chat-engine")
+
+    implementation project(":domains:olm")
+
+    implementation project(":matrix:matrix")
+    implementation project(":matrix:matrix-http-ktor")
+    implementation project(":matrix:services:auth")
+    implementation project(":matrix:services:sync")
+    implementation project(":matrix:services:room")
+    implementation project(":matrix:services:push")
+    implementation project(":matrix:services:message")
+    implementation project(":matrix:services:device")
+    implementation project(":matrix:services:crypto")
+    implementation project(":matrix:services:profile")
+}

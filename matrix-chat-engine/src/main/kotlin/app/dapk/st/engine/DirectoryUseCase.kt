@@ -1,4 +1,4 @@
-package app.dapk.st.directory
+package app.dapk.st.engine
 
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.RoomId
@@ -6,22 +6,12 @@ import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.*
+import app.dapk.st.matrix.sync.RoomStore
+import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.matrix.sync.SyncService.SyncEvent.Typing
 import kotlinx.coroutines.flow.*
 
-@JvmInline
-value class UnreadCount(val value: Int)
-
-typealias DirectoryState = List<RoomFoo>
-
-data class RoomFoo(
-    val overview: RoomOverview,
-    val unreadCount: UnreadCount,
-    val typing: Typing?
-)
-
-class DirectoryUseCase(
+internal class DirectoryUseCase(
     private val syncService: SyncService,
     private val messageService: MessageService,
     private val roomService: RoomService,
@@ -38,10 +28,10 @@ class DirectoryUseCase(
                 syncService.events()
             ) { overviewState, localEchos, unread, events ->
                 overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
-                    RoomFoo(
+                    DirectoryItem(
                         overview = roomOverview,
                         unreadCount = UnreadCount(unread[roomOverview.roomId] ?: 0),
-                        typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }
+                        typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }?.engine()
                     )
                 }
             }
@@ -50,7 +40,7 @@ class DirectoryUseCase(
 
     private fun overviewDatasource() = combine(
         syncService.startSyncing().map { false }.onStart { emit(true) },
-        syncService.overview()
+        syncService.overview().map { it.map { it.engine() } }
     ) { isFirstLoad, overview ->
         when {
             isFirstLoad && overview.isEmpty() -> null
@@ -81,7 +71,7 @@ class DirectoryUseCase(
         val latestEcho = echos.maxByOrNull { it.timestampUtc }
         return if (latestEcho != null && latestEcho.timestampUtc > (this.lastMessage?.utcTimestamp ?: 0)) {
             this.copy(
-                lastMessage = LastMessage(
+                lastMessage = RoomOverview.LastMessage(
                     content = when (val message = latestEcho.message) {
                         is MessageService.Message.TextMessage -> message.content.body
                         is MessageService.Message.ImageMessage -> "\uD83D\uDCF7"
@@ -96,3 +86,6 @@ class DirectoryUseCase(
     }
 
 }
+
+
+
