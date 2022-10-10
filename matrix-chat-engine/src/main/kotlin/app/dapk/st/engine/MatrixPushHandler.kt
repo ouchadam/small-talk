@@ -64,7 +64,7 @@ class MatrixPushHandler(
 
     private suspend fun waitForEvent(timeout: Long, eventId: EventId): EventId? {
         return withTimeoutOrNull(timeout) {
-            combine(syncService.startSyncing().startInstantly(), syncService.observeEvent(eventId)) { _, event -> event }
+            combine(syncService.startSyncing(), syncService.observeEvent(eventId)) { _, event -> event }
                 .firstOrNull {
                     it == eventId
                 }
@@ -73,11 +73,9 @@ class MatrixPushHandler(
 
     private suspend fun waitForUnreadChange(timeout: Long): String? {
         return withTimeoutOrNull(timeout) {
-            combine(syncService.startSyncing().startInstantly(), roomStore.observeUnread()) { _, unread -> unread }
+            combine(syncService.startSyncing(), roomStore.observeUnread()) { _, unread -> unread }
                 .first()
             "ignored"
         }
     }
-
-    private fun Flow<Unit>.startInstantly() = this.onStart { emit(Unit) }
 }

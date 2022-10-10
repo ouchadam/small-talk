@@ -1,6 +1,5 @@
 package app.dapk.st.engine
 
-import app.dapk.st.core.extensions.startAndIgnoreEmissions
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
@@ -44,8 +43,8 @@ internal class TimelineUseCaseImpl(
     }
 
     private fun roomDatasource(roomId: RoomId) = combine(
-        syncService.startSyncing().startAndIgnoreEmissions(),
-        syncService.room(roomId).map { it.engine()  }
+        syncService.startSyncing(),
+        syncService.room(roomId).map { it.engine() }
     ) { _, room -> room }
 }
 

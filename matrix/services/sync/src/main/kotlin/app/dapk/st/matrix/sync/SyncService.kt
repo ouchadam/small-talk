@@ -18,6 +18,11 @@ interface SyncService : MatrixService {
     fun invites(): Flow<InviteState>
     fun overview(): Flow<OverviewState>
     fun room(roomId: RoomId): Flow<RoomState>
+
+    /**
+     * Subscribe to keep the background syncing alive
+     * Emits once, either when the initial sync completes or immediately if has already sync'd once
+     */
     fun startSyncing(): Flow<Unit>
     fun events(roomId: RoomId? = null): Flow<List<SyncEvent>>
     suspend fun observeEvent(eventId: EventId): Flow<EventId>
@@ -31,6 +36,7 @@ interface SyncService : MatrixService {
 
         data class Typing(override val roomId: RoomId, val members: List<RoomMember>) : SyncEvent
     }
+
 }
 
 fun MatrixServiceInstaller.installSyncService(

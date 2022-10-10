@@ -1,6 +1,8 @@
 package app.dapk.st.core.extensions
 
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.takeWhile
 
 suspend fun <T> Flow<T>.firstOrNull(count: Int, predicate: suspend (T) -> Boolean): T? {
     var counter = 0
@@ -18,5 +20,3 @@ suspend fun <T> Flow<T>.firstOrNull(count: Int, predicate: suspend (T) -> Boolea
 
     return result
 }
-
-fun <T> Flow<T>.startAndIgnoreEmissions(): Flow<Boolean> = this.map { false }.onStart { emit(true) }.filter { it }

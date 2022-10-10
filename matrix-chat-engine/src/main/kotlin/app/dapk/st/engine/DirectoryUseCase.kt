@@ -39,14 +39,9 @@ internal class DirectoryUseCase(
     }
 
     private fun overviewDatasource() = combine(
-        syncService.startSyncing().map { false }.onStart { emit(true) },
+        syncService.startSyncing(),
         syncService.overview().map { it.map { it.engine() } }
-    ) { isFirstLoad, overview ->
-        when {
-            isFirstLoad && overview.isEmpty() -> null
-            else -> overview
-        }
-    }.filterNotNull()
+    ) { _, overview -> overview }.filterNotNull()
 
     private suspend fun OverviewState.mergeWithLocalEchos(localEchos: Map<RoomId, List<MessageService.LocalEcho>>, userId: UserId): OverviewState {
         return when {
