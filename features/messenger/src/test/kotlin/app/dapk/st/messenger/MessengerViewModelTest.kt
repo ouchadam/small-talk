@@ -2,27 +2,23 @@ package app.dapk.st.messenger
 
 import ViewModelTest
 import app.dapk.st.core.Lce
-import app.dapk.st.engine.*
-import app.dapk.st.matrix.common.*
+import app.dapk.st.engine.MessengerState
+import app.dapk.st.engine.RoomState
+import app.dapk.st.engine.SendMessage
+import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.UserId
+import fake.FakeChatEngine
 import fake.FakeMessageOptionsStore
 import fixture.*
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
-import test.delegateReturn
 
 private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
 private const val A_MESSAGE_CONTENT = "message content"
 private val AN_EVENT_ID = anEventId("state event")
 private val A_SELF_ID = aUserId("self")
-
-class FakeChatEngine : ChatEngine by mockk() {
-
-    fun givenMessages(roomId: RoomId, disableReadReceipts: Boolean) = every { messages(roomId, disableReadReceipts) }.delegateReturn()
-
-}
 
 class MessengerViewModelTest {
 

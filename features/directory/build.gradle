@@ -11,11 +11,10 @@ dependencies {
 
     kotlinTest(it)
 
-    androidImportFixturesWorkaround(project, project(":matrix:services:sync"))
-    androidImportFixturesWorkaround(project, project(":matrix:services:message"))
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":domains:store"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
+    androidImportFixturesWorkaround(project, project(":chat-engine"))
 }
