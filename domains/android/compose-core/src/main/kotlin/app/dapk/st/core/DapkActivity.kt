@@ -75,6 +75,16 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
         }
     }
 
+    protected fun registerForPermission(permission: String, callback: () -> Unit = {}): () -> Unit {
+        val resultCallback: (result: Boolean) -> Unit = { result ->
+            if (result) {
+                callback()
+            }
+        }
+        val launcher = registerForActivityResult(ActivityResultContracts.RequestPermission(), resultCallback)
+        return { launcher.launch(permission) }
+    }
+
     protected suspend fun ensurePermission(permission: String): PermissionResult {
         return when {
             checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED -> PermissionResult.Granted
