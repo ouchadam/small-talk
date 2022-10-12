@@ -2,6 +2,7 @@ package app.dapk.st.messenger
 
 import ViewModelTest
 import app.dapk.st.core.Lce
+import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.engine.MessengerState
 import app.dapk.st.engine.RoomState
 import app.dapk.st.engine.SendMessage
@@ -72,9 +73,10 @@ class MessengerViewModelTest {
 
     @Test
     fun `given composer message state when posting send text, then resets composer state and sends message`() = runViewModelTest {
-        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT), aRoomOverview()) }
+        val initialState = initialStateWithComposerMessage(A_ROOM_ID, A_MESSAGE_CONTENT)
+        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT), initialState.roomState.takeIfContent()!!.roomState.roomOverview) }
 
-        viewModel.test(initialState = initialStateWithComposerMessage(A_ROOM_ID, A_MESSAGE_CONTENT)).post(MessengerAction.ComposerSendText)
+        viewModel.test(initialState = initialState).post(MessengerAction.ComposerSendText)
 
         assertStates<MessengerScreenState>({ copy(composerState = ComposerState.Text("", reply = null)) })
         verifyExpects()

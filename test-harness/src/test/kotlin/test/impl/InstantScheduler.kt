@@ -12,7 +12,7 @@ class InstantScheduler(private val matrixClient: MatrixClient) : BackgroundSched
             matrixClient.run(
                 MatrixTaskRunner.MatrixTask(
                     task.type,
-                    task.jsonPayload
+                    task.jsonPayload.value,
                 )
             )
         }
