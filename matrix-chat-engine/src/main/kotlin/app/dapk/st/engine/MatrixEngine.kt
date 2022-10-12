@@ -46,8 +46,8 @@ class MatrixEngine internal constructor(
     override fun directory() = directoryUseCase.value.state()
     override fun invites() = inviteUseCase.value.invites()
 
-    override suspend fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState> {
-        return timelineUseCase.value.foo(roomId, isReadReceiptsDisabled = disableReadReceipts)
+    override fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState> {
+        return timelineUseCase.value.fetch(roomId, isReadReceiptsDisabled = disableReadReceipts)
     }
 
     override suspend fun login(request: LoginRequest): LoginResult {

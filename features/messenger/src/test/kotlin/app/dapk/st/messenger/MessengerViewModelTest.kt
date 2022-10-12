@@ -2,58 +2,38 @@ package app.dapk.st.messenger
 
 import ViewModelTest
 import app.dapk.st.core.Lce
-import app.dapk.st.matrix.common.EventId
-import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.UserId
-import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.message.internal.ImageContentReader
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.RoomState
-import app.dapk.st.matrix.sync.SyncService
-import fake.FakeCredentialsStore
+import app.dapk.st.engine.*
+import app.dapk.st.matrix.common.*
 import fake.FakeMessageOptionsStore
-import fake.FakeRoomStore
 import fixture.*
-import internalfake.FakeLocalIdFactory
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 import test.delegateReturn
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 
-private const val A_CURRENT_TIMESTAMP = 10000L
 private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
 private const val A_MESSAGE_CONTENT = "message content"
-private const val A_LOCAL_ID = "local.1111-2222-3333"
 private val AN_EVENT_ID = anEventId("state event")
 private val A_SELF_ID = aUserId("self")
+
+class FakeChatEngine : ChatEngine by mockk() {
+
+    fun givenMessages(roomId: RoomId, disableReadReceipts: Boolean) = every { messages(roomId, disableReadReceipts) }.delegateReturn()
+
+}
 
 class MessengerViewModelTest {
 
     private val runViewModelTest = ViewModelTest()
 
-    private val fakeMessageService = FakeMessageService()
-    private val fakeRoomService = FakeRoomService()
-    private val fakeRoomStore = FakeRoomStore()
-    private val fakeCredentialsStore = FakeCredentialsStore().also { it.givenCredentials().returns(aUserCredentials(userId = A_SELF_ID)) }
-    private val fakeObserveTimelineUseCase = FakeObserveTimelineUseCase()
     private val fakeMessageOptionsStore = FakeMessageOptionsStore()
+    private val fakeChatEngine = FakeChatEngine()
 
     private val viewModel = MessengerViewModel(
-        fakeMessageService,
-        fakeRoomService,
-        fakeRoomStore,
-        fakeCredentialsStore,
-        fakeObserveTimelineUseCase,
-        localIdFactory = FakeLocalIdFactory().also { it.givenCreate().returns(A_LOCAL_ID) }.instance,
-        imageContentReader = FakeImageContentReader(),
-        messageOptionsStore = fakeMessageOptionsStore.instance,
-        clock = fixedClock(A_CURRENT_TIMESTAMP),
+        fakeChatEngine,
+        fakeMessageOptionsStore.instance,
         factory = runViewModelTest.testMutableStateFactory(),
     )
 
@@ -73,10 +53,8 @@ class MessengerViewModelTest {
     @Test
     fun `given timeline emits state, when starting, then updates state and marks room and events as read`() = runViewModelTest {
         fakeMessageOptionsStore.givenReadReceiptsDisabled().returns(READ_RECEIPTS_ARE_DISABLED)
-        fakeRoomStore.expectUnit(times = 2) { it.markRead(A_ROOM_ID) }
-        fakeRoomService.expectUnit { it.markFullyRead(A_ROOM_ID, AN_EVENT_ID, isPrivate = READ_RECEIPTS_ARE_DISABLED) }
         val state = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
-        fakeObserveTimelineUseCase.given(A_ROOM_ID, A_SELF_ID).returns(flowOf(state))
+        fakeChatEngine.givenMessages(A_ROOM_ID, READ_RECEIPTS_ARE_DISABLED).returns(flowOf(state))
 
         viewModel.test().post(MessengerAction.OnMessengerVisible(A_ROOM_ID, attachments = null))
 
@@ -98,7 +76,7 @@ class MessengerViewModelTest {
 
     @Test
     fun `given composer message state when posting send text, then resets composer state and sends message`() = runViewModelTest {
-        fakeMessageService.expectUnit { it.scheduleMessage(expectEncryptedMessage(A_ROOM_ID, A_LOCAL_ID, A_CURRENT_TIMESTAMP, A_MESSAGE_CONTENT)) }
+        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT), aRoomOverview()) }
 
         viewModel.test(initialState = initialStateWithComposerMessage(A_ROOM_ID, A_MESSAGE_CONTENT)).post(MessengerAction.ComposerSendText)
 
@@ -114,9 +92,8 @@ class MessengerViewModelTest {
         return aMessageScreenState(roomId, aMessengerState(roomState = roomState), messageContent)
     }
 
-    private fun expectEncryptedMessage(roomId: RoomId, localId: String, timestamp: Long, messageContent: String): MessageService.Message.TextMessage {
-        val content = MessageService.Message.Content.TextContent(body = messageContent)
-        return MessageService.Message.TextMessage(content, sendEncrypted = true, roomId, localId, timestamp)
+    private fun expectTextMessage(messageContent: String): SendMessage.TextMessage {
+        return SendMessage.TextMessage(messageContent, reply = null)
     }
 
     private fun aMessengerStateWithEvent(eventId: EventId, selfId: UserId) = aRoomStateWithEventId(eventId).toMessengerState(selfId)
@@ -135,27 +112,3 @@ fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerState, m
     roomState = Lce.Content(roomState),
     composerState = ComposerState.Text(value = messageContent ?: "", reply = null)
 )
-
-fun aMessengerState(
-    self: UserId = aUserId(),
-    roomState: RoomState,
-    typing: SyncService.SyncEvent.Typing? = null
-) = MessengerState(self, roomState, typing)
-
-class FakeObserveTimelineUseCase : ObserveTimelineUseCase by mockk() {
-    fun given(roomId: RoomId, selfId: UserId) = coEvery { this@FakeObserveTimelineUseCase.invoke(roomId, selfId) }.delegateReturn()
-}
-
-class FakeMessageService : MessageService by mockk() {
-
-    fun givenEchos(roomId: RoomId) = every { localEchos(roomId) }.delegateReturn()
-
-}
-
-class FakeRoomService : RoomService by mockk() {
-    fun givenFindMember(roomId: RoomId, userId: UserId) = coEvery { findMember(roomId, userId) }.delegateReturn()
-}
-
-fun fixedClock(timestamp: Long = 0) = Clock.fixed(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC)
-
-class FakeImageContentReader : ImageContentReader by mockk()

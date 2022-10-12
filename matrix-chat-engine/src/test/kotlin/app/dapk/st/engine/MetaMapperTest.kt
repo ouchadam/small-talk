@@ -1,7 +1,6 @@
-package app.dapk.st.messenger
+package app.dapk.st.engine
 
 import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.sync.MessageMeta
 import fixture.aLocalEcho
 import fixture.aTextMessage
 import org.amshove.kluent.shouldBeEqualTo

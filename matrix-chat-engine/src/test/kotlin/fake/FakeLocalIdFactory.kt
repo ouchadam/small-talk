@@ -1,6 +1,6 @@
-package internalfake
+package fake
 
-import app.dapk.st.messenger.LocalIdFactory
+import app.dapk.st.engine.LocalIdFactory
 import io.mockk.every
 import io.mockk.mockk
 import test.delegateReturn

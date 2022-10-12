@@ -1,7 +1,7 @@
-package internalfake
+package fake
 
+import app.dapk.st.engine.MetaMapper
 import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.messenger.MetaMapper
 import io.mockk.every
 import io.mockk.mockk
 import test.delegateReturn

@@ -10,9 +10,7 @@ import app.dapk.st.matrix.sync.RoomStore
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 
 class ReadMarkingTimeline(
     private val roomStore: RoomStore,
@@ -21,15 +19,19 @@ class ReadMarkingTimeline(
     private val roomService: RoomService,
 ) {
 
-    suspend fun foo(roomId: RoomId, isReadReceiptsDisabled: Boolean): Flow<MessengerState> {
-        var lastKnownReadEvent: EventId? = null
-        val credentials = credentialsStore.credentials()!!
-        roomStore.markRead(roomId)
-        return observeTimelineUseCase.invoke(roomId, credentials.userId).distinctUntilChanged().onEach { state ->
-            state.latestMessageEventFromOthers(self = credentials.userId)?.let {
-                if (lastKnownReadEvent != it) {
-                    updateRoomReadStateAsync(latestReadEvent = it, state, isReadReceiptsDisabled)
-                    lastKnownReadEvent = it
+    fun fetch(roomId: RoomId, isReadReceiptsDisabled: Boolean): Flow<MessengerState> {
+        return flow {
+            val credentials = credentialsStore.credentials()!!
+            roomStore.markRead(roomId)
+            emit(credentials)
+        }.flatMapMerge { credentials ->
+            var lastKnownReadEvent: EventId? = null
+            observeTimelineUseCase.invoke(roomId, credentials.userId).distinctUntilChanged().onEach { state ->
+                state.latestMessageEventFromOthers(self = credentials.userId)?.let {
+                    if (lastKnownReadEvent != it) {
+                        updateRoomReadStateAsync(latestReadEvent = it, state, isReadReceiptsDisabled)
+                        lastKnownReadEvent = it
+                    }
                 }
             }
         }

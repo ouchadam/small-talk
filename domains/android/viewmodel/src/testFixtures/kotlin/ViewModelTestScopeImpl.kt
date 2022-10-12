@@ -3,6 +3,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.amshove.kluent.internal.assertEquals
 import test.ExpectTestScope
+import test.FlowTestObserver
 
 @Suppress("UNCHECKED_CAST")
 internal class ViewModelTestScopeImpl(

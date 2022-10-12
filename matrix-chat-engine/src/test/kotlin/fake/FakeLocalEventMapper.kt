@@ -1,8 +1,8 @@
-package internalfake
+package fake
 
+import app.dapk.st.engine.LocalEchoMapper
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.messenger.LocalEchoMapper
 import io.mockk.every
 import io.mockk.mockk
 

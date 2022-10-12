@@ -1,13 +1,15 @@
-package app.dapk.st.messenger
+package app.dapk.st.engine
 
-import FlowTestObserver
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
+import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.message.MessageService
+import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.matrix.sync.SyncService
 import fake.FakeSyncService
 import fixture.*
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import test.FlowTestObserver
 import test.delegateReturn
 
 private val A_ROOM_ID = aRoomId()
@@ -47,7 +50,7 @@ class TimelineUseCaseTest {
             .test(this)
             .assertValues(
                 listOf(
-                    aMessengerState(self = AN_USER_ID, roomState = A_ROOM_STATE)
+                    aMessengerState(self = AN_USER_ID, roomState = A_ROOM_STATE.engine())
                 )
             )
     }
@@ -57,13 +60,13 @@ class TimelineUseCaseTest {
         givenSyncEmission(roomState = A_ROOM_STATE, echos = A_LOCAL_ECHOS_LIST)
         fakeRoomService.givenFindMember(A_ROOM_ID, AN_USER_ID).returns(A_ROOM_MEMBER)
 
-        fakeMergeWithLocalEchosUseCase.givenMerging(A_ROOM_STATE, A_ROOM_MEMBER, A_LOCAL_ECHOS_LIST).returns(A_MERGED_ROOM_STATE)
+        fakeMergeWithLocalEchosUseCase.givenMerging(A_ROOM_STATE, A_ROOM_MEMBER, A_LOCAL_ECHOS_LIST).returns(A_MERGED_ROOM_STATE.engine())
 
         timelineUseCase.invoke(A_ROOM_ID, AN_USER_ID)
             .test(this)
             .assertValues(
                 listOf(
-                    aMessengerState(self = AN_USER_ID, roomState = A_MERGED_ROOM_STATE)
+                    aMessengerState(self = AN_USER_ID, roomState = A_MERGED_ROOM_STATE.engine())
                 )
             )
     }
@@ -81,7 +84,11 @@ class TimelineUseCaseTest {
             .test(this)
             .assertValues(
                 listOf(
-                    aMessengerState(self = AN_USER_ID, roomState = A_ROOM_STATE, typing = aTypingSyncEvent(A_ROOM_ID, members = listOf(A_ROOM_MEMBER)))
+                    aMessengerState(
+                        self = AN_USER_ID,
+                        roomState = A_ROOM_STATE.engine(),
+                        typing = aTypingSyncEvent(A_ROOM_ID, members = listOf(A_ROOM_MEMBER)).engine()
+                    )
                 )
             )
     }
@@ -104,7 +111,7 @@ suspend fun <T> Flow<T>.test(scope: CoroutineScope) = FlowTestObserver(scope, th
 
 class FakeMergeWithLocalEchosUseCase : MergeWithLocalEchosUseCase by mockk() {
     fun givenMerging(roomState: RoomState, roomMember: RoomMember, echos: List<MessageService.LocalEcho>) = every {
-        this@FakeMergeWithLocalEchosUseCase.invoke(roomState, roomMember, echos)
+        this@FakeMergeWithLocalEchosUseCase.invoke(roomState.engine(), roomMember, echos)
     }.delegateReturn()
 }
 
@@ -112,3 +119,19 @@ fun aTypingSyncEvent(
     roomId: RoomId = aRoomId(),
     members: List<RoomMember> = listOf(aRoomMember())
 ) = SyncService.SyncEvent.Typing(roomId, members)
+
+class FakeMessageService : MessageService by mockk() {
+
+    fun givenEchos(roomId: RoomId) = every { localEchos(roomId) }.delegateReturn()
+
+}
+
+class FakeRoomService : RoomService by mockk() {
+    fun givenFindMember(roomId: RoomId, userId: UserId) = coEvery { findMember(roomId, userId) }.delegateReturn()
+}
+
+fun aMessengerState(
+    self: UserId = aUserId(),
+    roomState: app.dapk.st.engine.RoomState,
+    typing: Typing? = null
+) = MessengerState(self, roomState, typing)

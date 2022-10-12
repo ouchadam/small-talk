@@ -7,13 +7,11 @@ import app.dapk.st.matrix.common.RoomMember
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
 
-interface ChatEngine: TaskRunner {
+interface ChatEngine : TaskRunner {
 
     fun directory(): Flow<DirectoryState>
-
     fun invites(): Flow<InviteState>
-
-    suspend fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState>
+    fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState>
 
     suspend fun login(request: LoginRequest): LoginResult
 
@@ -47,7 +45,6 @@ interface TaskRunner {
     }
 
 }
-
 
 
 data class ChatEngineTask(val type: String, val jsonPayload: String)

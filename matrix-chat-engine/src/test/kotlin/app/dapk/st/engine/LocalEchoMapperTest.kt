@@ -1,10 +1,10 @@
-package app.dapk.st.messenger
+package app.dapk.st.engine
 
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.sync.MessageMeta
+import fake.FakeMetaMapper
 import fixture.*
-import internalfake.FakeMetaMapper
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
@@ -28,7 +28,7 @@ class LocalEchoMapperTest {
             eventId = echo.eventId!!,
             content = AN_ECHO_CONTENT.content.body,
             meta = A_META
-        )
+        ).engine()
     }
 
     @Test
@@ -41,24 +41,24 @@ class LocalEchoMapperTest {
             eventId = anEventId(echo.localId),
             content = AN_ECHO_CONTENT.content.body,
             meta = A_META
-        )
+        ).engine()
     }
 
     @Test
     fun `when merging with echo then updates meta with the echos meta`() = runWith(localEchoMapper) {
         val previousMeta = MessageMeta.LocalEcho("previous", MessageMeta.LocalEcho.State.Sending)
-        val event = aRoomMessageEvent(meta = previousMeta)
+        val event = aRoomMessageEvent(meta = previousMeta).engine()
         val echo = aLocalEcho()
-        fakeMetaMapper.given(echo).returns(A_META)
+        fakeMetaMapper.given(echo).returns(A_META.engine() as app.dapk.st.engine.MessageMeta.LocalEcho)
 
         val result = event.mergeWith(echo)
 
-        result shouldBeEqualTo aRoomMessageEvent(meta = A_META)
+        result shouldBeEqualTo aRoomMessageEvent(meta = A_META).engine()
     }
 
     private fun givenEcho(eventId: EventId? = null, localId: String = "", meta: MessageMeta.LocalEcho = A_META): MessageService.LocalEcho {
         return aLocalEcho(eventId = eventId, message = aTextMessage(localId = localId)).also {
-            fakeMetaMapper.given(it).returns(meta)
+            fakeMetaMapper.given(it).returns(meta.engine() as app.dapk.st.engine.MessageMeta.LocalEcho)
         }
     }
 }
