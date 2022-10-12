@@ -27,8 +27,8 @@ class LocalEchoMapperTest {
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = echo.eventId!!,
             content = AN_ECHO_CONTENT.content.body,
-            meta = A_META
-        ).engine()
+            meta = A_META.engine()
+        )
     }
 
     @Test
@@ -40,20 +40,20 @@ class LocalEchoMapperTest {
         result shouldBeEqualTo aRoomMessageEvent(
             eventId = anEventId(echo.localId),
             content = AN_ECHO_CONTENT.content.body,
-            meta = A_META
-        ).engine()
+            meta = A_META.engine()
+        )
     }
 
     @Test
     fun `when merging with echo then updates meta with the echos meta`() = runWith(localEchoMapper) {
-        val previousMeta = MessageMeta.LocalEcho("previous", MessageMeta.LocalEcho.State.Sending)
-        val event = aRoomMessageEvent(meta = previousMeta).engine()
+        val previousMeta = MessageMeta.LocalEcho("previous", MessageMeta.LocalEcho.State.Sending).engine()
+        val event = aRoomMessageEvent(meta = previousMeta)
         val echo = aLocalEcho()
         fakeMetaMapper.given(echo).returns(A_META.engine() as app.dapk.st.engine.MessageMeta.LocalEcho)
 
         val result = event.mergeWith(echo)
 
-        result shouldBeEqualTo aRoomMessageEvent(meta = A_META).engine()
+        result shouldBeEqualTo aRoomMessageEvent(meta = A_META.engine())
     }
 
     private fun givenEcho(eventId: EventId? = null, localId: String = "", meta: MessageMeta.LocalEcho = A_META): MessageService.LocalEcho {

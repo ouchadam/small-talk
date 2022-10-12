@@ -5,6 +5,7 @@ import app.dapk.st.matrix.common.RoomId
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import test.delegateEmit
 import test.delegateReturn
 import java.io.InputStream
 
@@ -15,5 +16,9 @@ class FakeChatEngine : ChatEngine by mockk() {
     fun givenDirectory() = every { directory() }.delegateReturn()
 
     fun givenImportKeys(inputStream: InputStream, passphrase: String) = coEvery { inputStream.importRoomKeys(passphrase) }.delegateReturn()
+
+    fun givenNotificationsInvites() = every { notificationsInvites() }.delegateEmit()
+
+    fun givenNotificationsMessages() = every { notificationsMessages() }.delegateEmit()
 
 }

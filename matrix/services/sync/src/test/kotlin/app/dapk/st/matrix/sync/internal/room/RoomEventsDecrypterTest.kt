@@ -15,7 +15,7 @@ import org.junit.Test
 
 private const val A_DECRYPTED_MESSAGE_CONTENT = "decrypted - content"
 private val AN_ENCRYPTED_ROOM_CONTENT = aMegolmV1()
-private val AN_ENCRYPTED_ROOM_MESSAGE = aRoomMessageEvent(encryptedContent = AN_ENCRYPTED_ROOM_CONTENT)
+private val AN_ENCRYPTED_ROOM_MESSAGE = aMatrixRoomMessageEvent(encryptedContent = AN_ENCRYPTED_ROOM_CONTENT)
 private val AN_ENCRYPTED_ROOM_REPLY = aRoomReplyMessageEvent(
     message = AN_ENCRYPTED_ROOM_MESSAGE,
     replyingTo = AN_ENCRYPTED_ROOM_MESSAGE.copy(eventId = anEventId("other-event"))
@@ -37,7 +37,7 @@ class RoomEventsDecrypterTest {
 
     @Test
     fun `given clear message event, when decrypting, then does nothing`() = runTest {
-        val aClearMessageEvent = aRoomMessageEvent(encryptedContent = null)
+        val aClearMessageEvent = aMatrixRoomMessageEvent(encryptedContent = null)
         val result = roomEventsDecrypter.decryptRoomEvents(A_USER_CREDENTIALS, listOf(aClearMessageEvent))
 
         result shouldBeEqualTo listOf(aClearMessageEvent)

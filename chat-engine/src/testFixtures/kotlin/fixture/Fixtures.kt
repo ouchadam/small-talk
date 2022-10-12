@@ -29,3 +29,38 @@ fun anEncryptedRoomMessageEvent(
     edited: Boolean = false,
     redacted: Boolean = false,
 ) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited, redacted)
+
+fun aRoomImageMessageEvent(
+    eventId: EventId = anEventId(),
+    utcTimestamp: Long = 0L,
+    content: RoomEvent.Image.ImageMeta = anImageMeta(),
+    author: RoomMember = aRoomMember(),
+    meta: MessageMeta = MessageMeta.FromServer,
+    edited: Boolean = false,
+) = RoomEvent.Image(eventId, utcTimestamp, content, author, meta, edited)
+
+fun aRoomReplyMessageEvent(
+    message: RoomEvent = aRoomMessageEvent(),
+    replyingTo: RoomEvent = aRoomMessageEvent(eventId = anEventId("in-reply-to-id")),
+) = RoomEvent.Reply(message, replyingTo)
+
+fun aRoomMessageEvent(
+    eventId: EventId = anEventId(),
+    utcTimestamp: Long = 0L,
+    content: String = "message-content",
+    author: RoomMember = aRoomMember(),
+    meta: MessageMeta = MessageMeta.FromServer,
+    edited: Boolean = false,
+) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited)
+
+fun anImageMeta(
+    width: Int? = 100,
+    height: Int? = 100,
+    url: String = "https://a-url.com",
+    keys: RoomEvent.Image.ImageMeta.Keys? = null
+) = RoomEvent.Image.ImageMeta(width, height, url, keys)
+
+fun aRoomState(
+    roomOverview: RoomOverview = aRoomOverview(),
+    events: List<RoomEvent> = listOf(aRoomMessageEvent()),
+) = RoomState(roomOverview, events)

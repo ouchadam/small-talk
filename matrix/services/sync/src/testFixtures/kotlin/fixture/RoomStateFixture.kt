@@ -4,7 +4,7 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.matrix.sync.RoomState
 
-fun aRoomState(
+fun aMatrixRoomState(
     roomOverview: RoomOverview = aMatrixRoomOverview(),
-    events: List<RoomEvent> = listOf(aRoomMessageEvent()),
+    events: List<RoomEvent> = listOf(aMatrixRoomMessageEvent()),
 ) = RoomState(roomOverview, events)

@@ -15,8 +15,6 @@ class RenderNotificationsUseCaseTest {
 
     private val fakeNotificationMessageRenderer = FakeNotificationMessageRenderer()
     private val fakeNotificationInviteRenderer = FakeNotificationInviteRenderer()
-    private val fakeObserveUnreadNotificationsUseCase = FakeObserveUnreadNotificationsUseCase()
-    private val fakeObserveInviteNotificationsUseCase = FakeObserveInviteNotificationsUseCase()
     private val fakeNotificationChannels = FakeNotificationChannels().also {
         it.instance.expect { it.initChannels() }
     }
@@ -32,8 +30,8 @@ class RenderNotificationsUseCaseTest {
     @Test
     fun `given events, when listening for changes then initiates channels once`() = runTest {
         fakeNotificationMessageRenderer.instance.expect { it.render(any()) }
-        fakeObserveUnreadNotificationsUseCase.given().emits(AN_UNREAD_NOTIFICATIONS)
-        fakeObserveInviteNotificationsUseCase.given().emits()
+        fakeChatEngine.givenNotificationsMessages().emits(AN_UNREAD_NOTIFICATIONS)
+        fakeChatEngine.givenNotificationsInvites().emits()
 
         renderNotificationsUseCase.listenForNotificationChanges(TestScope(UnconfinedTestDispatcher()))
 
@@ -43,8 +41,8 @@ class RenderNotificationsUseCaseTest {
     @Test
     fun `given renderable unread events, when listening for changes, then renders change`() = runTest {
         fakeNotificationMessageRenderer.instance.expect { it.render(any()) }
-        fakeObserveUnreadNotificationsUseCase.given().emits(AN_UNREAD_NOTIFICATIONS)
-        fakeObserveInviteNotificationsUseCase.given().emits()
+        fakeChatEngine.givenNotificationsMessages().emits(AN_UNREAD_NOTIFICATIONS)
+        fakeChatEngine.givenNotificationsInvites().emits()
 
         renderNotificationsUseCase.listenForNotificationChanges(TestScope(UnconfinedTestDispatcher()))
 

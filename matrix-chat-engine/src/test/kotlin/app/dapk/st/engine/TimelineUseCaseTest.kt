@@ -23,8 +23,8 @@ import test.delegateReturn
 
 private val A_ROOM_ID = aRoomId()
 private val AN_USER_ID = aUserId()
-private val A_ROOM_STATE = aRoomState()
-private val A_MERGED_ROOM_STATE = A_ROOM_STATE.copy(events = listOf(aRoomMessageEvent(content = "a merged event")))
+private val A_ROOM_STATE = aMatrixRoomState()
+private val A_MERGED_ROOM_STATE = A_ROOM_STATE.copy(events = listOf(aMatrixRoomMessageEvent(content = "a merged event")))
 private val A_LOCAL_ECHOS_LIST = listOf(aLocalEcho())
 private val A_ROOM_MEMBER = aRoomMember()
 

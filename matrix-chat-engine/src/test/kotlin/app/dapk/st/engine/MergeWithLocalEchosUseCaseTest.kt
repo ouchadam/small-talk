@@ -20,7 +20,7 @@ class MergeWithLocalEchosUseCaseTest {
 
     @Test
     fun `given no local echos, when merging text message, then returns original state`() {
-        val roomState = aRoomState(events = listOf(A_ROOM_MESSAGE_EVENT)).engine()
+        val roomState = aRoomState(events = listOf(A_ROOM_MESSAGE_EVENT))
 
         val result = mergeWithLocalEchosUseCase.invoke(roomState, A_ROOM_MEMBER, emptyList())
 
@@ -29,7 +29,7 @@ class MergeWithLocalEchosUseCaseTest {
 
     @Test
     fun `given no local echos, when merging events, then returns original ordered by timestamp descending`() {
-        val roomState = aRoomState(events = listOf(A_ROOM_IMAGE_MESSAGE_EVENT.copy(utcTimestamp = 1500), A_ROOM_MESSAGE_EVENT.copy(utcTimestamp = 1000))).engine()
+        val roomState = aRoomState(events = listOf(A_ROOM_IMAGE_MESSAGE_EVENT.copy(utcTimestamp = 1500), A_ROOM_MESSAGE_EVENT.copy(utcTimestamp = 1000)))
 
         val result = mergeWithLocalEchosUseCase.invoke(roomState, A_ROOM_MEMBER, emptyList())
 
@@ -39,15 +39,15 @@ class MergeWithLocalEchosUseCaseTest {
     @Test
     fun `given local echo with sending state, when merging then maps to room event with local echo state`() {
         val second = createLocalEcho(A_LOCAL_ECHO_EVENT_ID, A_LOCAL_ECHO_BODY, state = MessageService.LocalEcho.State.Sending)
-        fakeLocalEchoMapper.givenMapping(second, A_ROOM_MEMBER).returns(ANOTHER_ROOM_MESSAGE_EVENT.engine())
-        val roomState = aRoomState(events = listOf(A_ROOM_MESSAGE_EVENT)).engine()
+        fakeLocalEchoMapper.givenMapping(second, A_ROOM_MEMBER).returns(ANOTHER_ROOM_MESSAGE_EVENT)
+        val roomState = aRoomState(events = listOf(A_ROOM_MESSAGE_EVENT))
 
         val result = mergeWithLocalEchosUseCase.invoke(roomState, A_ROOM_MEMBER, listOf(second))
 
         result shouldBeEqualTo roomState.copy(
             events = listOf(
-                A_ROOM_MESSAGE_EVENT.engine(),
-                ANOTHER_ROOM_MESSAGE_EVENT.engine(),
+                A_ROOM_MESSAGE_EVENT,
+                ANOTHER_ROOM_MESSAGE_EVENT,
             )
         )
     }
