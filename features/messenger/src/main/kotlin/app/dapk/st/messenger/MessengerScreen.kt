@@ -44,12 +44,12 @@ import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.*
+import app.dapk.st.engine.MessageMeta
+import app.dapk.st.engine.MessengerState
+import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.RoomState
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
-import app.dapk.st.matrix.sync.MessageMeta
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomEvent.Message
-import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.navigator.Navigator
@@ -196,7 +196,7 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions
             AlignedBubble(item, self, wasPreviousMessageSameSender, replyActions) {
                 when (item) {
                     is RoomEvent.Image -> MessageImage(it as BubbleContent<RoomEvent.Image>)
-                    is Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
+                    is RoomEvent.Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
                     is RoomEvent.Reply -> ReplyBubbleContent(it as BubbleContent<RoomEvent.Reply>)
                 }
             }
@@ -482,7 +482,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     when (val replyingTo = content.message.replyingTo) {
-                        is Message -> {
+                        is RoomEvent.Message -> {
                             Text(
                                 text = replyingTo.content,
                                 color = content.textColor().copy(alpha = 0.8f),
@@ -525,7 +525,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                     )
                 }
                 when (val message = content.message.message) {
-                    is Message -> {
+                    is RoomEvent.Message -> {
                         Text(
                             text = message.content,
                             color = content.textColor(),
@@ -642,7 +642,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                         )
                 }
             ) {
-                if (it is Message) {
+                if (it is RoomEvent.Message) {
                     Box(Modifier.padding(12.dp)) {
                         Box(Modifier.padding(8.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
                             Icon(

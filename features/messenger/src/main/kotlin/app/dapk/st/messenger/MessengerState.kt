@@ -1,8 +1,9 @@
 package app.dapk.st.messenger
 
 import app.dapk.st.core.Lce
+import app.dapk.st.engine.MessengerState
+import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.navigator.MessageAttachment
 
 data class MessengerScreenState(

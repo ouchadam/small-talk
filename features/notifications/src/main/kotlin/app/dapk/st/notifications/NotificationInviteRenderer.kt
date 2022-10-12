@@ -10,7 +10,7 @@ class NotificationInviteRenderer(
     private val androidNotificationBuilder: AndroidNotificationBuilder,
 ) {
 
-    fun render(inviteNotification: InviteNotification) {
+    fun render(inviteNotification: app.dapk.st.engine.InviteNotification) {
         notificationManager.notify(
             inviteNotification.roomId.value,
             INVITE_NOTIFICATION_ID,
@@ -18,7 +18,7 @@ class NotificationInviteRenderer(
         )
     }
 
-    private fun InviteNotification.toAndroidNotification() = androidNotificationBuilder.build(
+    private fun app.dapk.st.engine.InviteNotification.toAndroidNotification() = androidNotificationBuilder.build(
         notificationFactory.createInvite(this)
     )
 

@@ -1,7 +1,7 @@
 package app.dapk.st.matrix.sync.internal.sync
 
 import fake.FakeRoomStore
-import fixture.aRoomMessageEvent
+import fixture.aMatrixRoomMessageEvent
 import fixture.anEventId
 import internalfixture.aTimelineTextEventContent
 import internalfixture.anApiTimelineTextEvent
@@ -11,8 +11,8 @@ import org.junit.Test
 
 private val AN_EVENT_ID = anEventId()
 private val A_TIMELINE_EVENT = anApiTimelineTextEvent(AN_EVENT_ID, content = aTimelineTextEventContent(body = "timeline event"))
-private val A_ROOM_EVENT = aRoomMessageEvent(AN_EVENT_ID, content = "previous room event")
-private val A_PERSISTED_EVENT = aRoomMessageEvent(AN_EVENT_ID, content = "persisted event")
+private val A_ROOM_EVENT = aMatrixRoomMessageEvent(AN_EVENT_ID, content = "previous room event")
+private val A_PERSISTED_EVENT = aMatrixRoomMessageEvent(AN_EVENT_ID, content = "persisted event")
 
 class EventLookupUseCaseTest {
 

@@ -7,7 +7,7 @@ import TestUser
 import app.dapk.st.core.extensions.ifNull
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
-import app.dapk.st.matrix.crypto.MediaDecrypter
+import app.dapk.st.matrix.crypto.MatrixMediaDecrypter
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.messageService
 import app.dapk.st.matrix.sync.RoomEvent
@@ -153,7 +153,7 @@ class MatrixTestScope(private val testScope: TestScope) {
                         null -> output.readBytes().md5Hash()
                         else -> {
                             val byteStream = ByteArrayOutputStream()
-                            MediaDecrypter(this.base64).decrypt(output.inputStream(), keys.k, keys.iv).collect {
+                            MatrixMediaDecrypter(this.base64).decrypt(output.inputStream(), keys.k, keys.iv).collect {
                                 byteStream.write(it)
                             }
                             byteStream.toByteArray().md5Hash()

@@ -2,6 +2,7 @@ package app.dapk.st.directory
 
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.directory.DirectoryScreenState.*
+import app.dapk.st.engine.ChatEngine
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
 import app.dapk.st.viewmodel.defaultStateFactory
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 
 class DirectoryViewModel(
     private val shortcutHandler: ShortcutHandler,
-    private val directoryUseCase: DirectoryUseCase,
+    private val chatEngine: ChatEngine,
     factory: MutableStateFactory<DirectoryScreenState> = defaultStateFactory(),
 ) : DapkViewModel<DirectoryScreenState, DirectoryEvent>(
     initialState = EmptyLoading,
@@ -23,7 +24,7 @@ class DirectoryViewModel(
 
     fun start() {
         syncJob = viewModelScope.launch {
-            directoryUseCase.state().onEach {
+            chatEngine.directory().onEach {
                 shortcutHandler.onDirectoryUpdate(it.map { it.overview })
                 state = when (it.isEmpty()) {
                     true -> Empty

@@ -5,8 +5,8 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomState
 import fake.FakeMatrixLogger
 import fake.FakeRoomDataSource
-import internalfake.FakeRoomEventsDecrypter
 import fixture.*
+import internalfake.FakeRoomEventsDecrypter
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
@@ -15,13 +15,14 @@ import test.expect
 private val A_ROOM_ID = aRoomId()
 
 private object ARoom {
-    val MESSAGE_EVENT = aRoomMessageEvent(utcTimestamp = 0)
+    val MESSAGE_EVENT = aMatrixRoomMessageEvent(utcTimestamp = 0)
     val ENCRYPTED_EVENT = anEncryptedRoomMessageEvent(utcTimestamp = 1)
-    val DECRYPTED_EVENT = aRoomMessageEvent(utcTimestamp = 2)
-    val PREVIOUS_STATE = RoomState(aRoomOverview(), listOf(MESSAGE_EVENT, ENCRYPTED_EVENT))
+    val DECRYPTED_EVENT = aMatrixRoomMessageEvent(utcTimestamp = 2)
+    val PREVIOUS_STATE = RoomState(aMatrixRoomOverview(), listOf(MESSAGE_EVENT, ENCRYPTED_EVENT))
     val DECRYPTED_EVENTS = listOf(MESSAGE_EVENT, DECRYPTED_EVENT)
-    val NEW_STATE = RoomState(aRoomOverview(lastMessage = DECRYPTED_EVENT.asLastMessage()), DECRYPTED_EVENTS)
+    val NEW_STATE = RoomState(aMatrixRoomOverview(lastMessage = DECRYPTED_EVENT.asLastMessage()), DECRYPTED_EVENTS)
 }
+
 private val A_USER_CREDENTIALS = aUserCredentials()
 
 internal class RoomRefresherTest {

@@ -4,7 +4,7 @@ import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.sync.MessageMeta
 import app.dapk.st.matrix.sync.RoomEvent
 
-fun aRoomMessageEvent(
+fun aMatrixRoomMessageEvent(
     eventId: EventId = anEventId(),
     utcTimestamp: Long = 0L,
     content: String = "message-content",
@@ -25,8 +25,8 @@ fun aRoomImageMessageEvent(
 ) = RoomEvent.Image(eventId, utcTimestamp, content, author, meta, encryptedContent, edited)
 
 fun aRoomReplyMessageEvent(
-    message: RoomEvent = aRoomMessageEvent(),
-    replyingTo: RoomEvent = aRoomMessageEvent(eventId = anEventId("in-reply-to-id")),
+    message: RoomEvent = aMatrixRoomMessageEvent(),
+    replyingTo: RoomEvent = aMatrixRoomMessageEvent(eventId = anEventId("in-reply-to-id")),
 ) = RoomEvent.Reply(message, replyingTo)
 
 fun anEncryptedRoomMessageEvent(

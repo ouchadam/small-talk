@@ -7,7 +7,7 @@ import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.sync.LastMessage
 import app.dapk.st.matrix.sync.RoomOverview
 
-fun aRoomOverview(
+fun aMatrixRoomOverview(
     roomId: RoomId = aRoomId(),
     roomCreationUtc: Long = 0L,
     roomName: String? = null,

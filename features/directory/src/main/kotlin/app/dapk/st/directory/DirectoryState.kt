@@ -1,5 +1,7 @@
 package app.dapk.st.directory
 
+import app.dapk.st.engine.DirectoryState
+
 sealed interface DirectoryScreenState {
 
     object EmptyLoading : DirectoryScreenState

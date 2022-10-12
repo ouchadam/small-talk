@@ -3,8 +3,8 @@ package app.dapk.st.notifications
 import android.annotation.SuppressLint
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.whenPOrHigher
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.imageloader.IconLoader
-import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.notifications.AndroidNotificationStyle.Inbox
 import app.dapk.st.notifications.AndroidNotificationStyle.Messaging
 

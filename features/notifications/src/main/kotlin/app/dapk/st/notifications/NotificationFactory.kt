@@ -4,9 +4,9 @@ import android.app.Notification
 import android.content.Context
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.whenPOrHigher
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.navigator.IntentFactory
 import java.time.Clock
 
@@ -87,7 +87,7 @@ class NotificationFactory(
         )
     }
 
-    fun createInvite(inviteNotification: InviteNotification): AndroidNotification {
+    fun createInvite(inviteNotification: app.dapk.st.engine.InviteNotification): AndroidNotification {
         val openAppIntent = intentFactory.notificationOpenApp(context)
         return AndroidNotification(
             channelId = INVITE_CHANNEL_ID,

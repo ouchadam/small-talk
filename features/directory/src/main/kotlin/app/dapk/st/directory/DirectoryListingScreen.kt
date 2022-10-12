@@ -38,9 +38,10 @@ import app.dapk.st.design.components.Toolbar
 import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
 import app.dapk.st.directory.DirectoryScreenState.Content
 import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
+import app.dapk.st.engine.DirectoryItem
+import app.dapk.st.engine.RoomOverview
+import app.dapk.st.engine.Typing
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomOverview
-import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.messenger.MessengerActivity
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -147,7 +148,7 @@ private fun Content(listState: LazyListState, state: Content) {
 }
 
 @Composable
-private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock) {
+private fun DirectoryItem(room: DirectoryItem, onClick: (RoomId) -> Unit, clock: Clock) {
     val overview = room.overview
     val roomName = overview.roomName ?: "Empty room"
     val hasUnread = room.unreadCount.value > 0
@@ -233,7 +234,7 @@ private fun DirectoryItem(room: RoomFoo, onClick: (RoomId) -> Unit, clock: Clock
 }
 
 @Composable
-private fun body(overview: RoomOverview, secondaryText: Color, typing: SyncService.SyncEvent.Typing?) {
+private fun body(overview: RoomOverview, secondaryText: Color, typing: Typing?) {
     val bodySize = 14.sp
 
     when {

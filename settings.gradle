@@ -55,3 +55,6 @@ include ':matrix:services:profile'
 include ':core'
 
 include ':test-harness'
+
+include ':chat-engine'
+include ':matrix-chat-engine'

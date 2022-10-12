@@ -1,6 +1,7 @@
 package app.dapk.st.matrix.message.internal
 
 import app.dapk.st.matrix.MatrixTaskRunner
+import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.http.MatrixHttpClient
 import app.dapk.st.matrix.message.*
@@ -69,13 +70,13 @@ internal class DefaultMessageService(
             is MessageService.Message.TextMessage -> {
                 BackgroundScheduler.Task(
                     type = MATRIX_MESSAGE_TASK_TYPE,
-                    Json.encodeToString(MessageService.Message.TextMessage.serializer(), this)
+                    JsonString(Json.encodeToString(MessageService.Message.TextMessage.serializer(), this))
                 )
             }
 
             is MessageService.Message.ImageMessage -> BackgroundScheduler.Task(
                 type = MATRIX_IMAGE_MESSAGE_TASK_TYPE,
-                Json.encodeToString(MessageService.Message.ImageMessage.serializer(), this)
+                JsonString(Json.encodeToString(MessageService.Message.ImageMessage.serializer(), this))
             )
         }
     }
