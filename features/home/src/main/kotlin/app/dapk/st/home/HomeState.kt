@@ -21,5 +21,6 @@ sealed interface HomeScreenState {
 
 sealed interface HomeEvent {
     object Relaunch : HomeEvent
+    object OnShowContent : HomeEvent
 }
 

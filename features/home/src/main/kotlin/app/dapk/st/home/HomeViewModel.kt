@@ -39,6 +39,7 @@ class HomeViewModel(
     fun start() {
         viewModelScope.launch {
             state = if (credentialsProvider.isSignedIn()) {
+                _events.emit(HomeEvent.OnShowContent)
                 initialHomeContent()
             } else {
                 SignedOut
@@ -62,6 +63,7 @@ class HomeViewModel(
     fun loggedIn() {
         viewModelScope.launch {
             state = initialHomeContent()
+            _events.emit(HomeEvent.OnShowContent)
             listenForInviteChanges()
         }
     }

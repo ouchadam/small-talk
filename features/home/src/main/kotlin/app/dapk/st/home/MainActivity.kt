@@ -1,5 +1,7 @@
 package app.dapk.st.home
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
@@ -27,10 +29,11 @@ class MainActivity : DapkActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        val pushPermissionLauncher = registerPushPermission()
         homeViewModel.events.onEach {
             when (it) {
                 HomeEvent.Relaunch -> recreate()
+                HomeEvent.OnShowContent -> pushPermissionLauncher?.invoke()
             }
         }.launchIn(lifecycleScope)
 
@@ -42,6 +45,14 @@ class MainActivity : DapkActivity() {
                     HomeScreen(homeViewModel)
                 }
             }
+        }
+    }
+
+    private fun registerPushPermission(): (() -> Unit)? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerForPermission(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            null
         }
     }
 
