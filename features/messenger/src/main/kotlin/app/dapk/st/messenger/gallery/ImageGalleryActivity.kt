@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.result.contract.ActivityResultContract
@@ -32,7 +33,7 @@ class ImageGalleryActivity : DapkActivity() {
         val permissionState = mutableStateOf<Lce<PermissionResult>>(Lce.Loading())
 
         lifecycleScope.launch {
-            permissionState.value = runCatching { ensurePermission(Manifest.permission.READ_EXTERNAL_STORAGE) }.fold(
+            permissionState.value = runCatching { ensurePermission(mediaPermission()) }.fold(
                 onSuccess = { Lce.Content(it) },
                 onFailure = { Lce.Error(it) }
             )
@@ -48,6 +49,12 @@ class ImageGalleryActivity : DapkActivity() {
                 }
             }
         }
+    }
+
+    private fun mediaPermission() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
     }
 }
 
