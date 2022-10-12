@@ -5,9 +5,9 @@ import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.extensions.ifNull
 import app.dapk.st.core.log
+import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
 import kotlinx.coroutines.withContext
 
 private const val SUMMARY_NOTIFICATION_ID = 101

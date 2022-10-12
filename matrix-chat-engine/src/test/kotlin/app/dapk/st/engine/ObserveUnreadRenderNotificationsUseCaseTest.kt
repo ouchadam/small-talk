@@ -1,24 +1,27 @@
-package app.dapk.st.notifications
+package app.dapk.st.engine
 
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
 import fake.FakeRoomStore
 import fixture.NotificationDiffFixtures.aNotificationDiff
+import fixture.aMatrixRoomOverview
 import fixture.aRoomId
 import fixture.aRoomMessageEvent
-import fixture.aRoomOverview
 import fixture.anEventId
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
+import app.dapk.st.matrix.sync.RoomEvent as MatrixRoomEvent
+import app.dapk.st.matrix.sync.RoomOverview as MatrixRoomOverview
 
-private val NO_UNREADS = emptyMap<RoomOverview, List<RoomEvent>>()
+private val NO_UNREADS = emptyMap<MatrixRoomOverview, List<MatrixRoomEvent>>()
 private val A_MESSAGE = aRoomMessageEvent(eventId = anEventId("1"), content = "hello", utcTimestamp = 1000)
 private val A_MESSAGE_2 = aRoomMessageEvent(eventId = anEventId("2"), content = "world", utcTimestamp = 2000)
-private val A_ROOM_OVERVIEW = aRoomOverview(roomId = aRoomId("1"))
-private val A_ROOM_OVERVIEW_2 = aRoomOverview(roomId = aRoomId("2"))
+private val A_ROOM_OVERVIEW = aMatrixRoomOverview(roomId = aRoomId("1"))
+private val A_ROOM_OVERVIEW_2 = aMatrixRoomOverview(roomId = aRoomId("2"))
+
+private fun MatrixRoomOverview.withUnreads(vararg events: MatrixRoomEvent) = mapOf(this to events.toList())
+private fun MatrixRoomOverview.toDiff(vararg events: MatrixRoomEvent) = mapOf(this.roomId to events.map { it.eventId })
 
 class ObserveUnreadRenderNotificationsUseCaseTest {
 
@@ -33,7 +36,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
         val result = useCase.invoke().toList()
 
         result shouldBeEqualTo listOf(
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE).engine() to aNotificationDiff(
                 changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE),
                 newRooms = setOf(A_ROOM_OVERVIEW.roomId)
             )
@@ -47,11 +50,11 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
         val result = useCase.invoke().toList()
 
         result shouldBeEqualTo listOf(
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE).engine() to aNotificationDiff(
                 changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE),
                 newRooms = setOf(A_ROOM_OVERVIEW.roomId)
             ),
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE, A_MESSAGE_2) to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE_2))
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE, A_MESSAGE_2).engine() to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE_2))
         )
     }
 
@@ -64,7 +67,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
         val result = useCase.invoke().toList()
 
         result shouldBeEqualTo listOf(
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE, A_MESSAGE_2) to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE_2))
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE, A_MESSAGE_2).engine() to aNotificationDiff(changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE_2))
         )
     }
 
@@ -92,7 +95,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
         val result = useCase.invoke().toList()
 
         result shouldBeEqualTo listOf(
-            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) to aNotificationDiff(
+            A_ROOM_OVERVIEW.withUnreads(A_MESSAGE).engine() to aNotificationDiff(
                 changedOrNew = A_ROOM_OVERVIEW.toDiff(A_MESSAGE),
                 newRooms = setOf(A_ROOM_OVERVIEW.roomId)
             ),
@@ -110,8 +113,10 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
         result shouldBeEqualTo emptyList()
     }
 
-    private fun givenNoInitialUnreads(vararg unreads: Map<RoomOverview, List<RoomEvent>>) = fakeRoomStore.givenUnreadEvents(flowOf(NO_UNREADS, *unreads))
+    private fun givenNoInitialUnreads(vararg unreads: Map<MatrixRoomOverview, List<MatrixRoomEvent>>) =
+        fakeRoomStore.givenUnreadEvents(flowOf(NO_UNREADS, *unreads))
 }
 
-private fun RoomOverview.withUnreads(vararg events: RoomEvent) = mapOf(this to events.toList())
-private fun RoomOverview.toDiff(vararg events: RoomEvent) = mapOf(this.roomId to events.map { it.eventId })
+private fun Map<MatrixRoomOverview, List<MatrixRoomEvent>>.engine() = this
+    .mapKeys { it.key.engine() }
+    .mapValues { it.value.map { it.engine() } }

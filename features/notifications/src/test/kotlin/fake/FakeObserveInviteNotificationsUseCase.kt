@@ -1,10 +1,10 @@
 package fake
 
-import app.dapk.st.notifications.ObserveInviteNotificationsUseCase
+import app.dapk.st.engine.ObserveInviteNotificationsUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import test.delegateEmit
 
-class FakeObserveInviteNotificationsUseCase : ObserveInviteNotificationsUseCase by mockk() {
+class FakeObserveInviteNotificationsUseCase : app.dapk.st.engine.ObserveInviteNotificationsUseCase by mockk() {
     fun given() = coEvery { this@FakeObserveInviteNotificationsUseCase.invoke() }.delegateEmit()
 }

@@ -2,7 +2,7 @@ package fixture
 
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.notifications.NotificationDiff
+import app.dapk.st.engine.NotificationDiff
 
 object NotificationDiffFixtures {
 

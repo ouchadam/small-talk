@@ -1,7 +1,7 @@
 package app.dapk.st.notifications
 
+import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomMember
-import app.dapk.st.matrix.sync.RoomEvent
 
 class RoomEventsToNotifiableMapper {
 

@@ -137,7 +137,7 @@ class NotificationFactoryTest {
         fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
         val content = "Content message"
         val result = notificationFactory.createInvite(
-            InviteNotification(
+            app.dapk.st.engine.InviteNotification(
                 content = content,
                 A_ROOM_ID,
             )

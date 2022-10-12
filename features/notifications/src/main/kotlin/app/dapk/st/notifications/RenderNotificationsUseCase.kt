@@ -1,7 +1,9 @@
 package app.dapk.st.notifications
 
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
+import app.dapk.st.engine.ChatEngine
+import app.dapk.st.engine.NotificationDiff
+import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.RoomOverview
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -9,18 +11,17 @@ import kotlinx.coroutines.flow.onEach
 class RenderNotificationsUseCase(
     private val notificationRenderer: NotificationMessageRenderer,
     private val inviteRenderer: NotificationInviteRenderer,
-    private val observeRenderableUnreadEventsUseCase: ObserveUnreadNotificationsUseCase,
-    private val observeInviteNotificationsUseCase: ObserveInviteNotificationsUseCase,
+    private val chatEngine: ChatEngine,
     private val notificationChannels: NotificationChannels,
 ) {
 
     suspend fun listenForNotificationChanges(scope: CoroutineScope) {
         notificationChannels.initChannels()
-        observeRenderableUnreadEventsUseCase()
+        chatEngine.notificationsMessages()
             .onEach { (each, diff) -> renderUnreadChange(each, diff) }
             .launchIn(scope)
 
-        observeInviteNotificationsUseCase()
+        chatEngine.notificationsInvites()
             .onEach { inviteRenderer.render(it) }
             .launchIn(scope)
     }

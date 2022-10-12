@@ -5,16 +5,14 @@ import android.content.Context
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.ProvidableModule
+import app.dapk.st.engine.ChatEngine
 import app.dapk.st.imageloader.IconLoader
-import app.dapk.st.matrix.sync.OverviewStore
-import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.navigator.IntentFactory
 import java.time.Clock
 
 class NotificationsModule(
+    private val chatEngine: ChatEngine,
     private val iconLoader: IconLoader,
-    private val roomStore: RoomStore,
-    private val overviewStore: OverviewStore,
     private val context: Context,
     private val intentFactory: IntentFactory,
     private val dispatchers: CoroutineDispatchers,
@@ -40,10 +38,9 @@ class NotificationsModule(
         )
         return RenderNotificationsUseCase(
             notificationRenderer = notificationMessageRenderer,
-            observeRenderableUnreadEventsUseCase = ObserveUnreadNotificationsUseCaseImpl(roomStore),
             notificationChannels = NotificationChannels(notificationManager),
-            observeInviteNotificationsUseCase = ObserveInviteNotificationsUseCaseImpl(overviewStore),
-            inviteRenderer = NotificationInviteRenderer(notificationManager, notificationFactory, androidNotificationBuilder)
+            inviteRenderer = NotificationInviteRenderer(notificationManager, notificationFactory, androidNotificationBuilder),
+            chatEngine = chatEngine,
         )
     }
 

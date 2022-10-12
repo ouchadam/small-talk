@@ -13,6 +13,9 @@ interface ChatEngine : TaskRunner {
     fun invites(): Flow<InviteState>
     fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState>
 
+    fun notificationsMessages(): Flow<UnreadNotifications>
+    fun notificationsInvites(): Flow<InviteNotification>
+
     suspend fun login(request: LoginRequest): LoginResult
 
     suspend fun me(forceRefresh: Boolean): Me
@@ -63,3 +66,17 @@ interface PushHandler {
     fun onNewToken(payload: JsonString)
     fun onMessageReceived(eventId: EventId?, roomId: RoomId?)
 }
+
+typealias UnreadNotifications = Pair<Map<RoomOverview, List<RoomEvent>>, NotificationDiff>
+
+data class NotificationDiff(
+    val unchanged: Map<RoomId, List<EventId>>,
+    val changedOrNew: Map<RoomId, List<EventId>>,
+    val removed: Map<RoomId, List<EventId>>,
+    val newRooms: Set<RoomId>
+)
+
+data class InviteNotification(
+    val content: String,
+    val roomId: RoomId
+)

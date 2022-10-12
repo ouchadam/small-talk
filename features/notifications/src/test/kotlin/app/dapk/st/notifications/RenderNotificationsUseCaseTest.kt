@@ -1,5 +1,6 @@
 package app.dapk.st.notifications
 
+import app.dapk.st.engine.UnreadNotifications
 import fake.*
 import fixture.NotificationDiffFixtures.aNotificationDiff
 import kotlinx.coroutines.test.TestScope
@@ -19,12 +20,12 @@ class RenderNotificationsUseCaseTest {
     private val fakeNotificationChannels = FakeNotificationChannels().also {
         it.instance.expect { it.initChannels() }
     }
+    private val fakeChatEngine = FakeChatEngine()
 
     private val renderNotificationsUseCase = RenderNotificationsUseCase(
         fakeNotificationMessageRenderer.instance,
         fakeNotificationInviteRenderer.instance,
-        fakeObserveUnreadNotificationsUseCase,
-        fakeObserveInviteNotificationsUseCase,
+        fakeChatEngine,
         fakeNotificationChannels.instance,
     )
 

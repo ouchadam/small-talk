@@ -1,4 +1,4 @@
-package app.dapk.st.notifications
+package app.dapk.st.engine
 
 import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.extensions.clearAndPutAll
@@ -6,17 +6,16 @@ import app.dapk.st.core.extensions.containsKey
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.matrix.sync.RoomStore
 import kotlinx.coroutines.flow.*
+import app.dapk.st.matrix.sync.RoomEvent as MatrixRoomEvent
+import app.dapk.st.matrix.sync.RoomOverview as MatrixRoomOverview
 
-typealias UnreadNotifications = Pair<Map<RoomOverview, List<RoomEvent>>, NotificationDiff>
-internal typealias ObserveUnreadNotificationsUseCase = suspend () -> Flow<UnreadNotifications>
+internal typealias ObserveUnreadNotificationsUseCase = () -> Flow<UnreadNotifications>
 
 class ObserveUnreadNotificationsUseCaseImpl(private val roomStore: RoomStore) : ObserveUnreadNotificationsUseCase {
 
-    override suspend fun invoke(): Flow<UnreadNotifications> {
+    override fun invoke(): Flow<UnreadNotifications> {
         return roomStore.observeUnread()
             .mapWithDiff()
             .avoidShowingPreviousNotificationsOnLaunch()
@@ -25,28 +24,7 @@ class ObserveUnreadNotificationsUseCaseImpl(private val roomStore: RoomStore) : 
 
 }
 
-private fun Flow<UnreadNotifications>.onlyRenderableChanges(): Flow<UnreadNotifications> {
-    val inferredCurrentNotifications = mutableMapOf<RoomId, List<RoomEvent>>()
-    return this
-        .filter { (_, diff) ->
-            when {
-                diff.changedOrNew.isEmpty() && diff.removed.isEmpty() -> {
-                    log(AppLogTag.NOTIFICATION, "Ignoring unread change due to no renderable changes")
-                    false
-                }
-
-                inferredCurrentNotifications.isEmpty() && diff.removed.isNotEmpty() -> {
-                    log(AppLogTag.NOTIFICATION, "Ignoring unread change due to no currently showing messages and changes are all messages marked as read")
-                    false
-                }
-
-                else -> true
-            }
-        }
-        .onEach { (allUnread, _) -> inferredCurrentNotifications.clearAndPutAll(allUnread.mapKeys { it.key.roomId }) }
-}
-
-private fun Flow<Map<RoomOverview, List<RoomEvent>>>.mapWithDiff(): Flow<Pair<Map<RoomOverview, List<RoomEvent>>, NotificationDiff>> {
+private fun Flow<Map<MatrixRoomOverview, List<MatrixRoomEvent>>>.mapWithDiff(): Flow<Pair<Map<MatrixRoomOverview, List<MatrixRoomEvent>>, NotificationDiff>> {
     val previousUnreadEvents = mutableMapOf<RoomId, List<TimestampedEventId>>()
     return this.map { each ->
         val allUnreadIds = each.toTimestampedIds()
@@ -83,19 +61,39 @@ private fun Map<RoomId, List<TimestampedEventId>>?.toLatestTimestamps() = this?.
 
 private fun Map<RoomId, List<TimestampedEventId>>.toEventIds() = this.mapValues { it.value.map { it.first } }
 
-private fun Map<RoomOverview, List<RoomEvent>>.toTimestampedIds() = this
+private fun Map<MatrixRoomOverview, List<MatrixRoomEvent>>.toTimestampedIds() = this
     .mapValues { it.value.toEventIds() }
     .mapKeys { it.key.roomId }
 
-private fun List<RoomEvent>.toEventIds() = this.map { it.eventId to it.utcTimestamp }
+private fun List<MatrixRoomEvent>.toEventIds() = this.map { it.eventId to it.utcTimestamp }
 
 private fun <T> Flow<T>.avoidShowingPreviousNotificationsOnLaunch() = drop(1)
 
-data class NotificationDiff(
-    val unchanged: Map<RoomId, List<EventId>>,
-    val changedOrNew: Map<RoomId, List<EventId>>,
-    val removed: Map<RoomId, List<EventId>>,
-    val newRooms: Set<RoomId>
-)
+private fun Flow<Pair<Map<MatrixRoomOverview, List<MatrixRoomEvent>>, NotificationDiff>>.onlyRenderableChanges(): Flow<UnreadNotifications> {
+    val inferredCurrentNotifications = mutableMapOf<RoomId, List<MatrixRoomEvent>>()
+    return this
+        .filter { (_, diff) ->
+            when {
+                diff.changedOrNew.isEmpty() && diff.removed.isEmpty() -> {
+                    log(AppLogTag.NOTIFICATION, "Ignoring unread change due to no renderable changes")
+                    false
+                }
+
+                inferredCurrentNotifications.isEmpty() && diff.removed.isNotEmpty() -> {
+                    log(AppLogTag.NOTIFICATION, "Ignoring unread change due to no currently showing messages and changes are all messages marked as read")
+                    false
+                }
+
+                else -> true
+            }
+        }
+        .onEach { (allUnread, _) -> inferredCurrentNotifications.clearAndPutAll(allUnread.mapKeys { it.key.roomId }) }
+        .map {
+            val engineModels = it.first
+                .mapKeys { it.key.engine() }
+                .mapValues { it.value.map { it.engine() } }
+            engineModels to it.second
+        }
+}
 
 typealias TimestampedEventId = Pair<EventId, Long>

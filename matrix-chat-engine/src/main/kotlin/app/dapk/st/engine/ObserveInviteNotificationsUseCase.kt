@@ -1,17 +1,16 @@
-package app.dapk.st.notifications
+package app.dapk.st.engine
 
-import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.sync.InviteMeta
 import app.dapk.st.matrix.sync.OverviewStore
 import app.dapk.st.matrix.sync.RoomInvite
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
-internal typealias ObserveInviteNotificationsUseCase = suspend () -> Flow<InviteNotification>
+internal typealias ObserveInviteNotificationsUseCase = () -> Flow<InviteNotification>
 
 class ObserveInviteNotificationsUseCaseImpl(private val overviewStore: OverviewStore) : ObserveInviteNotificationsUseCase {
 
-    override suspend fun invoke(): Flow<InviteNotification> {
+    override fun invoke(): Flow<InviteNotification> {
         return overviewStore.latestInvites()
             .diff()
             .drop(1)
@@ -43,8 +42,3 @@ class ObserveInviteNotificationsUseCaseImpl(private val overviewStore: OverviewS
 private fun <T> Flow<Set<T>>.flatten() = this.flatMapConcat { items ->
     flow { items.forEach { this.emit(it) } }
 }
-
-data class InviteNotification(
-    val content: String,
-    val roomId: RoomId
-)

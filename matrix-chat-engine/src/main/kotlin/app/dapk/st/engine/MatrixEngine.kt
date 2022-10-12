@@ -41,6 +41,8 @@ class MatrixEngine internal constructor(
     private val matrixMediaDecrypter: Lazy<MatrixMediaDecrypter>,
     private val matrixPushHandler: Lazy<MatrixPushHandler>,
     private val inviteUseCase: Lazy<InviteUseCase>,
+    private val notificationMessagesUseCase: Lazy<ObserveUnreadNotificationsUseCase>,
+    private val notificationInvitesUseCase: Lazy<ObserveInviteNotificationsUseCase>,
 ) : ChatEngine {
 
     override fun directory() = directoryUseCase.value.state()
@@ -48,6 +50,14 @@ class MatrixEngine internal constructor(
 
     override fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState> {
         return timelineUseCase.value.fetch(roomId, isReadReceiptsDisabled = disableReadReceipts)
+    }
+
+    override fun notificationsMessages(): Flow<UnreadNotifications> {
+        return notificationMessagesUseCase.value.invoke()
+    }
+
+    override fun notificationsInvites(): Flow<InviteNotification> {
+        return notificationInvitesUseCase.value.invoke()
     }
 
     override suspend fun login(request: LoginRequest): LoginResult {
@@ -190,6 +200,8 @@ class MatrixEngine internal constructor(
                 mediaDecrypter,
                 pushHandler,
                 invitesUseCase,
+                unsafeLazy { ObserveUnreadNotificationsUseCaseImpl(roomStore) },
+                unsafeLazy { ObserveInviteNotificationsUseCaseImpl(overviewStore) },
             )
         }
 

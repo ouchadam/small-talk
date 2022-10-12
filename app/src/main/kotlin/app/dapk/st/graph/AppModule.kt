@@ -180,9 +180,8 @@ internal class FeatureModules internal constructor(
     val profileModule by unsafeLazy { ProfileModule(chatEngineModule.engine, trackingModule.errorTracker) }
     val notificationsModule by unsafeLazy {
         NotificationsModule(
+            chatEngineModule.engine,
             imageLoaderModule.iconLoader(),
-            storeModule.value.roomStore(),
-            storeModule.value.overviewStore(),
             context,
             intentFactory = coreAndroidModule.intentFactory(),
             dispatchers = coroutineDispatchers,
