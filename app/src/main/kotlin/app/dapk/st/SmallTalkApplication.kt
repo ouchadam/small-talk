@@ -42,10 +42,15 @@ class SmallTalkApplication : Application(), ModuleProvider {
         val notificationsModule = featureModules.notificationsModule
         val storeModule = appModule.storeModule.value
         val eventLogStore = storeModule.eventLogStore()
+        val loggingStore = storeModule.loggingStore()
 
         val logger: (String, String) -> Unit = { tag, message ->
             Log.e(tag, message)
-            applicationScope.launch { eventLogStore.insert(tag, message) }
+            applicationScope.launch {
+                if (loggingStore.isEnabled()) {
+                    eventLogStore.insert(tag, message)
+                }
+            }
         }
         attachAppLogger(logger)
         _appLogger = logger

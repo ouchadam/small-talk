@@ -1,8 +1,8 @@
 package app.dapk.st.notifications
 
+import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
 import fake.FakeNotificationFactory
 import fake.FakeNotificationManager
 import fake.aFakeNotification

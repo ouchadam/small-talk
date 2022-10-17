@@ -1,13 +1,13 @@
 package app.dapk.st.graph
 
-import app.dapk.st.matrix.push.PushService
+import app.dapk.st.engine.ChatEngine
 import app.dapk.st.push.PushTokenPayload
 import app.dapk.st.work.TaskRunner
 import io.ktor.client.plugins.*
 import kotlinx.serialization.json.Json
 
 class AppTaskRunner(
-    private val pushService: PushService,
+    private val chatEngine: ChatEngine,
 ) {
 
     suspend fun run(workTask: TaskRunner.RunnableWorkTask): TaskRunner.TaskResult {
@@ -15,7 +15,7 @@ class AppTaskRunner(
             "push_token" -> {
                 runCatching {
                     val payload = Json.decodeFromString(PushTokenPayload.serializer(), workTask.task.jsonPayload)
-                    pushService.registerPush(payload.token, payload.gatewayUrl)
+                    chatEngine.registerPushToken(payload.token, payload.gatewayUrl)
                 }.fold(
                     onSuccess = { TaskRunner.TaskResult.Success(workTask.source) },
                     onFailure = {

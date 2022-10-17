@@ -8,8 +8,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import test.expect
 
-private val A_ROOM_OVERVIEW = aRoomOverview()
-private val A_ROOM_MESSAGE_FROM_OTHER = aRoomMessageEvent(
+private val A_ROOM_OVERVIEW = aMatrixRoomOverview()
+private val A_ROOM_MESSAGE_FROM_OTHER = aMatrixRoomMessageEvent(
     eventId = anEventId("a-new-message-event"),
     author = aRoomMember(id = aUserId("a-different-user"))
 )
@@ -27,7 +27,7 @@ internal class UnreadEventsProcessorTest {
     fun `given initial sync when processing unread then does mark any events as unread`() = runTest {
         unreadEventsProcessor.processUnreadState(
             isInitialSync = true,
-            overview = aRoomOverview(),
+            overview = aMatrixRoomOverview(),
             previousState = null,
             newEvents = emptyList(),
             selfId = aUserId()

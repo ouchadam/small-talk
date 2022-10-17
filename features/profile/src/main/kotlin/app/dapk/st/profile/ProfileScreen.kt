@@ -21,8 +21,8 @@ import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.*
-import app.dapk.st.matrix.sync.InviteMeta
-import app.dapk.st.matrix.sync.RoomInvite
+import app.dapk.st.engine.RoomInvite
+import app.dapk.st.engine.RoomInvite.InviteMeta
 import app.dapk.st.settings.SettingsActivity
 
 @Composable
@@ -119,7 +119,7 @@ private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: 
 }
 
 @Composable
-private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitations) {
+private fun SpiderItemScope.Invitations(viewModel: ProfileViewModel, invitations: Page.Invitations) {
     when (val state = invitations.content) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
@@ -147,7 +147,7 @@ private fun Invitations(viewModel: ProfileViewModel, invitations: Page.Invitatio
             }
         }
 
-        is Lce.Error -> TODO()
+        is Lce.Error -> GenericError(label = "Go back", cause = state.cause) { goBack() }
     }
 }
 

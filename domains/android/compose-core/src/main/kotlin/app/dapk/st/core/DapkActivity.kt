@@ -8,10 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.design.components.SmallTalkTheme
 import app.dapk.st.design.components.ThemeConfig
 import app.dapk.st.navigator.navigator
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import androidx.activity.compose.setContent as _setContent
@@ -29,7 +32,7 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.themeConfig = ThemeConfig(themeStore.isMaterialYouEnabled())
+        this.themeConfig = runBlocking { ThemeConfig(themeStore.isMaterialYouEnabled()) }
 
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -45,8 +48,10 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
 
     override fun onResume() {
         super.onResume()
-        if (themeConfig.useDynamicTheme != themeStore.isMaterialYouEnabled()) {
-            recreate()
+        lifecycleScope.launch {
+            if (themeConfig.useDynamicTheme != themeStore.isMaterialYouEnabled()) {
+                recreate()
+            }
         }
     }
 
@@ -68,6 +73,16 @@ abstract class DapkActivity : ComponentActivity(), EffectScope {
         } else {
             super.onBackPressed()
         }
+    }
+
+    protected fun registerForPermission(permission: String, callback: () -> Unit = {}): () -> Unit {
+        val resultCallback: (result: Boolean) -> Unit = { result ->
+            if (result) {
+                callback()
+            }
+        }
+        val launcher = registerForActivityResult(ActivityResultContracts.RequestPermission(), resultCallback)
+        return { launcher.launch(permission) }
     }
 
     protected suspend fun ensurePermission(permission: String): PermissionResult {

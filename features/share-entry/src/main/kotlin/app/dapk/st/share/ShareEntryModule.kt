@@ -1,15 +1,13 @@
 package app.dapk.st.share
 
 import app.dapk.st.core.ProvidableModule
-import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.SyncService
+import app.dapk.st.engine.ChatEngine
 
 class ShareEntryModule(
-    private val syncService: SyncService,
-    private val roomService: RoomService,
+    private val chatEngine: ChatEngine,
 ) : ProvidableModule {
 
     fun shareEntryViewModel(): ShareEntryViewModel {
-        return ShareEntryViewModel(FetchRoomsUseCase(syncService, roomService))
+        return ShareEntryViewModel(FetchRoomsUseCase(chatEngine))
     }
 }

@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.result.contract.ActivityResultContract
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.*
 import app.dapk.st.core.extensions.unsafeLazy
+import app.dapk.st.design.components.GenericError
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
@@ -31,7 +33,7 @@ class ImageGalleryActivity : DapkActivity() {
         val permissionState = mutableStateOf<Lce<PermissionResult>>(Lce.Loading())
 
         lifecycleScope.launch {
-            permissionState.value = runCatching { ensurePermission(Manifest.permission.READ_EXTERNAL_STORAGE) }.fold(
+            permissionState.value = runCatching { ensurePermission(mediaPermission()) }.fold(
                 onSuccess = { Lce.Content(it) },
                 onFailure = { Lce.Error(it) }
             )
@@ -48,6 +50,12 @@ class ImageGalleryActivity : DapkActivity() {
             }
         }
     }
+
+    private fun mediaPermission() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
 }
 
 @Composable
@@ -59,7 +67,10 @@ fun Activity.PermissionGuard(state: State<Lce<PermissionResult>>, onGranted: @Co
             PermissionResult.ShowRational -> finish()
         }
 
-        is Lce.Error -> finish()
+        is Lce.Error -> GenericError(message = "Store permission required", label = "Close") {
+            finish()
+        }
+
         is Lce.Loading -> {
             // loading should be quick, let's avoid displaying anything
         }

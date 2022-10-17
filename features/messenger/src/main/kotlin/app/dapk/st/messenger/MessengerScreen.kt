@@ -43,16 +43,13 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.extensions.takeIfContent
-import app.dapk.st.design.components.MessengerUrlIcon
-import app.dapk.st.design.components.MissingAvatarIcon
-import app.dapk.st.design.components.SmallTalkTheme
-import app.dapk.st.design.components.Toolbar
+import app.dapk.st.design.components.*
+import app.dapk.st.engine.MessageMeta
+import app.dapk.st.engine.MessengerState
+import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.RoomState
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
-import app.dapk.st.matrix.sync.MessageMeta
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomEvent.Message
-import app.dapk.st.matrix.sync.RoomState
 import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.navigator.Navigator
@@ -95,7 +92,7 @@ internal fun MessengerScreen(
         })
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState, replyActions)
+                Room(state.roomState, replyActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
@@ -132,7 +129,7 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions, onRetry: () -> Unit) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
@@ -165,16 +162,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: Re
             }
         }
 
-        is Lce.Error -> {
-            Box(contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Something went wrong...")
-                    Button(onClick = {}) {
-                        Text("Retry")
-                    }
-                }
-            }
-        }
+        is Lce.Error -> GenericError(cause = state.cause, action = onRetry)
     }
 }
 
@@ -208,8 +196,9 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions
             AlignedBubble(item, self, wasPreviousMessageSameSender, replyActions) {
                 when (item) {
                     is RoomEvent.Image -> MessageImage(it as BubbleContent<RoomEvent.Image>)
-                    is Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
+                    is RoomEvent.Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
                     is RoomEvent.Reply -> ReplyBubbleContent(it as BubbleContent<RoomEvent.Reply>)
+                    is RoomEvent.Encrypted -> EncryptedBubbleContent(it as BubbleContent<RoomEvent.Encrypted>)
                 }
             }
         }
@@ -458,6 +447,54 @@ private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
 }
 
 @Composable
+private fun EncryptedBubbleContent(content: BubbleContent<RoomEvent.Encrypted>) {
+    Box(modifier = Modifier.padding(start = 6.dp)) {
+        Box(
+            Modifier
+                .padding(4.dp)
+                .clip(content.shape)
+                .background(content.background)
+                .height(IntrinsicSize.Max),
+        ) {
+            Column(
+                Modifier
+                    .padding(8.dp)
+                    .width(IntrinsicSize.Max)
+                    .defaultMinSize(minWidth = 50.dp)
+            ) {
+                if (content.isNotSelf) {
+                    Text(
+                        fontSize = 11.sp,
+                        text = content.message.author.displayName ?: content.message.author.id.value,
+                        maxLines = 1,
+                        color = content.textColor()
+                    )
+                }
+                Text(
+                    text = "Encrypted message",
+                    color = content.textColor(),
+                    fontSize = 15.sp,
+                    modifier = Modifier.wrapContentSize(),
+                    textAlign = TextAlign.Start,
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        fontSize = 9.sp,
+                        text = "${content.message.time}",
+                        textAlign = TextAlign.End,
+                        color = content.textColor(),
+                        modifier = Modifier.wrapContentSize()
+                    )
+                    SendStatus(content.message)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
@@ -494,7 +531,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     when (val replyingTo = content.message.replyingTo) {
-                        is Message -> {
+                        is RoomEvent.Message -> {
                             Text(
                                 text = replyingTo.content,
                                 color = content.textColor().copy(alpha = 0.8f),
@@ -523,6 +560,16 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         is RoomEvent.Reply -> {
                             // TODO - a reply to a reply
                         }
+
+                        is RoomEvent.Encrypted -> {
+                            Text(
+                                text = "Encrypted message",
+                                color = content.textColor().copy(alpha = 0.8f),
+                                fontSize = 14.sp,
+                                modifier = Modifier.wrapContentSize(),
+                                textAlign = TextAlign.Start,
+                            )
+                        }
                     }
                 }
 
@@ -537,7 +584,7 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                     )
                 }
                 when (val message = content.message.message) {
-                    is Message -> {
+                    is RoomEvent.Message -> {
                         Text(
                             text = message.content,
                             color = content.textColor(),
@@ -565,6 +612,16 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
 
                     is RoomEvent.Reply -> {
                         // TODO - a reply to a reply
+                    }
+
+                    is RoomEvent.Encrypted -> {
+                        Text(
+                            text = "Encrypted message",
+                            color = content.textColor(),
+                            fontSize = 15.sp,
+                            modifier = Modifier.wrapContentSize(),
+                            textAlign = TextAlign.Start,
+                        )
                     }
                 }
 
@@ -654,7 +711,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                         )
                 }
             ) {
-                if (it is Message) {
+                if (it is RoomEvent.Message) {
                     Box(Modifier.padding(12.dp)) {
                         Box(Modifier.padding(8.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
                             Icon(

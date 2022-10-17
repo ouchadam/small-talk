@@ -4,8 +4,8 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.os.Build
 import app.dapk.st.core.DeviceMeta
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.matrix.common.AvatarUrl
-import app.dapk.st.matrix.sync.RoomOverview
 import fake.FakeContext
 import fixture.NotificationDelegateFixtures.anAndroidNotification
 import fixture.NotificationDelegateFixtures.anInboxStyle
@@ -137,7 +137,7 @@ class NotificationFactoryTest {
         fakeIntentFactory.givenNotificationOpenApp(fakeContext.instance).returns(AN_OPEN_APP_INTENT)
         val content = "Content message"
         val result = notificationFactory.createInvite(
-            InviteNotification(
+            app.dapk.st.engine.InviteNotification(
                 content = content,
                 A_ROOM_ID,
             )

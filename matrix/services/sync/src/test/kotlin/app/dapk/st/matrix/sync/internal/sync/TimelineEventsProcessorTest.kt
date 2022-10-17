@@ -19,7 +19,7 @@ private val A_ROOM_ID = aRoomId()
 private val ANY_LOOKUP_RESULT = LookupResult(anApiTimelineTextEvent(), roomEvent = null)
 private val AN_ENCRYPTED_TIMELINE_EVENT = anEncryptedApiTimelineEvent()
 private val A_TEXT_TIMELINE_EVENT = anApiTimelineTextEvent()
-private val A_MESSAGE_ROOM_EVENT = aRoomMessageEvent(anEventId("a-message"))
+private val A_MESSAGE_ROOM_EVENT = aMatrixRoomMessageEvent(anEventId("a-message"))
 private val AN_ENCRYPTED_ROOM_EVENT = anEncryptedRoomMessageEvent(anEventId("encrypted-message"))
 private val A_LOOKUP_EVENT_ID = anEventId("lookup-id")
 private val A_USER_CREDENTIALS = aUserCredentials()
@@ -52,7 +52,7 @@ class TimelineEventsProcessorTest {
 
     @Test
     fun `given encrypted and text timeline events when processing then maps to room events`() = runTest {
-        val previousEvents = listOf(aRoomMessageEvent(eventId = anEventId("previous-event")))
+        val previousEvents = listOf(aMatrixRoomMessageEvent(eventId = anEventId("previous-event")))
         val newTimelineEvents = listOf(AN_ENCRYPTED_TIMELINE_EVENT, A_TEXT_TIMELINE_EVENT)
         val roomToProcess = aRoomToProcess(apiSyncRoom = anApiSyncRoom(anApiSyncRoomTimeline(newTimelineEvents)))
         fakeRoomEventsDecrypter.givenDecrypts(A_USER_CREDENTIALS, previousEvents)

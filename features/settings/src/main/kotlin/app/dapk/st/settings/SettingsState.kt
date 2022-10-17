@@ -2,10 +2,9 @@ package app.dapk.st.settings
 
 import android.net.Uri
 import app.dapk.st.core.Lce
-import app.dapk.st.core.LceWithProgress
 import app.dapk.st.design.components.Route
 import app.dapk.st.design.components.SpiderPage
-import app.dapk.st.matrix.crypto.ImportResult
+import app.dapk.st.engine.ImportResult
 import app.dapk.st.push.Registrar
 
 internal data class SettingsScreenState(
@@ -43,8 +42,8 @@ internal sealed interface SettingItem {
     val id: Id
 
     data class Header(val label: String, override val id: Id = Id.Ignored) : SettingItem
-    data class Text(override val id: Id, val content: String, val subtitle: String? = null) : SettingItem
-    data class Toggle(override val id: Id, val content: String, val state: Boolean) : SettingItem
+    data class Text(override val id: Id, val content: String, val subtitle: String? = null, val enabled: Boolean = true) : SettingItem
+    data class Toggle(override val id: Id, val content: String, val subtitle: String? = null, val state: Boolean) : SettingItem
     data class AccessToken(override val id: Id, val content: String, val accessToken: String) : SettingItem
 
     enum class Id {
@@ -57,6 +56,8 @@ internal sealed interface SettingItem {
         PrivacyPolicy,
         Ignored,
         ToggleDynamicTheme,
+        ToggleEnableLogs,
+        ToggleSendReadReceipts,
     }
 }
 

@@ -1,8 +1,7 @@
 applyAndroidComposeLibraryModule(project)
 
 dependencies {
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:crypto")
+    implementation project(":chat-engine")
     implementation project(":features:navigator")
     implementation project(':domains:store')
     implementation project(':domains:android:push')
@@ -13,11 +12,10 @@ dependencies {
 
     kotlinTest(it)
 
-    androidImportFixturesWorkaround(project, project(":matrix:services:sync"))
-    androidImportFixturesWorkaround(project, project(":matrix:services:crypto"))
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":domains:store"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
+    androidImportFixturesWorkaround(project, project(":chat-engine"))
 }

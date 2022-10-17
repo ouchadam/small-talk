@@ -24,7 +24,7 @@ private val syncSubscriptionCount = AtomicInteger()
 
 internal class DefaultSyncService(
     httpClient: MatrixHttpClient,
-    syncStore: SyncStore,
+    private val syncStore: SyncStore,
     private val overviewStore: OverviewStore,
     private val roomStore: RoomStore,
     filterStore: FilterStore,
@@ -104,13 +104,24 @@ internal class DefaultSyncService(
             }
     }
 
-    override fun startSyncing() = syncFlow
+    override fun startSyncing(): Flow<Unit> {
+        return flow { emit(syncStore.read(SyncStore.SyncKey.Overview) != null) }.flatMapMerge { hasSynced ->
+            when (hasSynced) {
+                true -> syncFlow.filter { false }.onStart { emit(Unit) }
+                false -> {
+                    var counter = 0
+                    syncFlow.filter { counter < 1 }.onEach { counter++ }
+                }
+            }
+        }
+    }
+
     override fun invites() = overviewStore.latestInvites()
     override fun overview() = overviewStore.latest()
     override fun room(roomId: RoomId) = roomStore.latest(roomId)
     override fun events(roomId: RoomId?) = roomId?.let { syncEventsFlow.map { it.filter { it.roomId == roomId } }.distinctUntilChanged() } ?: syncEventsFlow
     override suspend fun observeEvent(eventId: EventId) = roomStore.observeEvent(eventId)
-    override suspend fun forceManualRefresh(roomIds: List<RoomId>) {
+    override suspend fun forceManualRefresh(roomIds: Set<RoomId>) {
         coroutineDispatchers.withIoContext {
             roomIds.map {
                 async {

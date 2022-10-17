@@ -3,12 +3,11 @@ package app.dapk.st.home
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.directory.DirectoryViewModel
 import app.dapk.st.domain.StoreCleaner
+import app.dapk.st.engine.ChatEngine
 import app.dapk.st.home.HomeScreenState.*
 import app.dapk.st.login.LoginViewModel
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.isSignedIn
-import app.dapk.st.matrix.room.ProfileService
-import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.profile.ProfileViewModel
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -20,14 +19,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
+    private val chatEngine: ChatEngine,
     private val credentialsProvider: CredentialsStore,
     private val directoryViewModel: DirectoryViewModel,
     private val loginViewModel: LoginViewModel,
     private val profileViewModel: ProfileViewModel,
-    private val profileService: ProfileService,
     private val cacheCleaner: StoreCleaner,
     private val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
-    private val syncService: SyncService,
 ) : DapkViewModel<HomeScreenState, HomeEvent>(
     initialState = Loading
 ) {
@@ -41,6 +39,7 @@ class HomeViewModel(
     fun start() {
         viewModelScope.launch {
             state = if (credentialsProvider.isSignedIn()) {
+                _events.emit(HomeEvent.OnShowContent)
                 initialHomeContent()
             } else {
                 SignedOut
@@ -56,21 +55,22 @@ class HomeViewModel(
     }
 
     private suspend fun initialHomeContent(): SignedIn {
-        val me = profileService.me(forceRefresh = false)
-        val initialInvites = syncService.invites().first().size
+        val me = chatEngine.me(forceRefresh = false)
+        val initialInvites = chatEngine.invites().first().size
         return SignedIn(Page.Directory, me, invites = initialInvites)
     }
 
     fun loggedIn() {
         viewModelScope.launch {
             state = initialHomeContent()
+            _events.emit(HomeEvent.OnShowContent)
             listenForInviteChanges()
         }
     }
 
     private fun CoroutineScope.listenForInviteChanges() {
         listenForInvitesJob?.cancel()
-        listenForInvitesJob = syncService.invites()
+        listenForInvitesJob = chatEngine.invites()
             .onEach { invites ->
                 when (val currentState = state) {
                     is SignedIn -> updateState { currentState.copy(invites = invites.size) }
@@ -122,6 +122,6 @@ class HomeViewModel(
     }
 
     fun stop() {
-        viewModelScope.cancel()
+        // do nothing
     }
 }

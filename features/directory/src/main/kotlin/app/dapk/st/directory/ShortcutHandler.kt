@@ -5,8 +5,8 @@ import android.content.pm.ShortcutInfo
 import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.messenger.MessengerActivity
 
 class ShortcutHandler(private val context: Context) {

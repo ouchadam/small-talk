@@ -1,9 +1,9 @@
 package app.dapk.st.notifications
 
 import android.content.Context
+import app.dapk.st.engine.RoomEvent
+import app.dapk.st.engine.RoomOverview
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
 import app.dapk.st.navigator.IntentFactory
 import fixture.NotificationDelegateFixtures.anAndroidNotification
 import fixture.NotificationFixtures.aDismissRoomNotification

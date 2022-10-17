@@ -3,9 +3,8 @@ package app.dapk.st.settings
 import ViewModelTest
 import app.dapk.st.core.Lce
 import app.dapk.st.design.components.SpiderPage
-import app.dapk.st.matrix.crypto.ImportResult
+import app.dapk.st.engine.ImportResult
 import fake.*
-import fixture.FakeStoreCleaner
 import fixture.aRoomId
 import internalfake.FakeSettingsItemFactory
 import internalfake.FakeUriFilenameResolver
@@ -35,22 +34,24 @@ internal class SettingsViewModelTest {
 
     private val fakeStoreCleaner = FakeStoreCleaner()
     private val fakeContentResolver = FakeContentResolver()
-    private val fakeCryptoService = FakeCryptoService()
-    private val fakeSyncService = FakeSyncService()
     private val fakeUriFilenameResolver = FakeUriFilenameResolver()
     private val fakePushTokenRegistrars = FakePushRegistrars()
     private val fakeSettingsItemFactory = FakeSettingsItemFactory()
     private val fakeThemeStore = FakeThemeStore()
+    private val fakeLoggingStore = FakeLoggingStore()
+    private val fakeMessageOptionsStore = FakeMessageOptionsStore()
+    private val fakeChatEngine = FakeChatEngine()
 
     private val viewModel = SettingsViewModel(
+        fakeChatEngine,
         fakeStoreCleaner,
         fakeContentResolver.instance,
-        fakeCryptoService,
-        fakeSyncService,
         fakeUriFilenameResolver.instance,
         fakeSettingsItemFactory.instance,
         fakePushTokenRegistrars.instance,
         fakeThemeStore.instance,
+        fakeLoggingStore.instance,
+        fakeMessageOptionsStore.instance,
         runViewModelTest.testMutableStateFactory(),
     )
 
@@ -170,9 +171,8 @@ internal class SettingsViewModelTest {
 
     @Test
     fun `given success when importing room keys, then emits progress`() = runViewModelTest {
-        fakeSyncService.expectUnit { it.forceManualRefresh(A_LIST_OF_ROOM_IDS) }
         fakeContentResolver.givenFile(A_URI.instance).returns(AN_INPUT_STREAM.instance)
-        fakeCryptoService.givenImportKeys(AN_INPUT_STREAM.instance, A_PASSPHRASE).returns(flowOf(AN_IMPORT_SUCCESS))
+        fakeChatEngine.givenImportKeys(AN_INPUT_STREAM.instance, A_PASSPHRASE).returns(flowOf(AN_IMPORT_SUCCESS))
 
         viewModel
             .test(initialState = SettingsScreenState(A_IMPORT_ROOM_KEYS_PAGE_WITH_SELECTION))

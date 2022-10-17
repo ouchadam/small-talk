@@ -1,7 +1,6 @@
 package app.dapk.st.login
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,6 +31,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.dapk.st.core.StartObserving
+import app.dapk.st.core.components.CenteredLoading
+import app.dapk.st.design.components.GenericError
 import app.dapk.st.login.LoginEvent.LoginComplete
 import app.dapk.st.login.LoginScreenState.*
 
@@ -49,42 +50,8 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     when (val state = loginViewModel.state) {
-        is Error -> {
-            val openDetailsDialog = remember { mutableStateOf(false) }
-
-            if (openDetailsDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { openDetailsDialog.value = false },
-                    confirmButton = {
-                        Button(onClick = { openDetailsDialog.value = false }) {
-                            Text("OK")
-                        }
-                    },
-                    title = { Text("Details") },
-                    text = {
-                        Text(state.cause.message ?: "Unknown")
-                    }
-                )
-            }
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Something went wrong")
-                    Text("Tap for more details".uppercase(), fontSize = 12.sp, modifier = Modifier.clickable { openDetailsDialog.value = true }.padding(12.dp))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(onClick = {
-                        loginViewModel.start()
-                    }) {
-                        Text("Retry".uppercase())
-                    }
-                }
-            }
-        }
-
-        Loading -> {
-            Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
+        is Error -> GenericError(cause = state.cause, action = { loginViewModel.start() })
+        Loading -> CenteredLoading()
 
         is Content ->
             Row {

@@ -22,7 +22,8 @@ dependencies {
     implementation project(":core")
     implementation Dependencies.mavenCentral.kotlinSerializationJson
     implementation Dependencies.mavenCentral.kotlinCoroutinesCore
-    implementation "com.squareup.sqldelight:coroutines-extensions:1.5.3"
+    implementation "com.squareup.sqldelight:coroutines-extensions:1.5.4"
 
     kotlinFixtures(it)
-}
+    testImplementation(testFixtures(project(":core")))
+    testFixturesImplementation(testFixtures(project(":core")))}
