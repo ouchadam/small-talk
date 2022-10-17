@@ -1,21 +1,13 @@
 package app.dapk.st.matrix.sync
 
-import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.matrix.common.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 data class RoomState(
     val roomOverview: RoomOverview,
     val events: List<RoomEvent>,
 )
-
-internal val DEFAULT_ZONE = ZoneId.systemDefault()
-internal val MESSAGE_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm")
 
 @Serializable
 sealed class RoomEvent {
@@ -47,10 +39,6 @@ sealed class RoomEvent {
             @SerialName("session_id") val sessionId: SessionId,
         )
 
-        val time: String by unsafeLazy {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
     }
 
     @Serializable
@@ -63,13 +51,7 @@ sealed class RoomEvent {
         @SerialName("meta") override val meta: MessageMeta,
         @SerialName("edited") val edited: Boolean = false,
         @SerialName("redacted") override val redacted: Boolean = false,
-    ) : RoomEvent() {
-
-        val time: String by unsafeLazy {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
-    }
+    ) : RoomEvent()
 
     @Serializable
     @SerialName("reply")
@@ -84,12 +66,6 @@ sealed class RoomEvent {
         override val meta: MessageMeta = message.meta
         override val redacted: Boolean = message.redacted
 
-        val replyingToSelf = replyingTo.author == message.author
-
-        val time: String by unsafeLazy {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
     }
 
     @Serializable
@@ -103,11 +79,6 @@ sealed class RoomEvent {
         @SerialName("edited") val edited: Boolean = false,
         @SerialName("redacted") override val redacted: Boolean = false,
     ) : RoomEvent() {
-
-        val time: String by unsafeLazy {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
 
         @Serializable
         data class ImageMeta(
