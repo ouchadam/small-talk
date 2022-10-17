@@ -14,6 +14,8 @@ import com.squareup.sqldelight.TransactionWithoutReturn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class OlmPersistence(
     private val database: DapkDb,
@@ -83,10 +85,12 @@ class OlmPersistence(
     }
 
     suspend fun startTransaction(action: suspend TransactionWithoutReturn.() -> Unit) {
-        val scope = CoroutineScope(dispatchers.io)
-        database.cryptoQueries.transaction {
-            scope.launch { action() }
+        val transaction = suspendCoroutine { continuation ->
+            database.cryptoQueries.transaction {
+                continuation.resume(this)
+            }
         }
+        action(transaction)
     }
 
     suspend fun persist(sessionId: SessionId, inboundGroupSession: SerializedObject) {
