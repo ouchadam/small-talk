@@ -122,6 +122,6 @@ class HomeViewModel(
     }
 
     fun stop() {
-        viewModelScope.cancel()
+        // do nothing
     }
 }
