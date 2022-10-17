@@ -29,7 +29,6 @@ internal class RoomEventCreator(
                     author = roomMembersService.find(roomId, this.senderId)!!,
                     utcTimestamp = this.utcTimestamp,
                     meta = MessageMeta.FromServer,
-                    content = "Encrypted message",
                     encryptedContent = RoomEvent.Encrypted.MegOlmV1(
                         this.encryptedContent.cipherText,
                         this.encryptedContent.deviceId,

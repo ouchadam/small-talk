@@ -23,12 +23,11 @@ sealed class RoomEvent {
     data class Encrypted(
         @SerialName("event_id") override val eventId: EventId,
         @SerialName("timestamp") override val utcTimestamp: Long,
-        @SerialName("content") val content: String,
         @SerialName("author") override val author: RoomMember,
         @SerialName("meta") override val meta: MessageMeta,
-        @SerialName("encrypted_content") val encryptedContent: MegOlmV1,
         @SerialName("edited") val edited: Boolean = false,
         @SerialName("redacted") override val redacted: Boolean = false,
+        @SerialName("encrypted_content") val encryptedContent: MegOlmV1,
     ) : RoomEvent() {
 
         @Serializable

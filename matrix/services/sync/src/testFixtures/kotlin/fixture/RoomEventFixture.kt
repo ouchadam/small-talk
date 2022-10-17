@@ -10,9 +10,8 @@ fun aMatrixRoomMessageEvent(
     content: String = "message-content",
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
-    encryptedContent: RoomEvent.Message.MegOlmV1? = null,
     edited: Boolean = false,
-) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, encryptedContent, edited)
+) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited)
 
 fun aRoomImageMessageEvent(
     eventId: EventId = anEventId(),
@@ -20,9 +19,8 @@ fun aRoomImageMessageEvent(
     content: RoomEvent.Image.ImageMeta = anImageMeta(),
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
-    encryptedContent: RoomEvent.Message.MegOlmV1? = null,
     edited: Boolean = false,
-) = RoomEvent.Image(eventId, utcTimestamp, content, author, meta, encryptedContent, edited)
+) = RoomEvent.Image(eventId, utcTimestamp, content, author, meta, edited)
 
 fun aRoomReplyMessageEvent(
     message: RoomEvent = aMatrixRoomMessageEvent(),
@@ -32,19 +30,19 @@ fun aRoomReplyMessageEvent(
 fun anEncryptedRoomMessageEvent(
     eventId: EventId = anEventId(),
     utcTimestamp: Long = 0L,
-    content: String = "encrypted-content",
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
-    encryptedContent: RoomEvent.Message.MegOlmV1? = aMegolmV1(),
+    encryptedContent: RoomEvent.Encrypted.MegOlmV1 = aMegolmV1(),
     edited: Boolean = false,
-) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, encryptedContent, edited)
+    redacted: Boolean = false,
+) = RoomEvent.Encrypted(eventId, utcTimestamp, author, meta, edited, redacted, encryptedContent)
 
 fun aMegolmV1(
     cipherText: CipherText = CipherText("a-cipher"),
     deviceId: DeviceId = aDeviceId(),
     senderKey: String = "a-sender-key",
     sessionId: SessionId = aSessionId(),
-) = RoomEvent.Message.MegOlmV1(cipherText, deviceId, senderKey, sessionId)
+) = RoomEvent.Encrypted.MegOlmV1(cipherText, deviceId, senderKey, sessionId)
 
 fun anImageMeta(
     width: Int? = 100,
