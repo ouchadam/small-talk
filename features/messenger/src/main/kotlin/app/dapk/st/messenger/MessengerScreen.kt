@@ -198,6 +198,7 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions
                     is RoomEvent.Image -> MessageImage(it as BubbleContent<RoomEvent.Image>)
                     is RoomEvent.Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
                     is RoomEvent.Reply -> ReplyBubbleContent(it as BubbleContent<RoomEvent.Reply>)
+                    is RoomEvent.Encrypted -> EncryptedBubbleContent(it as BubbleContent<RoomEvent.Encrypted>)
                 }
             }
         }
@@ -446,6 +447,54 @@ private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
 }
 
 @Composable
+private fun EncryptedBubbleContent(content: BubbleContent<RoomEvent.Encrypted>) {
+    Box(modifier = Modifier.padding(start = 6.dp)) {
+        Box(
+            Modifier
+                .padding(4.dp)
+                .clip(content.shape)
+                .background(content.background)
+                .height(IntrinsicSize.Max),
+        ) {
+            Column(
+                Modifier
+                    .padding(8.dp)
+                    .width(IntrinsicSize.Max)
+                    .defaultMinSize(minWidth = 50.dp)
+            ) {
+                if (content.isNotSelf) {
+                    Text(
+                        fontSize = 11.sp,
+                        text = content.message.author.displayName ?: content.message.author.id.value,
+                        maxLines = 1,
+                        color = content.textColor()
+                    )
+                }
+                Text(
+                    text = "Encrypted message",
+                    color = content.textColor(),
+                    fontSize = 15.sp,
+                    modifier = Modifier.wrapContentSize(),
+                    textAlign = TextAlign.Start,
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        fontSize = 9.sp,
+                        text = "${content.message.time}",
+                        textAlign = TextAlign.End,
+                        color = content.textColor(),
+                        modifier = Modifier.wrapContentSize()
+                    )
+                    SendStatus(content.message)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
@@ -511,6 +560,16 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
                         is RoomEvent.Reply -> {
                             // TODO - a reply to a reply
                         }
+
+                        is RoomEvent.Encrypted -> {
+                            Text(
+                                text = "Encrypted message",
+                                color = content.textColor().copy(alpha = 0.8f),
+                                fontSize = 14.sp,
+                                modifier = Modifier.wrapContentSize(),
+                                textAlign = TextAlign.Start,
+                            )
+                        }
                     }
                 }
 
@@ -553,6 +612,16 @@ private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
 
                     is RoomEvent.Reply -> {
                         // TODO - a reply to a reply
+                    }
+
+                    is RoomEvent.Encrypted -> {
+                        Text(
+                            text = "Encrypted message",
+                            color = content.textColor(),
+                            fontSize = 15.sp,
+                            modifier = Modifier.wrapContentSize(),
+                            textAlign = TextAlign.Start,
+                        )
                     }
                 }
 

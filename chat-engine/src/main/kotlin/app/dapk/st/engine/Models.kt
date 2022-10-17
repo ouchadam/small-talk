@@ -105,6 +105,19 @@ sealed class RoomEvent {
     abstract val author: RoomMember
     abstract val meta: MessageMeta
 
+    data class Encrypted(
+        override val eventId: EventId,
+        override val utcTimestamp: Long,
+        override val author: RoomMember,
+        override val meta: MessageMeta,
+    ) : RoomEvent() {
+
+        val time: String by lazy(mode = LazyThreadSafetyMode.NONE) {
+            val instant = Instant.ofEpochMilli(utcTimestamp)
+            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
+        }
+    }
+
     data class Message(
         override val eventId: EventId,
         override val utcTimestamp: Long,

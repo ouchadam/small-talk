@@ -97,6 +97,7 @@ internal class MessengerViewModel(
                                             is RoomEvent.Image -> TODO()
                                             is RoomEvent.Reply -> TODO()
                                             is RoomEvent.Message -> it.content
+                                            is RoomEvent.Encrypted -> error("Should never happen")
                                         },
                                         eventId = it.eventId,
                                         timestampUtc = it.utcTimestamp,

@@ -40,10 +40,9 @@ internal class RoomEventCreatorTest {
 
         val result = with(roomEventCreator) { megolmEvent.toRoomEvent(A_ROOM_ID) }
 
-        result shouldBeEqualTo aMatrixRoomMessageEvent(
+        result shouldBeEqualTo anEncryptedRoomMessageEvent(
             eventId = megolmEvent.eventId,
             utcTimestamp = megolmEvent.utcTimestamp,
-            content = "Encrypted message",
             author = A_SENDER,
             encryptedContent = megolmEvent.encryptedContent.toMegolm(),
         )
@@ -320,7 +319,7 @@ private fun RoomEvent.Message.toReplyEvent(messageContent: String) = anApiTimeli
     )
 )
 
-private fun ApiEncryptedContent.toMegolm(): RoomEvent.Message.MegOlmV1 {
+private fun ApiEncryptedContent.toMegolm(): RoomEvent.Encrypted.MegOlmV1 {
     require(this is ApiEncryptedContent.MegOlmV1)
     return aMegolmV1(this.cipherText, this.deviceId, this.senderKey, this.sessionId)
 }
