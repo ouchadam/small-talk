@@ -47,6 +47,7 @@ internal class LocalEchoMapper(private val metaMapper: MetaMapper) {
         is RoomEvent.Message -> this.copy(meta = metaMapper.toMeta(echo))
         is RoomEvent.Reply -> this.copy(message = this.message.mergeWith(echo))
         is RoomEvent.Image -> this.copy(meta = metaMapper.toMeta(echo))
+        is RoomEvent.Encrypted -> this.copy(meta = metaMapper.toMeta(echo))
     }
 }
 

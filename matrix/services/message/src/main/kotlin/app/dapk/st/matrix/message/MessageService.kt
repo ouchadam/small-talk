@@ -77,13 +77,12 @@ interface MessageService : MatrixService {
 
                 @Serializable
                 data class Meta(
-                    val height: Int,
-                    val width: Int,
-                    val size: Long,
-                    val fileName: String,
-                    val mimeType: String,
+                    @SerialName("height") val height: Int,
+                    @SerialName("width") val width: Int,
+                    @SerialName("size") val size: Long,
+                    @SerialName("file_name") val fileName: String,
+                    @SerialName("mime_type") val mimeType: String,
                 )
-
             }
 
         }

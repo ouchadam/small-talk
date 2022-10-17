@@ -24,13 +24,13 @@ internal class RoomEventCreator(
     suspend fun ApiTimelineEvent.Encrypted.toRoomEvent(roomId: RoomId): RoomEvent? {
         return when (this.encryptedContent) {
             is ApiEncryptedContent.MegOlmV1 -> {
-                RoomEvent.Message(
+                RoomEvent.Encrypted(
                     eventId = this.eventId,
                     author = roomMembersService.find(roomId, this.senderId)!!,
                     utcTimestamp = this.utcTimestamp,
                     meta = MessageMeta.FromServer,
                     content = "Encrypted message",
-                    encryptedContent = RoomEvent.Message.MegOlmV1(
+                    encryptedContent = RoomEvent.Encrypted.MegOlmV1(
                         this.encryptedContent.cipherText,
                         this.encryptedContent.deviceId,
                         this.encryptedContent.senderKey,
@@ -38,6 +38,7 @@ internal class RoomEventCreator(
                     )
                 )
             }
+
             is ApiEncryptedContent.OlmV1 -> errorTracker.nullAndTrack(IllegalStateException("unexpected encryption, got OlmV1 for a room event"))
             ApiEncryptedContent.Unknown -> errorTracker.nullAndTrack(IllegalStateException("unknown room event encryption"))
         }
@@ -79,6 +80,7 @@ internal class TimelineEventMapper(
                         is RoomEvent.Message -> relationEvent
                         is RoomEvent.Reply -> relationEvent.message
                         is RoomEvent.Image -> relationEvent
+                        is RoomEvent.Encrypted -> relationEvent
                     }
                 )
             }
@@ -110,10 +112,17 @@ internal class TimelineEventMapper(
                         is RoomEvent.Image -> original.message
                         is RoomEvent.Message -> original.message.edited(incomingEdit)
                         is RoomEvent.Reply -> original.message
+                        is RoomEvent.Encrypted -> original.message
                     }
                 )
+
                 is RoomEvent.Image -> {
                     // can't edit images
+                    null
+                }
+
+                is RoomEvent.Encrypted -> {
+                    // can't edit encrypted messages
                     null
                 }
             }
@@ -127,11 +136,13 @@ internal class TimelineEventMapper(
                     utcTimestamp = incomingEdit.utcTimestamp,
                     edited = true,
                 )
+
                 is ApiTimelineEvent.TimelineMessage.Content.Text -> original.toTextMessage(
                     utcTimestamp = incomingEdit.utcTimestamp,
                     content = incomingEdit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
                     edited = true,
                 )
+
                 ApiTimelineEvent.TimelineMessage.Content.Ignored -> null
             }
         }

@@ -81,4 +81,5 @@ private fun RoomEvent.toTextContent(): String = when (this) {
     is RoomEvent.Image -> "\uD83D\uDCF7"
     is RoomEvent.Message -> this.content
     is RoomEvent.Reply -> this.message.toTextContent()
+    is RoomEvent.Encrypted -> "Encrypted message"
 }
