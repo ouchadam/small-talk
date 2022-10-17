@@ -144,7 +144,7 @@ ext.Dependencies.with {
         accompanistSystemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.25.1"
 
         junit = "junit:junit:4.13.2"
-        kluent = "org.amshove.kluent:kluent:1.68"
+        kluent = "org.amshove.kluent:kluent:1.70"
         mockk = 'io.mockk:mockk:1.13.2'
 
         matrixOlm = "org.matrix.android:olm-sdk:3.2.12"
