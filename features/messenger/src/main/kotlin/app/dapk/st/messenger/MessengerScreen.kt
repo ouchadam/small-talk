@@ -198,67 +198,19 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions
                 val event = Event(item.author.displayName ?: item.author.id.value, item.edited, item.time)
                 val status = @Composable { SendStatus(item) }
                 when (item) {
-                    is RoomEvent.Image -> MessageImage(this, item)
-                    is RoomEvent.Message -> TextBubbleContent(this, event, item.content, status = status)
-                    is RoomEvent.Reply -> ReplyBubbleContent(this, item)
-                    is RoomEvent.Encrypted -> EncryptedBubbleContent(this, item)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MessageImage(bubble: BubbleMeta, event: RoomEvent.Image) {
-    val context = LocalContext.current
-
-    Box(modifier = Modifier.padding(start = 6.dp)) {
-        Box(
-            Modifier
-                .padding(4.dp)
-                .clip(bubble.shape)
-                .background(bubble.background)
-                .height(IntrinsicSize.Max),
-        ) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .width(IntrinsicSize.Max)
-                    .defaultMinSize(minWidth = 50.dp)
-            ) {
-                if (bubble.isNotSelf()) {
-                    Text(
-                        fontSize = 11.sp,
-                        text = event.author.displayName ?: event.author.id.value,
-                        maxLines = 1,
-                        color = bubble.textColor()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Image(
-                    modifier = Modifier.size(event.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                    painter = rememberAsyncImagePainter(
-                        model = ImageRequest.Builder(context)
+                    is RoomEvent.Image -> {
+                        val context = LocalContext.current
+                        val imageRequest = ImageRequest.Builder(context)
                             .fetcherFactory(LocalDecyptingFetcherFactory.current)
-                            .memoryCacheKey(event.imageMeta.url)
-                            .data(event)
+                            .memoryCacheKey(item.imageMeta.url)
+                            .data(item)
                             .build()
-                    ),
-                    contentDescription = null,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                        ImageBubble(this, event, ImageContent(item.imageMeta.width, item.imageMeta.height, item.imageMeta.url), status, imageRequest)
+                    }
 
-                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    val editedPrefix = if (event.edited) "(edited) " else null
-                    Text(
-                        fontSize = 9.sp,
-                        text = "${editedPrefix ?: ""}${event.time}",
-                        textAlign = TextAlign.End,
-                        color = bubble.textColor(),
-                        modifier = Modifier.wrapContentSize()
-                    )
-                    SendStatus(event)
+                    is RoomEvent.Message -> TextBubble(this, event, item.content, status = status)
+                    is RoomEvent.Reply -> ReplyBubble(this, item)
+                    is RoomEvent.Encrypted -> EncryptedBubble(this, event, status)
                 }
             }
         }
@@ -292,55 +244,7 @@ private fun BubbleMeta.textColor(): Color {
 }
 
 @Composable
-private fun EncryptedBubbleContent(bubble: BubbleMeta, event: RoomEvent.Encrypted) {
-    Box(modifier = Modifier.padding(start = 6.dp)) {
-        Box(
-            Modifier
-                .padding(4.dp)
-                .clip(bubble.shape)
-                .background(bubble.background)
-                .height(IntrinsicSize.Max),
-        ) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .width(IntrinsicSize.Max)
-                    .defaultMinSize(minWidth = 50.dp)
-            ) {
-                if (bubble.isNotSelf()) {
-                    Text(
-                        fontSize = 11.sp,
-                        text = event.author.displayName ?: event.author.id.value,
-                        maxLines = 1,
-                        color = bubble.textColor()
-                    )
-                }
-                Text(
-                    text = "Encrypted message",
-                    color = bubble.textColor(),
-                    fontSize = 15.sp,
-                    modifier = Modifier.wrapContentSize(),
-                    textAlign = TextAlign.Start,
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        fontSize = 9.sp,
-                        text = event.time,
-                        textAlign = TextAlign.End,
-                        color = bubble.textColor(),
-                        modifier = Modifier.wrapContentSize()
-                    )
-                    SendStatus(event)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ReplyBubbleContent(bubble: BubbleMeta, event: RoomEvent.Reply) {
+private fun ReplyBubble(bubble: BubbleMeta, event: RoomEvent.Reply) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
             Modifier
