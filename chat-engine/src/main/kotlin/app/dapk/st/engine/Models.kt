@@ -104,6 +104,12 @@ sealed class RoomEvent {
     abstract val utcTimestamp: Long
     abstract val author: RoomMember
     abstract val meta: MessageMeta
+    abstract val edited: Boolean
+
+    val time: String by lazy(mode = LazyThreadSafetyMode.NONE) {
+        val instant = Instant.ofEpochMilli(utcTimestamp)
+        ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
+    }
 
     data class Encrypted(
         override val eventId: EventId,
@@ -112,10 +118,8 @@ sealed class RoomEvent {
         override val meta: MessageMeta,
     ) : RoomEvent() {
 
-        val time: String by lazy(mode = LazyThreadSafetyMode.NONE) {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
+        override val edited: Boolean = false
+
     }
 
     data class Message(
@@ -124,15 +128,9 @@ sealed class RoomEvent {
         val content: String,
         override val author: RoomMember,
         override val meta: MessageMeta,
-        val edited: Boolean = false,
+        override val edited: Boolean = false,
         val redacted: Boolean = false,
-    ) : RoomEvent() {
-
-        val time: String by lazy(mode = LazyThreadSafetyMode.NONE) {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
-    }
+    ) : RoomEvent()
 
     data class Reply(
         val message: RoomEvent,
@@ -143,13 +141,9 @@ sealed class RoomEvent {
         override val utcTimestamp: Long = message.utcTimestamp
         override val author: RoomMember = message.author
         override val meta: MessageMeta = message.meta
+        override val edited: Boolean = message.edited
 
         val replyingToSelf = replyingTo.author == message.author
-
-        val time: String by lazy(mode = LazyThreadSafetyMode.NONE) {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
     }
 
     data class Image(
@@ -158,13 +152,8 @@ sealed class RoomEvent {
         val imageMeta: ImageMeta,
         override val author: RoomMember,
         override val meta: MessageMeta,
-        val edited: Boolean = false,
+        override val edited: Boolean = false,
     ) : RoomEvent() {
-
-        val time: String by lazy(mode = LazyThreadSafetyMode.NONE) {
-            val instant = Instant.ofEpochMilli(utcTimestamp)
-            ZonedDateTime.ofInstant(instant, DEFAULT_ZONE).toLocalTime().format(MESSAGE_TIME_FORMAT)
-        }
 
         data class ImageMeta(
             val width: Int?,
