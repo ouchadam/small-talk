@@ -160,6 +160,7 @@ internal class FeatureModules internal constructor(
             chatEngineModule.engine,
             context,
             storeModule.value.messageStore(),
+            deviceMeta,
         )
     }
     val homeModule by unsafeLazy { HomeModule(chatEngineModule.engine, storeModule.value, buildMeta) }

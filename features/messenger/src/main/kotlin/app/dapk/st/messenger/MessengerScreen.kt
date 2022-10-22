@@ -1,5 +1,6 @@
 package app.dapk.st.messenger
 
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -7,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -71,9 +73,10 @@ internal fun MessengerScreen(
         else -> null
     }
 
-    val replyActions = ReplyActions(
+    val messageActions = MessageActions(
         onReply = { viewModel.post(MessengerAction.ComposerEnterReplyMode(it)) },
-        onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) }
+        onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) },
+        onLongClick = { viewModel.post(MessengerAction.CopyToClipboard(it)) }
     )
 
     Column {
@@ -84,13 +87,13 @@ internal fun MessengerScreen(
         })
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState, replyActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
+                Room(state.roomState, messageActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
                     onAttach = { viewModel.startAttachment() },
-                    replyActions = replyActions,
+                    messageActions = messageActions,
                 )
             }
 
@@ -107,6 +110,7 @@ internal fun MessengerScreen(
 
 @Composable
 private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
+    val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
@@ -115,17 +119,21 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
                         galleryLauncher.launch(ImageGalleryActivityPayload(it.roomState.roomOverview.roomName ?: ""))
                     }
                 }
+
+                is MessengerEvent.Toast -> {
+                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions, onRetry: () -> Unit) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, messageActions: MessageActions, onRetry: () -> Unit) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
-            RoomContent(state.value.self, state.value.roomState, replyActions)
+            RoomContent(state.value.self, state.value.roomState, messageActions)
             val eventBarHeight = 14.dp
             val typing = state.value.typing
             when {
@@ -159,7 +167,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: Re
 }
 
 @Composable
-private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions: ReplyActions) {
+private fun ColumnScope.RoomContent(self: UserId, state: RoomState, messageActions: MessageActions) {
     val listState: LazyListState = rememberLazyListState(
         initialFirstVisibleItemIndex = 0
     )
@@ -190,11 +198,11 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions
                 avatar = Avatar(item.author.avatarUrl?.value, item.author.displayName ?: item.author.id.value),
                 isSelf = self == item.author.id,
                 wasPreviousMessageSameSender = wasPreviousMessageSameSender,
-                onReply = { replyActions.onReply(item) },
+                onReply = { messageActions.onReply(item) },
             ) {
                 val event = BubbleModel.Event(item.author.id.value, item.author.displayName ?: item.author.id.value, item.edited, item.time)
                 val status = @Composable { SendStatus(item) }
-                MessageBubble(this, item.toModel(event), status)
+                MessageBubble(this, item.toModel(event), status, onLongClick = messageActions.onLongClick)
             }
         }
     }
@@ -260,7 +268,7 @@ private fun SendStatus(message: RoomEvent) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit, replyActions: ReplyActions) {
+private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit, messageActions: MessageActions) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -289,7 +297,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             ) {
                 if (it is RoomEvent.Message) {
                     Box(Modifier.padding(12.dp)) {
-                        Box(Modifier.padding(8.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
+                        Box(Modifier.padding(8.dp).clickable { messageActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
                             Icon(
                                 modifier = Modifier.size(16.dp),
                                 imageVector = Icons.Filled.Close,
@@ -420,7 +428,8 @@ private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> U
     }
 }
 
-class ReplyActions(
+class MessageActions(
     val onReply: (RoomEvent) -> Unit,
     val onDismiss: () -> Unit,
+    val onLongClick: (BubbleModel) -> Unit,
 )
