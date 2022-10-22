@@ -205,9 +205,7 @@ private fun RoomEvent.toModel(event: BubbleModel.Event): BubbleModel = when (thi
     is RoomEvent.Message -> BubbleModel.Text(this.content, event)
     is RoomEvent.Encrypted -> BubbleModel.Encrypted(event)
     is RoomEvent.Image -> {
-        val context = LocalContext.current
-        val imageRequest = ImageRequest.Builder(context)
-            .fetcherFactory(LocalDecyptingFetcherFactory.current)
+        val imageRequest = LocalImageRequestFactory.current
             .memoryCacheKey(this.imageMeta.url)
             .data(this)
             .build()
