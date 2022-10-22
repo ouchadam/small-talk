@@ -108,12 +108,14 @@ ext.Dependencies.with {
 
         androidxComposeUi = "androidx.compose.ui:ui:${composeVer}"
         androidxComposeFoundation = "androidx.compose.foundation:foundation:${composeVer}"
-        androidxComposeMaterial = "androidx.compose.material3:material3:1.0.0-beta03"
+        androidxComposeMaterial = "androidx.compose.material3:material3:1.0.0-rc01"
         androidxComposeIconsExtended = "androidx.compose.material:material-icons-extended:${composeVer}"
-        androidxActivityCompose = "androidx.activity:activity-compose:1.4.0"
+        androidxActivityCompose = "androidx.activity:activity-compose:1.6.0"
         kotlinCompilerExtensionVersion = "1.3.2"
 
-        firebaseCrashlyticsPlugin = "com.google.firebase:firebase-crashlytics-gradle:2.9.1"
+        firebaseCrashlyticsPlugin = "com.google.firebase:firebase-crashlytics-gradle:2.9.2"
+        firebaseBom = "com.google.firebase:firebase-bom:31.0.1"
+
         jdkLibs = "com.android.tools:desugar_jdk_libs:1.1.5"
     }
 
