@@ -13,7 +13,7 @@ internal data class ApiSyncResponse(
     @SerialName("account_data") val accountData: ApiAccountData? = null,
     @SerialName("rooms") val rooms: ApiSyncRooms? = null,
     @SerialName("to_device") val toDevice: ToDevice? = null,
-    @SerialName("device_one_time_keys_count") val oneTimeKeysCount: Map<String, ServerKeyCount>,
+    @SerialName("device_one_time_keys_count") val oneTimeKeysCount: Map<String, ServerKeyCount>? = null,
     @SerialName("next_batch") val nextBatch: SyncToken,
     @SerialName("prev_batch") val prevBatch: SyncToken? = null,
 )
