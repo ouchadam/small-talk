@@ -70,7 +70,7 @@ internal class SyncReducer(
     }
 
     private fun findRoomsLeft(response: ApiSyncResponse, userCredentials: UserCredentials) = response.rooms?.leave?.filter {
-        it.value.state.stateEvents.filterIsInstance<ApiTimelineEvent.RoomMember>().any {
+        it.value.state?.stateEvents.orEmpty().filterIsInstance<ApiTimelineEvent.RoomMember>().any {
             it.content.membership.isLeave() && it.senderId == userCredentials.userId
         }
     }?.map { it.key } ?: emptyList()
@@ -91,7 +91,7 @@ internal class SyncReducer(
 }
 
 private fun Map<RoomId, ApiSyncRoom>.keepRoomsWithChanges() = this.filter {
-    it.value.state.stateEvents.isNotEmpty() ||
+    it.value.state?.stateEvents.orEmpty().isNotEmpty() ||
             it.value.timeline.apiTimelineEvents.isNotEmpty() ||
             it.value.accountData?.events?.isNotEmpty() == true ||
             it.value.ephemeral?.events?.isNotEmpty() == true

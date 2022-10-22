@@ -50,7 +50,7 @@ internal class RoomProcessor(
 }
 
 private fun ApiSyncRoom.collectMembers(userCredentials: UserCredentials): List<RoomMember> {
-    return (this.state.stateEvents + this.timeline.apiTimelineEvents)
+    return (this.state?.stateEvents.orEmpty() + this.timeline.apiTimelineEvents)
         .filterIsInstance<ApiTimelineEvent.RoomMember>()
         .mapNotNull {
             when {
