@@ -14,6 +14,7 @@ data class MessengerScreenState(
 
 sealed interface MessengerEvent {
     object SelectImageAttachment : MessengerEvent
+    data class Toast(val message: String) : MessengerEvent
 }
 
 sealed interface ComposerState {

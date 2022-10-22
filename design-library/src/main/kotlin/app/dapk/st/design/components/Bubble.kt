@@ -1,8 +1,10 @@
 package app.dapk.st.design.components
 
 import android.content.res.Configuration
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -40,20 +42,20 @@ sealed interface BubbleModel {
 
 private fun BubbleModel.Reply.isReplyingToSelf() = this.replyingTo.event.authorId == this.reply.event.authorId
 
-
 @Composable
-fun MessageBubble(bubble: BubbleMeta, model: BubbleModel, status: @Composable () -> Unit) {
+fun MessageBubble(bubble: BubbleMeta, model: BubbleModel, status: @Composable () -> Unit, onLongClick: (BubbleModel) -> Unit) {
+    val itemisedLongClick = { onLongClick.invoke(model) }
     when (model) {
-        is BubbleModel.Text -> TextBubble(bubble, model, status)
-        is BubbleModel.Encrypted -> EncryptedBubble(bubble, model, status)
-        is BubbleModel.Image -> ImageBubble(bubble, model, status)
-        is BubbleModel.Reply -> ReplyBubble(bubble, model, status)
+        is BubbleModel.Text -> TextBubble(bubble, model, status, itemisedLongClick)
+        is BubbleModel.Encrypted -> EncryptedBubble(bubble, model, status, itemisedLongClick)
+        is BubbleModel.Image -> ImageBubble(bubble, model, status, itemisedLongClick)
+        is BubbleModel.Reply -> ReplyBubble(bubble, model, status, itemisedLongClick)
     }
 }
 
 @Composable
-private fun TextBubble(bubble: BubbleMeta, model: BubbleModel.Text, status: @Composable () -> Unit) {
-    Bubble(bubble) {
+private fun TextBubble(bubble: BubbleMeta, model: BubbleModel.Text, status: @Composable () -> Unit, onLongClick: () -> Unit) {
+    Bubble(bubble, onLongClick) {
         if (bubble.isNotSelf()) {
             AuthorName(model.event, bubble)
         }
@@ -63,13 +65,13 @@ private fun TextBubble(bubble: BubbleMeta, model: BubbleModel.Text, status: @Com
 }
 
 @Composable
-private fun EncryptedBubble(bubble: BubbleMeta, model: BubbleModel.Encrypted, status: @Composable () -> Unit) {
-    TextBubble(bubble, BubbleModel.Text(content = "Encrypted message", model.event), status)
+private fun EncryptedBubble(bubble: BubbleMeta, model: BubbleModel.Encrypted, status: @Composable () -> Unit, onLongClick: () -> Unit) {
+    TextBubble(bubble, BubbleModel.Text(content = "Encrypted message", model.event), status, onLongClick)
 }
 
 @Composable
-private fun ImageBubble(bubble: BubbleMeta, model: BubbleModel.Image, status: @Composable () -> Unit) {
-    Bubble(bubble) {
+private fun ImageBubble(bubble: BubbleMeta, model: BubbleModel.Image, status: @Composable () -> Unit, onLongClick: () -> Unit) {
+    Bubble(bubble, onLongClick) {
         if (bubble.isNotSelf()) {
             AuthorName(model.event, bubble)
         }
@@ -85,8 +87,8 @@ private fun ImageBubble(bubble: BubbleMeta, model: BubbleModel.Image, status: @C
 }
 
 @Composable
-private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @Composable () -> Unit) {
-    Bubble(bubble) {
+private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @Composable () -> Unit, onLongClick: () -> Unit) {
+    Bubble(bubble, onLongClick) {
         Column(
             Modifier
                 .fillMaxWidth()
@@ -191,15 +193,17 @@ private fun Int.scalerFor(max: Float): Float {
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Bubble(bubble: BubbleMeta, content: @Composable () -> Unit) {
+private fun Bubble(bubble: BubbleMeta, onLongClick: () -> Unit, content: @Composable () -> Unit) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
             Modifier
                 .padding(4.dp)
                 .clip(bubble.shape)
                 .background(bubble.background)
-                .height(IntrinsicSize.Max),
+                .height(IntrinsicSize.Max)
+                .combinedClickable(onLongClick = onLongClick, onClick = {}),
         ) {
             Column(
                 Modifier
