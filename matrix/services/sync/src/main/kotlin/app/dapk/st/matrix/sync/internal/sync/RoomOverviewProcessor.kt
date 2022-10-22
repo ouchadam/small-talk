@@ -13,7 +13,7 @@ internal class RoomOverviewProcessor(
 ) {
 
     suspend fun process(roomToProcess: RoomToProcess, previousState: RoomOverview?, lastMessage: LastMessage?): RoomOverview? {
-        val combinedEvents = roomToProcess.apiSyncRoom.state.stateEvents + roomToProcess.apiSyncRoom.timeline.apiTimelineEvents
+        val combinedEvents = (roomToProcess.apiSyncRoom.state?.stateEvents.orEmpty()) + roomToProcess.apiSyncRoom.timeline.apiTimelineEvents
         val isEncrypted = combinedEvents.any { it is ApiTimelineEvent.Encryption }
         val readMarker = roomToProcess.apiSyncRoom.accountData?.events?.filterIsInstance<ApiAccountEvent.FullyRead>()?.firstOrNull()?.content?.eventId
         return when (previousState) {

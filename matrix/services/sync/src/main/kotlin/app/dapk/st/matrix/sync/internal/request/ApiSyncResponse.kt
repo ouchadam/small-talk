@@ -53,7 +53,7 @@ internal data class ApiInviteEvents(
 @Serializable
 internal data class ApiSyncRoom(
     @SerialName("timeline") val timeline: ApiSyncRoomTimeline,
-    @SerialName("state") val state: ApiSyncRoomState,
+    @SerialName("state") val state: ApiSyncRoomState? = null,
     @SerialName("account_data") val accountData: ApiAccountData? = null,
     @SerialName("ephemeral") val ephemeral: ApiEphemeral? = null,
     @SerialName("summary") val summary: ApiRoomSummary? = null,
