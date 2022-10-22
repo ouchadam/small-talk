@@ -1,13 +1,13 @@
 package app.dapk.st.matrix.sync.internal.sync
 
-import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.UserCredentials
-import app.dapk.st.matrix.common.convertMxUrToUrl
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.sync.MessageMeta
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomMembersService
 import app.dapk.st.matrix.sync.find
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+
+private val UNKNOWN_AUTHOR = RoomMember(id = UserId("unknown"), displayName = null, avatarUrl = null)
 
 internal class RoomEventFactory(
     private val roomMembersService: RoomMembersService
@@ -21,7 +21,7 @@ internal class RoomEventFactory(
     ) = RoomEvent.Message(
         eventId = this.id,
         content = content,
-        author = roomMembersService.find(roomId, this.senderId)!!,
+        author = roomMembersService.find(roomId, this.senderId) ?: UNKNOWN_AUTHOR,
         utcTimestamp = utcTimestamp,
         meta = MessageMeta.FromServer,
         edited = edited,
@@ -36,7 +36,7 @@ internal class RoomEventFactory(
     ) = RoomEvent.Image(
         eventId = this.id,
         imageMeta = imageMeta,
-        author = roomMembersService.find(roomId, this.senderId)!!,
+        author = roomMembersService.find(roomId, this.senderId) ?: UNKNOWN_AUTHOR,
         utcTimestamp = utcTimestamp,
         meta = MessageMeta.FromServer,
         edited = edited,
