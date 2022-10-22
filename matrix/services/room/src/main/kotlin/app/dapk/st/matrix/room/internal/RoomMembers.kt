@@ -31,6 +31,7 @@ class RoomMembers(private val memberStore: MemberStore, private val membersCache
                 missingIds.isNotEmpty() -> {
                     (memberStore.query(roomId, missingIds).also { membersCache.insert(roomId, it) } + cachedMembers)
                 }
+
                 else -> cachedMembers
             }
         }
@@ -44,14 +45,17 @@ class RoomMembers(private val memberStore: MemberStore, private val membersCache
     }
 }
 
+private const val ROOMS_TO_CACHE_MEMBERS_FOR_SIZE = 12
+private const val MEMBERS_TO_CACHE_PER_ROOM = 25
+
 class RoomMembersCache {
 
-    private val cache = LRUCache<RoomId, LRUCache<UserId, RoomMember>>(maxSize = 12)
+    private val cache = LRUCache<RoomId, LRUCache<UserId, RoomMember>>(maxSize = ROOMS_TO_CACHE_MEMBERS_FOR_SIZE)
 
     fun room(roomId: RoomId) = cache.get(roomId)
 
     fun insert(roomId: RoomId, members: List<RoomMember>) {
-        val map = cache.getOrPut(roomId) { LRUCache(maxSize = 25) }
+        val map = cache.getOrPut(roomId) { LRUCache(maxSize = MEMBERS_TO_CACHE_PER_ROOM) }
         members.forEach { map.put(it.id, it) }
     }
 }
