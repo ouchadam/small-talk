@@ -28,7 +28,7 @@ internal class SyncSideEffects(
                 notifyDevicesUpdated.notifyChanges(it, requestToken)
             }
 
-            oneTimeKeyProducer.onServerKeyCount(response.oneTimeKeysCount["signed_curve25519"] ?: ServerKeyCount(0))
+            oneTimeKeyProducer.onServerKeyCount(response.oneTimeKeysCount?.get("signed_curve25519") ?: ServerKeyCount(0))
 
             val decryptedToDeviceEvents = decryptedToDeviceEvents(response)
             val roomKeys = handleRoomKeyShares(decryptedToDeviceEvents)
