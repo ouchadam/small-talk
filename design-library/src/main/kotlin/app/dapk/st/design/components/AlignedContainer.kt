@@ -32,7 +32,7 @@ data class BubbleMeta(
 fun BubbleMeta.isNotSelf() = !this.isSelf
 
 @Composable
-fun LazyItemScope.AlignedContainer(
+fun LazyItemScope.AlignedDraggableContainer(
     avatar: Avatar,
     isSelf: Boolean,
     wasPreviousMessageSameSender: Boolean,
