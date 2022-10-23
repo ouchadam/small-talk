@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,18 +16,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.dapk.st.core.RichText
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+
+private val ENCRYPTED_MESSAGE = RichText(setOf(RichText.Part.Normal("Encrypted message")))
 
 sealed interface BubbleModel {
     val event: Event
 
-    data class Text(val content: String, override val event: Event) : BubbleModel
+    data class Text(val content: RichText, override val event: Event) : BubbleModel
     data class Encrypted(override val event: Event) : BubbleModel
     data class Image(val imageContent: ImageContent, val imageRequest: ImageRequest, override val event: Event) : BubbleModel {
         data class ImageContent(val width: Int?, val height: Int?, val url: String)
@@ -66,7 +78,7 @@ private fun TextBubble(bubble: BubbleMeta, model: BubbleModel.Text, status: @Com
 
 @Composable
 private fun EncryptedBubble(bubble: BubbleMeta, model: BubbleModel.Encrypted, status: @Composable () -> Unit, onLongClick: () -> Unit) {
-    TextBubble(bubble, BubbleModel.Text(content = "Encrypted message", model.event), status, onLongClick)
+    TextBubble(bubble, BubbleModel.Text(content = ENCRYPTED_MESSAGE, model.event), status, onLongClick)
 }
 
 @Composable
@@ -111,7 +123,7 @@ private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @C
             when (val replyingTo = model.replyingTo) {
                 is BubbleModel.Text -> {
                     Text(
-                        text = replyingTo.content,
+                        text = replyingTo.content.toAnnotatedText(),
                         color = bubble.textColor().copy(alpha = 0.8f),
                         fontSize = 14.sp,
                         modifier = Modifier.wrapContentSize(),
@@ -153,7 +165,7 @@ private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @C
 
         when (val message = model.reply) {
             is BubbleModel.Text -> TextContent(bubble, message.content)
-            is BubbleModel.Encrypted -> TextContent(bubble, "Encrypted message")
+            is BubbleModel.Encrypted -> TextContent(bubble, ENCRYPTED_MESSAGE)
             is BubbleModel.Image -> {
                 Spacer(modifier = Modifier.height(4.dp))
                 Image(
@@ -233,14 +245,41 @@ private fun Footer(event: BubbleModel.Event, bubble: BubbleMeta, status: @Compos
 }
 
 @Composable
-private fun TextContent(bubble: BubbleMeta, text: String) {
-    Text(
-        text = text,
-        color = bubble.textColor(),
-        fontSize = 15.sp,
+private fun TextContent(bubble: BubbleMeta, text: RichText) {
+    val annotatedText = text.toAnnotatedText()
+    val uriHandler = LocalUriHandler.current
+    ClickableText(
+        text = annotatedText,
+        style = TextStyle(color = bubble.textColor(), fontSize = 15.sp, textAlign = TextAlign.Start),
         modifier = Modifier.wrapContentSize(),
-        textAlign = TextAlign.Start,
+        onClick = {
+            annotatedText.getStringAnnotations("url", it, it).firstOrNull()?.let {
+                uriHandler.openUri(it.item)
+            }
+        }
     )
+}
+
+val hyperLinkStyle = SpanStyle(
+    color = Color(0xff64B5F6),
+    textDecoration = TextDecoration.Underline
+)
+
+fun RichText.toAnnotatedText() = buildAnnotatedString {
+    parts.forEach {
+        when (it) {
+            is RichText.Part.Bold -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(it.content) }
+            is RichText.Part.BoldItalic -> append(it.content)
+            is RichText.Part.Italic -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(it.content) }
+            is RichText.Part.Link -> {
+                pushStringAnnotation("url", annotation = it.url)
+                withStyle(hyperLinkStyle) { append(it.label) }
+                pop()
+            }
+
+            is RichText.Part.Normal -> append(it.content)
+        }
+    }
 }
 
 @Composable

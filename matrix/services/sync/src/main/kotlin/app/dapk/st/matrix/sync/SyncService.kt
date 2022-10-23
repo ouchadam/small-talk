@@ -8,6 +8,7 @@ import app.dapk.st.matrix.sync.internal.DefaultSyncService
 import app.dapk.st.matrix.sync.internal.request.*
 import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.matrix.sync.internal.room.MissingMessageDecrypter
+import app.dapk.st.matrix.sync.internal.sync.RichMessageParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
@@ -53,6 +54,7 @@ fun MatrixServiceInstaller.installSyncService(
     roomMembersService: ServiceDepFactory<RoomMembersService>,
     errorTracker: ErrorTracker,
     coroutineDispatchers: CoroutineDispatchers,
+
     syncConfig: SyncConfig = SyncConfig(),
 ): InstallExtender<SyncService> {
     this.serializers {
@@ -96,6 +98,7 @@ fun MatrixServiceInstaller.installSyncService(
             errorTracker = errorTracker,
             coroutineDispatchers = coroutineDispatchers,
             syncConfig = syncConfig,
+            richMessageParser = RichMessageParser()
         )
     }
 }

@@ -2,8 +2,10 @@ package app.dapk.st.matrix.sync.internal.room
 
 import app.dapk.st.matrix.common.EncryptedMessageContent
 import app.dapk.st.matrix.common.JsonString
+import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.DecryptedContent
+import app.dapk.st.matrix.sync.internal.sync.RichMessageParser
 import fake.FakeMatrixLogger
 import fake.FakeMessageDecrypter
 import fixture.*
@@ -31,6 +33,7 @@ class RoomEventsDecrypterTest {
 
     private val roomEventsDecrypter = RoomEventsDecrypter(
         fakeMessageDecrypter,
+        RichMessageParser(),
         Json,
         FakeMatrixLogger(),
     )
@@ -88,7 +91,7 @@ private fun RoomEvent.Encrypted.MegOlmV1.toModel() = EncryptedMessageContent.Meg
 private fun RoomEvent.Encrypted.toText(text: String) = RoomEvent.Message(
     this.eventId,
     this.utcTimestamp,
-    content = text,
+    content = RichText.of(text),
     this.author,
     this.meta,
     this.edited,

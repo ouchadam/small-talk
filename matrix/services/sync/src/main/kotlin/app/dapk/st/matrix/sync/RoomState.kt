@@ -45,7 +45,7 @@ sealed class RoomEvent {
     data class Message(
         @SerialName("event_id") override val eventId: EventId,
         @SerialName("timestamp") override val utcTimestamp: Long,
-        @SerialName("content") val content: String,
+        @SerialName("content") val content: RichText,
         @SerialName("author") override val author: RoomMember,
         @SerialName("meta") override val meta: MessageMeta,
         @SerialName("edited") val edited: Boolean = false,

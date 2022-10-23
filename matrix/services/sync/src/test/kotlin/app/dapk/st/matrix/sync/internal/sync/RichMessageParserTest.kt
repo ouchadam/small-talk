@@ -1,6 +1,8 @@
 package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.matrix.common.RichText
+import app.dapk.st.matrix.common.RichText.Part.Link
+import app.dapk.st.matrix.common.RichText.Part.Normal
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Ignore
 import org.junit.Test
@@ -12,32 +14,88 @@ class RichMessageParserTest {
     @Test
     fun `parses plain text`() = runParserTest(
         input = "Hello world!",
-        expected = RichText(setOf(RichText.Part.Normal("Hello world!")))
+        expected = RichText(setOf(Normal("Hello world!")))
     )
 
     @Test
-    fun `parses nested b tags`() = runParserTest(
+    fun `skips p tags`() = runParserTest(
+        input = "Hello world! <p>foo bar</p> after paragraph",
+        expected = RichText(setOf(Normal("Hello world! "), Normal("foo bar"), Normal(" after paragraph")))
+    )
+
+    @Test
+    fun `skips header tags`() = runParserTest(
         Case(
-            input = """hello <b>wor<b/>ld""",
+            input = "<h1>hello</h1>",
+            expected = RichText(setOf(Normal("hello")))
+        ),
+        Case(
+            input = "<h2>hello</h2>",
+            expected = RichText(setOf(Normal("hello")))
+        ),
+        Case(
+            input = "<h3>hello</h3>",
+            expected = RichText(setOf(Normal("hello")))
+        ),
+    )
+
+    @Test
+    fun `replaces br tags`() = runParserTest(
+        input = "Hello world!<br />next line<br />another line",
+        expected = RichText(setOf(Normal("Hello world!"), Normal("\n"), Normal("next line"), Normal("\n"), Normal("another line")))
+    )
+
+    @Test
+    fun `parses urls`() = runParserTest(
+        Case(
+            input = "https://google.com",
+            expected = RichText(setOf(Link("https://google.com", "https://google.com")))
+        ),
+        Case(
+            input = "https://google.com. after link",
+            expected = RichText(setOf(Link("https://google.com", "https://google.com"), Normal(". after link")))
+        ),
+        Case(
+            input = "ending sentence with url https://google.com.",
+            expected = RichText(setOf(Normal("ending sentence with url "), Link("https://google.com", "https://google.com"), Normal(".")))
+        ),
+    )
+
+    @Test
+    fun `parses styling text`() = runParserTest(
+        input = "<em>hello</em> <strong>world</strong>",
+        expected = RichText(setOf(RichText.Part.Italic("hello"), Normal(" "), RichText.Part.Bold("world")))
+    )
+
+    @Test
+    fun `parses raw reply text`() = runParserTest(
+        input = "> <@a-matrix-id:domain.foo> This is a reply",
+        expected = RichText(setOf(Normal("> <@a-matrix-id:domain.foo> This is a reply")))
+    )
+
+    @Test
+    fun `parses strong tags`() = runParserTest(
+        Case(
+            input = """hello <strong>wor</strong>ld""",
             expected = RichText(
                 setOf(
-                    RichText.Part.Normal("hello "),
+                    Normal("hello "),
                     RichText.Part.Bold("wor"),
-                    RichText.Part.Normal("ld"),
+                    Normal("ld"),
                 )
             )
         ),
     )
 
     @Test
-    fun `parses nested i tags`() = runParserTest(
+    fun `parses em tags`() = runParserTest(
         Case(
-            input = """hello <i>wor<i/>ld""",
+            input = """hello <em>wor</em>ld""",
             expected = RichText(
                 setOf(
-                    RichText.Part.Normal("hello "),
+                    Normal("hello "),
                     RichText.Part.Italic("wor"),
-                    RichText.Part.Normal("ld"),
+                    Normal("ld"),
                 )
             )
         ),
@@ -50,9 +108,9 @@ class RichMessageParserTest {
             input = """hello <b><i>wor<i/><b/>ld""",
             expected = RichText(
                 setOf(
-                    RichText.Part.Normal("hello "),
+                    Normal("hello "),
                     RichText.Part.BoldItalic("wor"),
-                    RichText.Part.Normal("ld"),
+                    Normal("ld"),
                 )
             )
         ),
@@ -60,8 +118,8 @@ class RichMessageParserTest {
             input = """<a href="www.google.com"><a href="www.google.com">www.google.com<a/><a/>""",
             expected = RichText(
                 setOf(
-                    RichText.Part.Link(url = "www.google.com", label = "www.google.com"),
-                    RichText.Part.Link(url = "www.bing.com", label = "www.bing.com"),
+                    Link(url = "www.google.com", label = "www.google.com"),
+                    Link(url = "www.bing.com", label = "www.bing.com"),
                 )
             )
         )
@@ -70,21 +128,21 @@ class RichMessageParserTest {
     @Test
     fun `parses 'a' tags`() = runParserTest(
         Case(
-            input = """hello world <a href="www.google.com">a link!<a/> more content.""",
+            input = """hello world <a href="www.google.com">a link!</a> more content.""",
             expected = RichText(
                 setOf(
-                    RichText.Part.Normal("hello world "),
-                    RichText.Part.Link(url = "www.google.com", label = "a link!"),
-                    RichText.Part.Normal(" more content."),
+                    Normal("hello world "),
+                    Link(url = "www.google.com", label = "a link!"),
+                    Normal(" more content."),
                 )
             )
         ),
         Case(
-            input = """<a href="www.google.com">www.google.com<a/><a href="www.bing.com">www.bing.com<a/>""",
+            input = """<a href="www.google.com">www.google.com</a><a href="www.bing.com">www.bing.com</a>""",
             expected = RichText(
                 setOf(
-                    RichText.Part.Link(url = "www.google.com", label = "www.google.com"),
-                    RichText.Part.Link(url = "www.bing.com", label = "www.bing.com"),
+                    Link(url = "www.google.com", label = "www.google.com"),
+                    Link(url = "www.bing.com", label = "www.bing.com"),
                 )
             )
         ),

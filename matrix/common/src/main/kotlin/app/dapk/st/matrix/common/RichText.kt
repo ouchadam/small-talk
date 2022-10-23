@@ -9,11 +9,31 @@ data class RichText(@SerialName("parts") val parts: Set<Part>) {
     sealed interface Part {
         @Serializable
         data class Normal(@SerialName("content") val content: String) : Part
+
+        @Serializable
         data class Link(@SerialName("url") val url: String, @SerialName("label") val label: String) : Part
+
+        @Serializable
         data class Bold(@SerialName("content") val content: String) : Part
+
+        @Serializable
         data class Italic(@SerialName("content") val content: String) : Part
+
+        @Serializable
         data class BoldItalic(@SerialName("content") val content: String) : Part
+    }
+
+    companion object {
+        fun of(text: String) = RichText(setOf(RichText.Part.Normal(text)))
     }
 }
 
-fun RichText.asString() = parts.joinToString(separator = "")
+fun RichText.asString() = parts.joinToString(separator = "") {
+    when(it) {
+        is RichText.Part.Bold -> it.content
+        is RichText.Part.BoldItalic -> it.content
+        is RichText.Part.Italic -> it.content
+        is RichText.Part.Link -> it.label
+        is RichText.Part.Normal -> it.content
+    }
+}

@@ -44,7 +44,7 @@ interface MessageService : MatrixService {
             @Serializable
             data class Reply(
                 val author: RoomMember,
-                val originalMessage: String,
+                val originalMessage: RichText,
                 val replyContent: String,
                 val eventId: EventId,
                 val timestampUtc: Long,
@@ -65,7 +65,7 @@ interface MessageService : MatrixService {
         sealed class Content {
             @Serializable
             data class TextContent(
-                @SerialName("body") val body: String,
+                @SerialName("body") val body: RichText,
                 @SerialName("msgtype") val type: String = MessageType.TEXT.value,
             ) : Content()
 

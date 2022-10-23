@@ -6,10 +6,12 @@ import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent.TimelineMessage.Content.Image
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent.TimelineMessage.Content.Text
 import app.dapk.st.matrix.sync.internal.request.DecryptedContent
+import app.dapk.st.matrix.sync.internal.sync.RichMessageParser
 import kotlinx.serialization.json.Json
 
 internal class RoomEventsDecrypter(
     private val messageDecrypter: MessageDecrypter,
+    private val richMessageParser: RichMessageParser,
     private val json: Json,
     private val logger: MatrixLogger,
 ) {
@@ -50,7 +52,7 @@ internal class RoomEventsDecrypter(
         meta = this.meta,
         edited = this.edited,
         redacted = this.redacted,
-        content = content.body ?: ""
+        content = richMessageParser.parse(content.body ?: "")
     )
 
     private fun RoomEvent.Encrypted.createImageEvent(content: Image, userCredentials: UserCredentials) = RoomEvent.Image(

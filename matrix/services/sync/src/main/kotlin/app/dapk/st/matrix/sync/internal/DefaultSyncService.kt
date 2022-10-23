@@ -41,13 +41,14 @@ internal class DefaultSyncService(
     errorTracker: ErrorTracker,
     private val coroutineDispatchers: CoroutineDispatchers,
     syncConfig: SyncConfig,
+    richMessageParser: RichMessageParser,
 ) : SyncService {
 
     private val syncEventsFlow = MutableStateFlow<List<SyncService.SyncEvent>>(emptyList())
 
     private val roomDataSource by lazy { RoomDataSource(roomStore, logger) }
     private val eventDecrypter by lazy { SyncEventDecrypter(messageDecrypter, json, logger) }
-    private val roomEventsDecrypter by lazy { RoomEventsDecrypter(messageDecrypter, json, logger) }
+    private val roomEventsDecrypter by lazy { RoomEventsDecrypter(messageDecrypter, richMessageParser, json, logger) }
     private val roomRefresher by lazy { RoomRefresher(roomDataSource, roomEventsDecrypter, logger) }
 
     private val sync2 by lazy {
@@ -57,7 +58,7 @@ internal class DefaultSyncService(
                 roomMembersService,
                 roomDataSource,
                 TimelineEventsProcessor(
-                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService)),
+                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService, richMessageParser)),
                     roomEventsDecrypter,
                     eventDecrypter,
                     EventLookupUseCase(roomStore)

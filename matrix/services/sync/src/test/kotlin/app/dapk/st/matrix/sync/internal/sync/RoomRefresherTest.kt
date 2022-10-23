@@ -1,6 +1,7 @@
 package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.asString
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomState
 import fake.FakeMatrixLogger
@@ -60,7 +61,7 @@ internal class RoomRefresherTest {
 }
 
 private fun RoomEvent.Message.asLastMessage() = aLastMessage(
-    this.content,
+    this.content.asString(),
     this.utcTimestamp,
     this.author,
 )

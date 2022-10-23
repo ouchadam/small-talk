@@ -10,17 +10,18 @@ import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
 private val UNKNOWN_AUTHOR = RoomMember(id = UserId("unknown"), displayName = null, avatarUrl = null)
 
 internal class RoomEventFactory(
-    private val roomMembersService: RoomMembersService
+    private val roomMembersService: RoomMembersService,
+    private val richMessageParser: RichMessageParser,
 ) {
 
     suspend fun ApiTimelineEvent.TimelineMessage.toTextMessage(
         roomId: RoomId,
-        content: String = this.asTextContent().formattedBody?.stripTags() ?: this.asTextContent().body ?: "redacted",
+        content: String,
         edited: Boolean = false,
         utcTimestamp: Long = this.utcTimestamp,
     ) = RoomEvent.Message(
         eventId = this.id,
-        content = content,
+        content = richMessageParser.parse(content),
         author = roomMembersService.find(roomId, this.senderId) ?: UNKNOWN_AUTHOR,
         utcTimestamp = utcTimestamp,
         meta = MessageMeta.FromServer,

@@ -68,7 +68,7 @@ internal class DirectoryUseCase(
             this.copy(
                 lastMessage = RoomOverview.LastMessage(
                     content = when (val message = latestEcho.message) {
-                        is MessageService.Message.TextMessage -> message.content.body
+                        is MessageService.Message.TextMessage -> message.content.body.parts.joinToString("")
                         is MessageService.Message.ImageMessage -> "\uD83D\uDCF7"
                     },
                     utcTimestamp = latestEcho.timestampUtc,

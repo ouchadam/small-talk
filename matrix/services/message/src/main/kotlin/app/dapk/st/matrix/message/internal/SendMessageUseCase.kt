@@ -153,13 +153,13 @@ class ApiMessageMapper {
 
     fun Message.TextMessage.toContents(reply: Message.TextMessage.Reply?) = when (reply) {
         null -> ApiMessage.TextMessage.TextContent(
-            body = this.content.body,
+            body = this.content.body.parts.joinToString(""),
         )
 
         else -> ApiMessage.TextMessage.TextContent(
-            body = buildReplyFallback(reply.originalMessage, reply.author.id, reply.replyContent),
+            body = buildReplyFallback(reply.originalMessage.parts.joinToString(""), reply.author.id, reply.replyContent),
             relatesTo = ApiMessage.RelatesTo(ApiMessage.RelatesTo.InReplyTo(reply.eventId)),
-            formattedBody = buildFormattedReply(reply.author.id, reply.originalMessage, reply.replyContent, this.roomId, reply.eventId),
+            formattedBody = buildFormattedReply(reply.author.id, reply.originalMessage.parts.joinToString(""), reply.replyContent, this.roomId, reply.eventId),
             format = "org.matrix.custom.html"
         )
     }

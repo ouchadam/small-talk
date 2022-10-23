@@ -147,8 +147,8 @@ internal class TimelineEventMapper(
         }
     }
 
+    // TODO handle edits
     private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
-        content = edit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
         utcTimestamp = edit.utcTimestamp,
         edited = true,
     )
@@ -156,7 +156,7 @@ internal class TimelineEventMapper(
     private suspend fun RoomEventFactory.mapToRoomEvent(source: ApiTimelineEvent.TimelineMessage): RoomEvent {
         return when (source.content) {
             is ApiTimelineEvent.TimelineMessage.Content.Image -> source.toImageMessage(userCredentials, roomId)
-            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(roomId)
+            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(roomId, content = source.asTextContent().formattedBody ?: source.content.body ?: "")
             ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
         }
     }
