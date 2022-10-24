@@ -200,29 +200,31 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, messageActio
                 wasPreviousMessageSameSender = wasPreviousMessageSameSender,
                 onReply = { messageActions.onReply(item) },
             ) {
-                val event = BubbleModel.Event(item.author.id.value, item.author.displayName ?: item.author.id.value, item.edited, item.time)
                 val status = @Composable { SendStatus(item) }
-                MessageBubble(this, item.toModel(event), status, onLongClick = messageActions.onLongClick)
+                MessageBubble(this, item.toModel(), status, onLongClick = messageActions.onLongClick)
             }
         }
     }
 }
 
 @Composable
-private fun RoomEvent.toModel(event: BubbleModel.Event): BubbleModel = when (this) {
-    is RoomEvent.Message -> BubbleModel.Text(this.content.toApp(), event)
-    is RoomEvent.Encrypted -> BubbleModel.Encrypted(event)
-    is RoomEvent.Image -> {
-        val imageRequest = LocalImageRequestFactory.current
-            .memoryCacheKey(this.imageMeta.url)
-            .data(this)
-            .build()
-        val imageContent = BubbleModel.Image.ImageContent(this.imageMeta.width, this.imageMeta.height, this.imageMeta.url)
-        BubbleModel.Image(imageContent, imageRequest, event)
-    }
+private fun RoomEvent.toModel(): BubbleModel {
+    val event = BubbleModel.Event(this.author.id.value, this.author.displayName ?: this.author.id.value, this.edited, this.time)
+    return when (this) {
+        is RoomEvent.Message -> BubbleModel.Text(this.content.toApp(), event)
+        is RoomEvent.Encrypted -> BubbleModel.Encrypted(event)
+        is RoomEvent.Image -> {
+            val imageRequest = LocalImageRequestFactory.current
+                .memoryCacheKey(this.imageMeta.url)
+                .data(this)
+                .build()
+            val imageContent = BubbleModel.Image.ImageContent(this.imageMeta.width, this.imageMeta.height, this.imageMeta.url)
+            BubbleModel.Image(imageContent, imageRequest, event)
+        }
 
-    is RoomEvent.Reply -> {
-        BubbleModel.Reply(this.replyingTo.toModel(event), this.message.toModel(event))
+        is RoomEvent.Reply -> {
+            BubbleModel.Reply(this.replyingTo.toModel(), this.message.toModel())
+        }
     }
 }
 
