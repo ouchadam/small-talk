@@ -2,10 +2,14 @@ package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.common.RichText.Part.*
+import app.dapk.st.matrix.common.UserId
 
 class RichMessageParser {
 
-    fun parse(input: String): RichText {
+    fun parse(source: String): RichText {
+        val input = source
+            .removeHtmlEntities()
+            .dropTextFallback()
         return kotlin.runCatching {
             val buffer = mutableSetOf<RichText.Part>()
             var openIndex = 0
@@ -21,12 +25,23 @@ class RichMessageParser {
                         val wholeTag = input.substring(foundIndex, closeIndex + 1)
                         val tagName = wholeTag.substring(1, wholeTag.indexOfFirst { it == '>' || it == ' ' })
 
+                        if (tagName.startsWith('@')) {
+                            if (openIndex != foundIndex) {
+                                buffer.add(Normal(input.substring(openIndex, foundIndex)))
+                            }
+                            buffer.add(Person(UserId(tagName), tagName))
+                            println(tagName)
+                            openIndex = foundIndex + wholeTag.length
+                            lastStartIndex = openIndex
+                            continue
+                        }
+
                         if (tagName == "br") {
                             if (openIndex != foundIndex) {
                                 buffer.add(Normal(input.substring(openIndex, foundIndex)))
                             }
                             buffer.add(Normal("\n"))
-                            openIndex = foundIndex + "<br />".length
+                            openIndex = foundIndex + wholeTag.length
                             lastStartIndex = openIndex
                             continue
                         }
@@ -39,6 +54,14 @@ class RichMessageParser {
                         if (exitIndex == -1) {
                             openIndex++
                         } else {
+                            when (tagName) {
+                                "mx-reply" -> {
+                                    openIndex = exitIndex + exitTag.length
+                                    lastStartIndex = openIndex
+                                    continue
+                                }
+                            }
+
                             if (openIndex != foundIndex) {
                                 buffer.add(Normal(input.substring(openIndex, foundIndex)))
                             }
@@ -49,7 +72,16 @@ class RichMessageParser {
                             when (tagName) {
                                 "a" -> {
                                     val findHrefUrl = wholeTag.substringAfter("href=").replace("\"", "").removeSuffix(">")
-                                    buffer.add(Link(url = findHrefUrl, label = tagContent))
+                                    if (findHrefUrl.startsWith("https://matrix.to/#/@")) {
+                                        val userId = UserId(findHrefUrl.substringAfter("https://matrix.to/#/").substringBeforeLast("\""))
+                                        buffer.add(Person(userId, "@${tagContent.removePrefix("@")}"))
+                                        if (input.getOrNull(openIndex) == ':') {
+                                            openIndex++
+                                            lastStartIndex = openIndex
+                                        }
+                                    } else {
+                                        buffer.add(Link(url = findHrefUrl, label = tagContent))
+                                    }
                                 }
 
                                 "b" -> buffer.add(Bold(tagContent))
@@ -84,12 +116,6 @@ class RichMessageParser {
 
                             else -> {
                                 val substring = input.substring(urlIndex, urlEndIndex)
-
-                                val last = substring.last()
-                                if (last == '.' || last == ',') {
-                                    substring.dropLast(1)
-                                }
-
                                 val url = substring.removeSuffix(".").removeSuffix(",")
                                 buffer.add(Link(url = url, label = url))
                                 openIndex = if (substring.endsWith('.') || substring.endsWith(',')) urlEndIndex - 1 else urlEndIndex
@@ -114,3 +140,7 @@ class RichMessageParser {
     }
 
 }
+
+private fun String.removeHtmlEntities() = this.replace("&quot;", "\"").replace("&#39;", "'")
+
+private fun String.dropTextFallback() = this.lines().dropWhile { it.startsWith("> ") || it.isEmpty() }.joinToString("")

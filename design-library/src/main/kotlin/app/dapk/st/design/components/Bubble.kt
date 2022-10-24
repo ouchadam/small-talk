@@ -17,14 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -265,6 +262,10 @@ val hyperLinkStyle = SpanStyle(
     textDecoration = TextDecoration.Underline
 )
 
+val nameStyle = SpanStyle(
+    color = Color(0xff64B5F6),
+)
+
 fun RichText.toAnnotatedText() = buildAnnotatedString {
     parts.forEach {
         when (it) {
@@ -278,6 +279,9 @@ fun RichText.toAnnotatedText() = buildAnnotatedString {
             }
 
             is RichText.Part.Normal -> append(it.content)
+            is RichText.Part.Person -> withStyle(nameStyle) {
+                append("@${it.userId.substringBefore(':').removePrefix("@")}")
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ data class RichText(val parts: Set<Part>) {
         data class Bold(val content: String) : Part
         data class Italic(val content: String) : Part
         data class BoldItalic(val content: String) : Part
+        data class Person(val userId: String) : Part
     }
 }
 

@@ -1,8 +1,8 @@
 package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.matrix.common.RichText
-import app.dapk.st.matrix.common.RichText.Part.Link
-import app.dapk.st.matrix.common.RichText.Part.Normal
+import app.dapk.st.matrix.common.RichText.Part.*
+import fixture.aUserId
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Ignore
 import org.junit.Test
@@ -21,6 +21,30 @@ class RichMessageParserTest {
     fun `skips p tags`() = runParserTest(
         input = "Hello world! <p>foo bar</p> after paragraph",
         expected = RichText(setOf(Normal("Hello world! "), Normal("foo bar"), Normal(" after paragraph")))
+    )
+
+    @Test
+    fun `replaces quote entity`() = runParserTest(
+        input = "Hello world! &quot;foo bar&quot;",
+        expected = RichText(setOf(Normal("Hello world! \"foo bar\"")))
+    )
+
+    @Test
+    fun `replaces apostrophe entity`() = runParserTest(
+        input = "Hello world! foo&#39;s bar",
+        expected = RichText(setOf(Normal("Hello world! foo's bar")))
+    )
+
+    @Test
+    fun `replaces people`() = runParserTest(
+        input = "Hello <@my-name:a-domain.foo>!",
+        expected = RichText(setOf(Normal("Hello "), Person(aUserId("@my-name:a-domain.foo"), "@my-name:a-domain.foo"), Normal("!")))
+    )
+
+    @Test
+    fun `replaces matrixdotto with person`() = runParserTest(
+        input = """Hello <a href="https://matrix.to/#/@a-name:foo.bar>a-name</a>: world""",
+        expected = RichText(setOf(Normal("Hello "), Person(aUserId("@a-name:foo.bar"), "@a-name"), Normal(" world")))
     )
 
     @Test
@@ -62,15 +86,39 @@ class RichMessageParserTest {
     )
 
     @Test
-    fun `parses styling text`() = runParserTest(
-        input = "<em>hello</em> <strong>world</strong>",
-        expected = RichText(setOf(RichText.Part.Italic("hello"), Normal(" "), RichText.Part.Bold("world")))
+    fun `removes reply fallback`() = runParserTest(
+        input = """
+            <mx-reply>
+              <blockquote>
+              Original message
+              </blockquote>
+            </mx-reply>
+            Reply to message
+        """.trimIndent(),
+        expected = RichText(setOf(Normal("Reply to message")))
     )
 
     @Test
-    fun `parses raw reply text`() = runParserTest(
-        input = "> <@a-matrix-id:domain.foo> This is a reply",
-        expected = RichText(setOf(Normal("> <@a-matrix-id:domain.foo> This is a reply")))
+    fun `removes text fallback`() = runParserTest(
+        input = """
+            > <@user:domain.foo> Original message
+            > Some more content
+            
+            Reply to message
+        """.trimIndent(),
+        expected = RichText(setOf(Normal("Reply to message")))
+    )
+
+    @Test
+    fun `parses styling text`() = runParserTest(
+        input = "<em>hello</em> <strong>world</strong>",
+        expected = RichText(setOf(Italic("hello"), Normal(" "), Bold("world")))
+    )
+
+    @Test
+    fun `parses invalid tags text`() = runParserTest(
+        input = ">><foo> ><>> << more content",
+        expected = RichText(setOf(Normal(">><foo> ><>> << more content")))
     )
 
     @Test
@@ -80,7 +128,7 @@ class RichMessageParserTest {
             expected = RichText(
                 setOf(
                     Normal("hello "),
-                    RichText.Part.Bold("wor"),
+                    Bold("wor"),
                     Normal("ld"),
                 )
             )
@@ -94,7 +142,7 @@ class RichMessageParserTest {
             expected = RichText(
                 setOf(
                     Normal("hello "),
-                    RichText.Part.Italic("wor"),
+                    Italic("wor"),
                     Normal("ld"),
                 )
             )
