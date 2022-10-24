@@ -280,7 +280,7 @@ fun RichText.toAnnotatedText() = buildAnnotatedString {
 
             is RichText.Part.Normal -> append(it.content)
             is RichText.Part.Person -> withStyle(nameStyle) {
-                append("@${it.userId.substringBefore(':').removePrefix("@")}")
+                append("@${it.displayName.substringBefore(':').removePrefix("@")}")
             }
         }
     }

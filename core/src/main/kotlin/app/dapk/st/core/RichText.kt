@@ -7,8 +7,17 @@ data class RichText(val parts: Set<Part>) {
         data class Bold(val content: String) : Part
         data class Italic(val content: String) : Part
         data class BoldItalic(val content: String) : Part
-        data class Person(val userId: String) : Part
+        data class Person(val displayName: String) : Part
     }
 }
 
-fun RichText.asString() = parts.joinToString(separator = "")
+fun RichText.asString() = parts.joinToString(separator = "") {
+    when(it) {
+        is RichText.Part.Bold -> it.content
+        is RichText.Part.BoldItalic -> it.content
+        is RichText.Part.Italic -> it.content
+        is RichText.Part.Link -> it.label
+        is RichText.Part.Normal -> it.content
+        is RichText.Part.Person -> it.displayName
+    }
+}

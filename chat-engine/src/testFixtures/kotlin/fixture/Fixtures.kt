@@ -23,7 +23,7 @@ fun aRoomOverview(
 fun anEncryptedRoomMessageEvent(
     eventId: EventId = anEventId(),
     utcTimestamp: Long = 0L,
-    content: String = "encrypted-content",
+    content: RichText = RichText.of("encrypted-content"),
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
     edited: Boolean = false,
@@ -47,7 +47,7 @@ fun aRoomReplyMessageEvent(
 fun aRoomMessageEvent(
     eventId: EventId = anEventId(),
     utcTimestamp: Long = 0L,
-    content: String = "message-content",
+    content: RichText = RichText.of("message-content"),
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
     edited: Boolean = false,

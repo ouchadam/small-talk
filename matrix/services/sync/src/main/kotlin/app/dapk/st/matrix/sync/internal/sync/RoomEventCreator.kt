@@ -156,13 +156,17 @@ internal class TimelineEventMapper(
     private suspend fun RoomEventFactory.mapToRoomEvent(source: ApiTimelineEvent.TimelineMessage): RoomEvent {
         return when (source.content) {
             is ApiTimelineEvent.TimelineMessage.Content.Image -> source.toImageMessage(userCredentials, roomId)
-            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(roomId, content = source.asTextContent().formattedBody ?: source.content.body ?: "")
+            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(
+                roomId,
+                content = source.asTextContent().formattedBody ?: source.content.body ?: ""
+            )
+
             ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
         }
     }
 
     private suspend fun ApiTimelineEvent.TimelineMessage.toTextMessage(
-        content: String = this.asTextContent().formattedBody?.stripTags() ?: this.asTextContent().body ?: "redacted",
+        content: String = this.asTextContent().formattedBody ?: this.asTextContent().body ?: "redacted",
         edited: Boolean = false,
         utcTimestamp: Long = this.utcTimestamp,
     ) = with(roomEventFactory) { toTextMessage(roomId, content, edited, utcTimestamp) }

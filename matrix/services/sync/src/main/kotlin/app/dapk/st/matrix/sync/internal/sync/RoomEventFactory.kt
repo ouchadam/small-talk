@@ -53,37 +53,3 @@ internal class RoomEventFactory(
         )
     }
 }
-
-
-private fun String.indexOfOrNull(string: String) = this.indexOf(string).takeIf { it != -1 }
-
-fun String.stripTags() = this
-    .run {
-        this.indexOfOrNull("</mx-reply>")?.let {
-            this.substring(it + "</mx-reply>".length)
-        } ?: this
-    }
-    .trim()
-    .replaceLinks()
-    .removeTag("p")
-    .removeTag("em")
-    .removeTag("strong")
-    .removeTag("code")
-    .removeTag("pre")
-    .replace("&quot;", "\"")
-    .replace("&#39;", "'")
-    .replace("<br />", "\n")
-    .replace("<br/>", "\n")
-
-private fun String.removeTag(name: String) = this.replace("<$name>", "").replace("/$name>", "")
-
-private fun String.replaceLinks(): String {
-    return this.indexOfOrNull("<a href=")?.let { start ->
-        val openTagClose = indexOfOrNull("\">")!!
-        val end = indexOfOrNull("</a>")!!
-        val content = this.substring(openTagClose + "\">".length, end)
-        this.replaceRange(start, end + "</a>".length, content)
-    } ?: this
-}
-
-private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text
