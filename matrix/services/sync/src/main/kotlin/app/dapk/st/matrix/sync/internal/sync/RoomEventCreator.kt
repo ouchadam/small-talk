@@ -19,6 +19,7 @@ internal class RoomEventCreator(
     private val roomMembersService: RoomMembersService,
     private val errorTracker: ErrorTracker,
     private val roomEventFactory: RoomEventFactory,
+    private val richMessageParser: RichMessageParser,
 ) {
 
     suspend fun ApiTimelineEvent.Encrypted.toRoomEvent(roomId: RoomId): RoomEvent? {
@@ -44,7 +45,7 @@ internal class RoomEventCreator(
     }
 
     suspend fun ApiTimelineEvent.TimelineMessage.toRoomEvent(userCredentials: UserCredentials, roomId: RoomId, lookup: Lookup): RoomEvent? {
-        return TimelineEventMapper(userCredentials, roomId, roomEventFactory).mapToRoomEvent(this, lookup)
+        return TimelineEventMapper(userCredentials, roomId, roomEventFactory, richMessageParser).mapToRoomEvent(this, lookup)
     }
 }
 
@@ -52,6 +53,7 @@ internal class TimelineEventMapper(
     private val userCredentials: UserCredentials,
     private val roomId: RoomId,
     private val roomEventFactory: RoomEventFactory,
+    private val richMessageParser: RichMessageParser,
 ) {
 
     suspend fun mapToRoomEvent(event: ApiTimelineEvent.TimelineMessage, lookup: Lookup): RoomEvent? {
@@ -138,7 +140,7 @@ internal class TimelineEventMapper(
 
                 is ApiTimelineEvent.TimelineMessage.Content.Text -> original.toTextMessage(
                     utcTimestamp = incomingEdit.utcTimestamp,
-                    content = incomingEdit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
+                    content = incomingEdit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted",
                     edited = true,
                 )
 
@@ -147,8 +149,8 @@ internal class TimelineEventMapper(
         }
     }
 
-    // TODO handle edits
     private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
+        content = richMessageParser.parse(edit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted"),
         utcTimestamp = edit.utcTimestamp,
         edited = true,
     )
@@ -158,7 +160,7 @@ internal class TimelineEventMapper(
             is ApiTimelineEvent.TimelineMessage.Content.Image -> source.toImageMessage(userCredentials, roomId)
             is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(
                 roomId,
-                content = source.asTextContent().formattedBody ?: source.content.body ?: ""
+                content = source.asTextContent().formattedBody ?: source.content.body ?: "redacted"
             )
 
             ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()

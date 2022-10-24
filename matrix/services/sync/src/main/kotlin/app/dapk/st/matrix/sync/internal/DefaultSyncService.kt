@@ -58,7 +58,7 @@ internal class DefaultSyncService(
                 roomMembersService,
                 roomDataSource,
                 TimelineEventsProcessor(
-                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService, richMessageParser)),
+                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService, richMessageParser), richMessageParser),
                     roomEventsDecrypter,
                     eventDecrypter,
                     EventLookupUseCase(roomStore)

@@ -33,7 +33,11 @@ internal class RoomEventCreatorTest {
 
     private val fakeRoomMembersService = FakeRoomMembersService()
 
-    private val roomEventCreator = RoomEventCreator(fakeRoomMembersService, FakeErrorTracker(), RoomEventFactory(fakeRoomMembersService, RichMessageParser()))
+    private val richMessageParser = RichMessageParser()
+    private val roomEventCreator = RoomEventCreator(
+        fakeRoomMembersService, FakeErrorTracker(), RoomEventFactory(fakeRoomMembersService, richMessageParser),
+        richMessageParser
+    )
 
     @Test
     fun `given Megolm encrypted event then maps to encrypted room message`() = runTest {
