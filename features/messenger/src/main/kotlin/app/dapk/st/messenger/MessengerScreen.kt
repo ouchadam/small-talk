@@ -1,17 +1,14 @@
 package app.dapk.st.messenger
 
-import android.content.res.Configuration
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -28,10 +25,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -56,7 +51,6 @@ import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @Composable
 internal fun MessengerScreen(
@@ -79,9 +73,10 @@ internal fun MessengerScreen(
         else -> null
     }
 
-    val replyActions = ReplyActions(
+    val messageActions = MessageActions(
         onReply = { viewModel.post(MessengerAction.ComposerEnterReplyMode(it)) },
-        onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) }
+        onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) },
+        onLongClick = { viewModel.post(MessengerAction.CopyToClipboard(it)) }
     )
 
     Column {
@@ -92,13 +87,13 @@ internal fun MessengerScreen(
         })
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState, replyActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
+                Room(state.roomState, messageActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
                 TextComposer(
                     state.composerState,
                     onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
                     onSend = { viewModel.post(MessengerAction.ComposerSendText) },
                     onAttach = { viewModel.startAttachment() },
-                    replyActions = replyActions,
+                    messageActions = messageActions,
                 )
             }
 
@@ -115,6 +110,7 @@ internal fun MessengerScreen(
 
 @Composable
 private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
+    val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
@@ -123,17 +119,21 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
                         galleryLauncher.launch(ImageGalleryActivityPayload(it.roomState.roomOverview.roomName ?: ""))
                     }
                 }
+
+                is MessengerEvent.Toast -> {
+                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: ReplyActions, onRetry: () -> Unit) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, messageActions: MessageActions, onRetry: () -> Unit) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
-            RoomContent(state.value.self, state.value.roomState, replyActions)
+            RoomContent(state.value.self, state.value.roomState, messageActions)
             val eventBarHeight = 14.dp
             val typing = state.value.typing
             when {
@@ -167,7 +167,7 @@ private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, replyActions: Re
 }
 
 @Composable
-private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions: ReplyActions) {
+private fun ColumnScope.RoomContent(self: UserId, state: RoomState, messageActions: MessageActions) {
     val listState: LazyListState = rememberLazyListState(
         initialFirstVisibleItemIndex = 0
     )
@@ -193,457 +193,41 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, replyActions
         ) { index, item ->
             val previousEvent = if (index != 0) state.events[index - 1] else null
             val wasPreviousMessageSameSender = previousEvent?.author?.id == item.author.id
-            AlignedBubble(item, self, wasPreviousMessageSameSender, replyActions) {
-                when (item) {
-                    is RoomEvent.Image -> MessageImage(it as BubbleContent<RoomEvent.Image>)
-                    is RoomEvent.Message -> TextBubbleContent(it as BubbleContent<RoomEvent.Message>)
-                    is RoomEvent.Reply -> ReplyBubbleContent(it as BubbleContent<RoomEvent.Reply>)
-                    is RoomEvent.Encrypted -> EncryptedBubbleContent(it as BubbleContent<RoomEvent.Encrypted>)
-                }
-            }
-        }
-    }
-}
 
-private data class BubbleContent<T : RoomEvent>(
-    val shape: RoundedCornerShape,
-    val background: Color,
-    val isNotSelf: Boolean,
-    val message: T
-)
-
-@Composable
-private fun <T : RoomEvent> LazyItemScope.AlignedBubble(
-    message: T,
-    self: UserId,
-    wasPreviousMessageSameSender: Boolean,
-    replyActions: ReplyActions,
-    content: @Composable (BubbleContent<T>) -> Unit
-) {
-    when (message.author.id == self) {
-        true -> {
-            Box(modifier = Modifier.fillParentMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                Box(modifier = Modifier.fillParentMaxWidth(0.85f), contentAlignment = Alignment.TopEnd) {
-                    Bubble(
-                        message = message,
-                        isNotSelf = false,
-                        wasPreviousMessageSameSender = wasPreviousMessageSameSender,
-                        replyActions = replyActions,
-                    ) {
-                        content(BubbleContent(selfBackgroundShape, SmallTalkTheme.extendedColors.selfBubble, false, message))
-                    }
-                }
-            }
-        }
-
-        false -> {
-            Box(modifier = Modifier.fillParentMaxWidth(0.95f), contentAlignment = Alignment.TopStart) {
-                Bubble(
-                    message = message,
-                    isNotSelf = true,
-                    wasPreviousMessageSameSender = wasPreviousMessageSameSender,
-                    replyActions = replyActions,
-                ) {
-                    content(BubbleContent(othersBackgroundShape, SmallTalkTheme.extendedColors.othersBubble, true, message))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MessageImage(content: BubbleContent<RoomEvent.Image>) {
-    val context = LocalContext.current
-
-    Box(modifier = Modifier.padding(start = 6.dp)) {
-        Box(
-            Modifier
-                .padding(4.dp)
-                .clip(content.shape)
-                .background(content.background)
-                .height(IntrinsicSize.Max),
-        ) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .width(IntrinsicSize.Max)
-                    .defaultMinSize(minWidth = 50.dp)
+            AlignedDraggableContainer(
+                avatar = Avatar(item.author.avatarUrl?.value, item.author.displayName ?: item.author.id.value),
+                isSelf = self == item.author.id,
+                wasPreviousMessageSameSender = wasPreviousMessageSameSender,
+                onReply = { messageActions.onReply(item) },
             ) {
-                if (content.isNotSelf) {
-                    Text(
-                        fontSize = 11.sp,
-                        text = content.message.author.displayName ?: content.message.author.id.value,
-                        maxLines = 1,
-                        color = content.textColor()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Image(
-                    modifier = Modifier.size(content.message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                    painter = rememberAsyncImagePainter(
-                        model = ImageRequest.Builder(context)
-                            .fetcherFactory(LocalDecyptingFetcherFactory.current)
-                            .memoryCacheKey(content.message.imageMeta.url)
-                            .data(content.message)
-                            .build()
-                    ),
-                    contentDescription = null,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    val editedPrefix = if (content.message.edited) "(edited) " else null
-                    Text(
-                        fontSize = 9.sp,
-                        text = "${editedPrefix ?: ""}${content.message.time}",
-                        textAlign = TextAlign.End,
-                        color = content.textColor(),
-                        modifier = Modifier.wrapContentSize()
-                    )
-                    SendStatus(content.message)
-                }
-            }
-        }
-    }
-}
-
-private fun RoomEvent.Image.ImageMeta.scale(density: Density, configuration: Configuration): DpSize {
-    val height = this@scale.height ?: 250
-    val width = this@scale.width ?: 250
-    return with(density) {
-        val scaler = minOf(
-            height.scalerFor(configuration.screenHeightDp.dp.toPx() * 0.5f),
-            width.scalerFor(configuration.screenWidthDp.dp.toPx() * 0.6f)
-        )
-
-        DpSize(
-            width = (width * scaler).toDp(),
-            height = (height * scaler).toDp(),
-        )
-    }
-}
-
-
-private fun Int.scalerFor(max: Float): Float {
-    return max / this
-}
-
-private val selfBackgroundShape = RoundedCornerShape(12.dp, 0.dp, 12.dp, 12.dp)
-private val othersBackgroundShape = RoundedCornerShape(0.dp, 12.dp, 12.dp, 12.dp)
-
-@Composable
-private fun Bubble(
-    message: RoomEvent,
-    isNotSelf: Boolean,
-    wasPreviousMessageSameSender: Boolean,
-    replyActions: ReplyActions,
-    content: @Composable () -> Unit
-) {
-
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
-    val localDensity = LocalDensity.current
-
-    val coroutineScope = rememberCoroutineScope()
-    val offsetX = remember { Animatable(0f) }
-
-    Row(
-        Modifier.padding(horizontal = 12.dp)
-            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-            .draggable(
-                orientation = Orientation.Horizontal,
-                state = rememberDraggableState {
-                    if ((offsetX.value + it) > 0) {
-                        coroutineScope.launch { offsetX.snapTo(offsetX.value + it) }
-                    }
-                },
-                onDragStopped = {
-                    with(localDensity) {
-                        if (offsetX.value > (screenWidthDp.toPx() * 0.15)) {
-                            replyActions.onReply(message)
-                        }
-                    }
-
-                    coroutineScope.launch {
-                        offsetX.animateTo(targetValue = 0f)
-                    }
-                }
-            )
-    ) {
-        when {
-            isNotSelf -> {
-                val displayImageSize = 32.dp
-                when {
-                    wasPreviousMessageSameSender -> {
-                        Spacer(modifier = Modifier.width(displayImageSize))
-                    }
-
-                    message.author.avatarUrl == null -> {
-                        MissingAvatarIcon(message.author.displayName ?: message.author.id.value, displayImageSize)
-                    }
-
-                    else -> {
-                        MessengerUrlIcon(message.author.avatarUrl!!.value, displayImageSize)
-                    }
-                }
-            }
-        }
-        content()
-    }
-}
-
-@Composable
-private fun BubbleContent<*>.textColor(): Color {
-    return if (this.isNotSelf) SmallTalkTheme.extendedColors.onOthersBubble else SmallTalkTheme.extendedColors.onSelfBubble
-}
-
-@Composable
-private fun TextBubbleContent(content: BubbleContent<RoomEvent.Message>) {
-    Box(modifier = Modifier.padding(start = 6.dp)) {
-        Box(
-            Modifier
-                .padding(4.dp)
-                .clip(content.shape)
-                .background(content.background)
-                .height(IntrinsicSize.Max),
-        ) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .width(IntrinsicSize.Max)
-                    .defaultMinSize(minWidth = 50.dp)
-            ) {
-                if (content.isNotSelf) {
-                    Text(
-                        fontSize = 11.sp,
-                        text = content.message.author.displayName ?: content.message.author.id.value,
-                        maxLines = 1,
-                        color = content.textColor()
-                    )
-                }
-                Text(
-                    text = content.message.content,
-                    color = content.textColor(),
-                    fontSize = 15.sp,
-                    modifier = Modifier.wrapContentSize(),
-                    textAlign = TextAlign.Start,
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    val editedPrefix = if (content.message.edited) "(edited) " else null
-                    Text(
-                        fontSize = 9.sp,
-                        text = "${editedPrefix ?: ""}${content.message.time}",
-                        textAlign = TextAlign.End,
-                        color = content.textColor(),
-                        modifier = Modifier.wrapContentSize()
-                    )
-                    SendStatus(content.message)
-                }
+                val event = BubbleModel.Event(item.author.id.value, item.author.displayName ?: item.author.id.value, item.edited, item.time)
+                val status = @Composable { SendStatus(item) }
+                MessageBubble(this, item.toModel(event), status, onLongClick = messageActions.onLongClick)
             }
         }
     }
 }
 
 @Composable
-private fun EncryptedBubbleContent(content: BubbleContent<RoomEvent.Encrypted>) {
-    Box(modifier = Modifier.padding(start = 6.dp)) {
-        Box(
-            Modifier
-                .padding(4.dp)
-                .clip(content.shape)
-                .background(content.background)
-                .height(IntrinsicSize.Max),
-        ) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .width(IntrinsicSize.Max)
-                    .defaultMinSize(minWidth = 50.dp)
-            ) {
-                if (content.isNotSelf) {
-                    Text(
-                        fontSize = 11.sp,
-                        text = content.message.author.displayName ?: content.message.author.id.value,
-                        maxLines = 1,
-                        color = content.textColor()
-                    )
-                }
-                Text(
-                    text = "Encrypted message",
-                    color = content.textColor(),
-                    fontSize = 15.sp,
-                    modifier = Modifier.wrapContentSize(),
-                    textAlign = TextAlign.Start,
-                )
+private fun RoomEvent.toModel(event: BubbleModel.Event): BubbleModel = when (this) {
+    is RoomEvent.Message -> BubbleModel.Text(this.content, event)
+    is RoomEvent.Encrypted -> BubbleModel.Encrypted(event)
+    is RoomEvent.Image -> {
+        val imageRequest = LocalImageRequestFactory.current
+            .memoryCacheKey(this.imageMeta.url)
+            .data(this)
+            .build()
+        val imageContent = BubbleModel.Image.ImageContent(this.imageMeta.width, this.imageMeta.height, this.imageMeta.url)
+        BubbleModel.Image(imageContent, imageRequest, event)
+    }
 
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        fontSize = 9.sp,
-                        text = "${content.message.time}",
-                        textAlign = TextAlign.End,
-                        color = content.textColor(),
-                        modifier = Modifier.wrapContentSize()
-                    )
-                    SendStatus(content.message)
-                }
-            }
-        }
+    is RoomEvent.Reply -> {
+        BubbleModel.Reply(this.replyingTo.toModel(event), this.message.toModel(event))
     }
 }
 
 @Composable
-private fun ReplyBubbleContent(content: BubbleContent<RoomEvent.Reply>) {
-    Box(modifier = Modifier.padding(start = 6.dp)) {
-        Box(
-            Modifier
-                .padding(4.dp)
-                .clip(content.shape)
-                .background(content.background)
-                .height(IntrinsicSize.Max),
-        ) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .width(IntrinsicSize.Max)
-                    .defaultMinSize(minWidth = 50.dp)
-            ) {
-                val context = LocalContext.current
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(
-                            if (content.isNotSelf) SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.1f) else SmallTalkTheme.extendedColors.onSelfBubble.copy(
-                                alpha = 0.2f
-                            ), RoundedCornerShape(12.dp)
-                        )
-                        .padding(8.dp)
-                ) {
-                    val replyName = if (!content.isNotSelf && content.message.replyingToSelf) "You" else content.message.replyingTo.author.displayName
-                        ?: content.message.replyingTo.author.id.value
-                    Text(
-                        fontSize = 11.sp,
-                        text = replyName,
-                        maxLines = 1,
-                        color = content.textColor()
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    when (val replyingTo = content.message.replyingTo) {
-                        is RoomEvent.Message -> {
-                            Text(
-                                text = replyingTo.content,
-                                color = content.textColor().copy(alpha = 0.8f),
-                                fontSize = 14.sp,
-                                modifier = Modifier.wrapContentSize(),
-                                textAlign = TextAlign.Start,
-                            )
-                        }
-
-                        is RoomEvent.Image -> {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Image(
-                                modifier = Modifier.size(replyingTo.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                                painter = rememberAsyncImagePainter(
-                                    model = ImageRequest.Builder(context)
-                                        .fetcherFactory(LocalDecyptingFetcherFactory.current)
-                                        .memoryCacheKey(replyingTo.imageMeta.url)
-                                        .data(replyingTo)
-                                        .build()
-                                ),
-                                contentDescription = null,
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
-
-                        is RoomEvent.Reply -> {
-                            // TODO - a reply to a reply
-                        }
-
-                        is RoomEvent.Encrypted -> {
-                            Text(
-                                text = "Encrypted message",
-                                color = content.textColor().copy(alpha = 0.8f),
-                                fontSize = 14.sp,
-                                modifier = Modifier.wrapContentSize(),
-                                textAlign = TextAlign.Start,
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                if (content.isNotSelf) {
-                    Text(
-                        fontSize = 11.sp,
-                        text = content.message.message.author.displayName ?: content.message.message.author.id.value,
-                        maxLines = 1,
-                        color = content.textColor()
-                    )
-                }
-                when (val message = content.message.message) {
-                    is RoomEvent.Message -> {
-                        Text(
-                            text = message.content,
-                            color = content.textColor(),
-                            fontSize = 15.sp,
-                            modifier = Modifier.wrapContentSize(),
-                            textAlign = TextAlign.Start,
-                        )
-                    }
-
-                    is RoomEvent.Image -> {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Image(
-                            modifier = Modifier.size(message.imageMeta.scale(LocalDensity.current, LocalConfiguration.current)),
-                            painter = rememberAsyncImagePainter(
-                                model = ImageRequest.Builder(context)
-                                    .data(message)
-                                    .memoryCacheKey(message.imageMeta.url)
-                                    .fetcherFactory(LocalDecyptingFetcherFactory.current)
-                                    .build()
-                            ),
-                            contentDescription = null,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-
-                    is RoomEvent.Reply -> {
-                        // TODO - a reply to a reply
-                    }
-
-                    is RoomEvent.Encrypted -> {
-                        Text(
-                            text = "Encrypted message",
-                            color = content.textColor(),
-                            fontSize = 15.sp,
-                            modifier = Modifier.wrapContentSize(),
-                            textAlign = TextAlign.Start,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        fontSize = 9.sp,
-                        text = content.message.time,
-                        textAlign = TextAlign.End,
-                        color = content.textColor(),
-                        modifier = Modifier.wrapContentSize()
-                    )
-                    SendStatus(content.message.message)
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun RowScope.SendStatus(message: RoomEvent) {
+private fun SendStatus(message: RoomEvent) {
     when (val meta = message.meta) {
         MessageMeta.FromServer -> {
             // last message is self
@@ -684,7 +268,7 @@ private fun RowScope.SendStatus(message: RoomEvent) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit, replyActions: ReplyActions) {
+private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit, messageActions: MessageActions) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -713,7 +297,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
             ) {
                 if (it is RoomEvent.Message) {
                     Box(Modifier.padding(12.dp)) {
-                        Box(Modifier.padding(8.dp).clickable { replyActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
+                        Box(Modifier.padding(8.dp).clickable { messageActions.onDismiss() }.wrapContentWidth().align(Alignment.TopEnd)) {
                             Icon(
                                 modifier = Modifier.size(16.dp),
                                 imageVector = Icons.Filled.Close,
@@ -844,7 +428,8 @@ private fun AttachmentComposer(state: ComposerState.Attachments, onSend: () -> U
     }
 }
 
-class ReplyActions(
+class MessageActions(
     val onReply: (RoomEvent) -> Unit,
     val onDismiss: () -> Unit,
+    val onLongClick: (BubbleModel) -> Unit,
 )

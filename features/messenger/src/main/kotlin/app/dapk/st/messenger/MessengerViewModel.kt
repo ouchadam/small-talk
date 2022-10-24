@@ -1,8 +1,11 @@
 package app.dapk.st.messenger
 
+import android.os.Build
 import androidx.lifecycle.viewModelScope
+import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
+import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.engine.RoomEvent
@@ -20,6 +23,8 @@ import kotlinx.coroutines.launch
 internal class MessengerViewModel(
     private val chatEngine: ChatEngine,
     private val messageOptionsStore: MessageOptionsStore,
+    private val copyToClipboard: CopyToClipboard,
+    private val deviceMeta: DeviceMeta,
     factory: MutableStateFactory<MessengerScreenState> = defaultStateFactory(),
 ) : DapkViewModel<MessengerScreenState, MessengerEvent>(
     initialState = MessengerScreenState(
@@ -64,6 +69,21 @@ internal class MessengerViewModel(
                         is ComposerState.Text -> composerState.copy(reply = null)
                     }
                 )
+            }
+
+            is MessengerAction.CopyToClipboard -> {
+                viewModelScope.launch {
+                    when (val result = action.model.findCopyableContent()) {
+                        is CopyableResult.Content -> {
+                            copyToClipboard.copy(result.value)
+                            if (deviceMeta.apiVersion <= Build.VERSION_CODES.S_V2) {
+                                _events.emit(MessengerEvent.Toast("Copied to clipboard"))
+                            }
+                        }
+
+                        CopyableResult.NothingToCopy -> _events.emit(MessengerEvent.Toast("Nothing to copy"))
+                    }
+                }
             }
         }
     }
@@ -137,10 +157,23 @@ internal class MessengerViewModel(
 
 }
 
+private fun BubbleModel.findCopyableContent(): CopyableResult = when (this) {
+    is BubbleModel.Encrypted -> CopyableResult.NothingToCopy
+    is BubbleModel.Image -> CopyableResult.NothingToCopy
+    is BubbleModel.Reply -> this.reply.findCopyableContent()
+    is BubbleModel.Text -> CopyableResult.Content(CopyToClipboard.Copyable.Text(this.content))
+}
+
+private sealed interface CopyableResult {
+    object NothingToCopy : CopyableResult
+    data class Content(val value: CopyToClipboard.Copyable) : CopyableResult
+}
+
 sealed interface MessengerAction {
     data class ComposerTextUpdate(val newValue: String) : MessengerAction
     data class ComposerEnterReplyMode(val replyingTo: RoomEvent) : MessengerAction
     object ComposerExitReplyMode : MessengerAction
+    data class CopyToClipboard(val model: BubbleModel) : MessengerAction
     data class ComposerImageUpdate(val newValue: MessageAttachment) : MessengerAction
     object ComposerSendText : MessengerAction
     object ComposerClear : MessengerAction

@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
@@ -16,9 +15,10 @@ import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.messenger.gallery.GetImageFromGallery
 import app.dapk.st.navigator.MessageAttachment
+import coil.request.ImageRequest
 import kotlinx.parcelize.Parcelize
 
-val LocalDecyptingFetcherFactory = staticCompositionLocalOf<DecryptingFetcherFactory> { throw IllegalAccessError() }
+val LocalImageRequestFactory = staticCompositionLocalOf<ImageRequest.Builder> { throw IllegalAccessError() }
 
 class MessengerActivity : DapkActivity() {
 
@@ -50,7 +50,7 @@ class MessengerActivity : DapkActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val payload = readPayload<MessagerActivityPayload>()
-        val factory = module.decryptingFetcherFactory(RoomId(payload.roomId))
+        val factory = ImageRequest.Builder(applicationContext).fetcherFactory(module.decryptingFetcherFactory(RoomId(payload.roomId)))
 
         val galleryLauncher = registerForActivityResult(GetImageFromGallery()) {
             it?.let { uri ->
@@ -65,10 +65,9 @@ class MessengerActivity : DapkActivity() {
             }
         }
 
-
         setContent {
             Surface(Modifier.fillMaxSize()) {
-                CompositionLocalProvider(LocalDecyptingFetcherFactory provides factory) {
+                CompositionLocalProvider(LocalImageRequestFactory provides factory) {
                     MessengerScreen(RoomId(payload.roomId), payload.attachments, viewModel, navigator, galleryLauncher)
                 }
             }

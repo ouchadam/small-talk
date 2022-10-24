@@ -1,6 +1,7 @@
 package app.dapk.st.messenger
 
 import ViewModelTest
+import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.engine.MessengerState
@@ -12,6 +13,7 @@ import app.dapk.st.matrix.common.UserId
 import fake.FakeChatEngine
 import fake.FakeMessageOptionsStore
 import fixture.*
+import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 
@@ -27,10 +29,14 @@ class MessengerViewModelTest {
 
     private val fakeMessageOptionsStore = FakeMessageOptionsStore()
     private val fakeChatEngine = FakeChatEngine()
+    private val fakeCopyToClipboard = FakeCopyToClipboard()
+    private val deviceMeta = DeviceMeta(26)
 
     private val viewModel = MessengerViewModel(
         fakeChatEngine,
         fakeMessageOptionsStore.instance,
+        fakeCopyToClipboard.instance,
+        deviceMeta,
         factory = runViewModelTest.testMutableStateFactory(),
     )
 
@@ -110,3 +116,7 @@ fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerState, m
     roomState = Lce.Content(roomState),
     composerState = ComposerState.Text(value = messageContent ?: "", reply = null)
 )
+
+class FakeCopyToClipboard {
+    val instance = mockk<CopyToClipboard>()
+}
