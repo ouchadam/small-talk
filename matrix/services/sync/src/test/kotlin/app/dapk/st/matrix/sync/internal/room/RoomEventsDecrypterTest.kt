@@ -5,7 +5,7 @@ import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.DecryptedContent
-import app.dapk.st.matrix.sync.internal.sync.RichMessageParser
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import fake.FakeMatrixLogger
 import fake.FakeMessageDecrypter
 import fixture.*

@@ -12,6 +12,7 @@ import app.dapk.st.matrix.sync.RoomMembersService
 import app.dapk.st.matrix.sync.find
 import app.dapk.st.matrix.sync.internal.request.ApiEncryptedContent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 
 private typealias Lookup = suspend (EventId) -> LookupResult
 

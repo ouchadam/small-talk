@@ -8,7 +8,7 @@ import app.dapk.st.matrix.sync.internal.DefaultSyncService
 import app.dapk.st.matrix.sync.internal.request.*
 import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.matrix.sync.internal.room.MissingMessageDecrypter
-import app.dapk.st.matrix.sync.internal.sync.RichMessageParser
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 

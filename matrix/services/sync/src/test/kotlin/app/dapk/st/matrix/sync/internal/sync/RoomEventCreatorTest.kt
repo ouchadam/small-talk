@@ -6,6 +6,7 @@ import app.dapk.st.matrix.common.asString
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.ApiEncryptedContent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import fake.FakeErrorTracker
 import fake.FakeRoomMembersService
 import fixture.*

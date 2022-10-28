@@ -6,6 +6,7 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomMembersService
 import app.dapk.st.matrix.sync.find
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 
 private val UNKNOWN_AUTHOR = RoomMember(id = UserId("unknown"), displayName = null, avatarUrl = null)
 

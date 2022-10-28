@@ -13,6 +13,7 @@ import app.dapk.st.matrix.sync.internal.room.RoomEventsDecrypter
 import app.dapk.st.matrix.sync.internal.room.SyncEventDecrypter
 import app.dapk.st.matrix.sync.internal.room.SyncSideEffects
 import app.dapk.st.matrix.sync.internal.sync.*
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

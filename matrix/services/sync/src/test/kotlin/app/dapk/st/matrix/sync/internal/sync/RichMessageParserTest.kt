@@ -2,6 +2,7 @@ package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.common.RichText.Part.*
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import fixture.aUserId
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Ignore
@@ -157,7 +158,7 @@ class RichMessageParserTest {
             expected = RichText(
                 setOf(
                     Normal("hello "),
-                    RichText.Part.BoldItalic("wor"),
+                    BoldItalic("wor"),
                     Normal("ld"),
                 )
             )
