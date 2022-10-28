@@ -4,6 +4,8 @@ import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.common.RichText.Part.*
 import app.dapk.st.matrix.common.UserId
 
+private const val INVALID_TRAILING_CHARS = ",.:;?"
+
 class RichMessageParser {
 
     fun parse(source: String): RichText {
@@ -30,7 +32,6 @@ class RichMessageParser {
                                 buffer.add(Normal(input.substring(openIndex, foundIndex)))
                             }
                             buffer.add(Person(UserId(tagName), tagName))
-                            println(tagName)
                             openIndex = foundIndex + wholeTag.length
                             lastStartIndex = openIndex
                             continue
@@ -48,9 +49,6 @@ class RichMessageParser {
 
                         val exitTag = "</$tagName>"
                         val exitIndex = input.indexOf(exitTag, startIndex = closeIndex)
-
-                        println("$exitTag : $exitIndex")
-
                         if (exitIndex == -1) {
                             openIndex++
                         } else {
@@ -101,24 +99,24 @@ class RichMessageParser {
                             buffer.add(Normal(input.substring(lastStartIndex, urlIndex)))
                         }
 
-                        val substring1 = input.substring(urlIndex)
-                        val urlEndIndex = substring1.indexOfFirst { it == '\n' || it == ' ' }
+                        val originalUrl = input.substring(urlIndex)
+                        val urlEndIndex = originalUrl.indexOfFirst { it == '\n' || it == ' ' }
+                        val urlContinuesUntilEnd = urlEndIndex == -1
                         when {
-                            urlEndIndex == -1 -> {
-                                val last = substring1.last()
-                                val url = substring1.removeSuffix(".").removeSuffix(",")
-                                buffer.add(Link(url = url, label = url))
-                                if (last == '.' || last == ',') {
-                                    buffer.add(Normal(last.toString()))
+                            urlContinuesUntilEnd -> {
+                                val cleanedUrl = originalUrl.bestGuessStripTrailingUrlChar()
+                                buffer.add(Link(url = cleanedUrl, label = cleanedUrl))
+                                if (cleanedUrl != originalUrl) {
+                                    buffer.add(Normal(originalUrl.last().toString()))
                                 }
                                 break
                             }
 
                             else -> {
-                                val substring = input.substring(urlIndex, urlEndIndex)
-                                val url = substring.removeSuffix(".").removeSuffix(",")
-                                buffer.add(Link(url = url, label = url))
-                                openIndex = if (substring.endsWith('.') || substring.endsWith(',')) urlEndIndex - 1 else urlEndIndex
+                                val originalUrl = input.substring(urlIndex, urlEndIndex)
+                                val cleanedUrl = originalUrl.bestGuessStripTrailingUrlChar()
+                                buffer.add(Link(url = cleanedUrl, label = cleanedUrl))
+                                openIndex = if (originalUrl == cleanedUrl) urlEndIndex else urlEndIndex - 1
                                 lastStartIndex = openIndex
                                 continue
                             }
@@ -143,4 +141,13 @@ class RichMessageParser {
 
 private fun String.removeHtmlEntities() = this.replace("&quot;", "\"").replace("&#39;", "'")
 
-private fun String.dropTextFallback() = this.lines().dropWhile { it.startsWith("> ") || it.isEmpty() }.joinToString("")
+private fun String.dropTextFallback() = this.lines().dropWhile { it.startsWith("> ") || it.isEmpty() }.joinToString("\n")
+
+private fun String.bestGuessStripTrailingUrlChar(): String {
+    val last = this.last()
+    return if (INVALID_TRAILING_CHARS.contains(last)) {
+        this.dropLast(1)
+    } else {
+        this
+    }
+}
