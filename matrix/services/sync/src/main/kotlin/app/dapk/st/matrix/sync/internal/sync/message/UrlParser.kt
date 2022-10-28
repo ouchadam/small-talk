@@ -1,16 +1,25 @@
 package app.dapk.st.matrix.sync.internal.sync.message
 
-private const val INVALID_TRAILING_CHARS = ",.:;?"
+private const val INVALID_TRAILING_CHARS = ",.:;?<>"
 
 internal class UrlParser {
 
+    private fun String.hasLookAhead(current: Int, value: String): Boolean {
+        return length > current + value.length && this.substring(current, current + value.length) == value
+    }
+
     fun parseUrl(input: String, linkStartIndex: Int, builder: PartBuilder): Int {
         val urlIndex = input.indexOf("http", startIndex = linkStartIndex)
-        val urlResult = if (urlIndex == END_SEARCH) END_SEARCH else {
+        return if (urlIndex == END_SEARCH) END_SEARCH else {
             builder.appendTextBeforeTag(linkStartIndex, urlIndex, input)
 
             val originalUrl = input.substring(urlIndex)
-            val urlEndIndex = originalUrl.indexOfFirst { it == '\n' || it == ' ' }
+            var index = 0
+            val maybeUrl = originalUrl.takeWhile {
+                it != '\n' && it != ' ' && !originalUrl.hasLookAhead(index++, "<br")
+            }
+
+            val urlEndIndex = maybeUrl.length + urlIndex
             val urlContinuesUntilEnd = urlEndIndex == -1
 
             when {
@@ -31,7 +40,10 @@ internal class UrlParser {
                 }
             }
         }
-        return urlResult
+    }
+
+    fun test(startingFrom: Int, input: String): Int {
+        return input.indexOf("http", startingFrom)
     }
 
 }

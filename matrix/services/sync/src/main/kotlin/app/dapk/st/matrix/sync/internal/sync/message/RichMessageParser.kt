@@ -17,15 +17,27 @@ class RichMessageParser {
         val builder = PartBuilder()
         var nextIndex = 0
         while (nextIndex != END_SEARCH) {
-            val htmlResult = htmlParser.parseHtmlTags(input, nextIndex, builder)
-            val linkStartIndex = findUrlStartIndex(htmlResult, nextIndex)
-            val urlResult = urlParser.parseUrl(input, linkStartIndex, builder)
+            val htmlStart = htmlParser.test(nextIndex, input)
+            val urlStart = urlParser.test(nextIndex, input)
 
-            val hasReachedEnd = hasReachedEnd(htmlResult, urlResult, input)
-            if (hasReachedEnd && hasUnprocessedText(htmlResult, urlResult, input)) {
+            val firstResult = if (htmlStart < urlStart) {
+                htmlParser.parseHtmlTags(input, nextIndex, builder)
+            } else {
+                urlParser.parseUrl(input, nextIndex, builder)
+            }
+
+            val secondStartIndex = findUrlStartIndex(firstResult, nextIndex)
+            val secondResult = if (htmlStart < urlStart) {
+                urlParser.parseUrl(input, secondStartIndex, builder)
+            } else {
+                htmlParser.parseHtmlTags(input, secondStartIndex, builder)
+            }
+
+            val hasReachedEnd = hasReachedEnd(firstResult, secondResult, input)
+            if (hasReachedEnd && hasUnprocessedText(firstResult, secondResult, input)) {
                 builder.appendText(input.substring(nextIndex))
             }
-            nextIndex = if (hasReachedEnd) END_SEARCH else max(htmlResult, urlResult)
+            nextIndex = if (hasReachedEnd) END_SEARCH else max(firstResult, secondResult)
         }
         return RichText(builder.build())
     }

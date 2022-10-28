@@ -54,3 +54,8 @@ internal fun PartBuilder.appendTextBeforeTag(previousIndex: Int, tagOpenIndex: I
         this.appendText(input.substring(previousIndex, tagOpenIndex))
     }
 }
+
+internal fun PartBuilder.appendNewline() {
+    this.appendText("\n")
+}
+

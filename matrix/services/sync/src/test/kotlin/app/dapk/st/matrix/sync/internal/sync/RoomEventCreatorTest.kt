@@ -111,7 +111,7 @@ internal class RoomEventCreatorTest {
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = editEvent.id,
             utcTimestamp = editEvent.utcTimestamp,
-            content = RichText.of(editEvent.asTextContent().body!!),
+            content = RichText.of(editEvent.asTextContent().body!!.trimStart()),
             author = A_SENDER,
             edited = true
         )

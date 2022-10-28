@@ -19,9 +19,9 @@ class RichMessageParserTest {
     )
 
     @Test
-    fun `skips p tags`() = runParserTest(
-        input = "Hello world! <p>foo bar</p> after paragraph",
-        expected = RichText(setOf(Normal("Hello world! foo bar after paragraph")))
+    fun `parses p tags`() = runParserTest(
+        input = "<p>Hello world!</p><p>foo bar</p>after paragraph",
+        expected = RichText(setOf(Normal("Hello world!\n\nfoo bar\n\nafter paragraph")))
     )
 
     @Test
@@ -83,6 +83,10 @@ class RichMessageParserTest {
         Case(
             input = "ending sentence with url https://google.com.",
             expected = RichText(setOf(Normal("ending sentence with url "), Link("https://google.com", "https://google.com"), Normal(".")))
+        ),
+        Case(
+            input = "https://google.com<br>html after url",
+            expected = RichText(setOf(Link("https://google.com", "https://google.com"), Normal("\nhtml after url")))
         ),
     )
 
