@@ -20,7 +20,7 @@ class RichMessageParserTest {
     @Test
     fun `skips p tags`() = runParserTest(
         input = "Hello world! <p>foo bar</p> after paragraph",
-        expected = RichText(setOf(Normal("Hello world! "), Normal("foo bar"), Normal(" after paragraph")))
+        expected = RichText(setOf(Normal("Hello world! foo bar after paragraph")))
     )
 
     @Test
@@ -66,7 +66,7 @@ class RichMessageParserTest {
     @Test
     fun `replaces br tags`() = runParserTest(
         input = "Hello world!<br />next line<br />another line",
-        expected = RichText(setOf(Normal("Hello world!"), Normal("\n"), Normal("next line"), Normal("\n"), Normal("another line")))
+        expected = RichText(setOf(Normal("Hello world!\nnext line\nanother line")))
     )
 
     @Test
