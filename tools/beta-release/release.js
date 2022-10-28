@@ -50,7 +50,7 @@ export const release = async (github, version, applicationId, artifacts, config)
         owner: config.owner,
         repo: config.repo,
         tag_name: version.name,
-        prerelease: true,
+        prerelease: false,
         generate_release_notes: true,
     })
 
