@@ -37,6 +37,14 @@ internal class PartBuilder {
 
     fun build(): Set<RichText.Part> {
         flushNormalBuffer()
+        val last = parts.last()
+        if (last is RichText.Part.Normal) {
+            parts.remove(last)
+            val newContent = last.content.trimEnd()
+            if (newContent.isNotEmpty()) {
+                parts.add(last.copy(content = newContent))
+            }
+        }
         return parts
     }
 

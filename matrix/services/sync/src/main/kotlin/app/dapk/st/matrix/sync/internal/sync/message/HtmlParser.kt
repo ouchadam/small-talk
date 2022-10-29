@@ -73,7 +73,7 @@ internal class HtmlParser {
             }
         }
 
-        "b" -> {
+        "b", "strong" -> {
             builder.appendBold(tagContent)
             exitTagCloseIndex
         }
@@ -81,21 +81,16 @@ internal class HtmlParser {
         "p" -> {
             builder.appendText(tagContent)
             builder.appendNewline()
+            exitTagCloseIndex
+        }
+
+        "h1", "h2", "h3", "h4", "h5" -> {
+            builder.appendBold(tagContent)
             builder.appendNewline()
             exitTagCloseIndex
         }
 
-        "strong" -> {
-            builder.appendBold(tagContent)
-            exitTagCloseIndex
-        }
-
-        "i" -> {
-            builder.appendItalic(tagContent)
-            exitTagCloseIndex
-        }
-
-        "em" -> {
+        "i", "em" -> {
             builder.appendItalic(tagContent)
             exitTagCloseIndex
         }

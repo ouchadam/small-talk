@@ -21,7 +21,7 @@ class RichMessageParserTest {
     @Test
     fun `parses p tags`() = runParserTest(
         input = "<p>Hello world!</p><p>foo bar</p>after paragraph",
-        expected = RichText(setOf(Normal("Hello world!\n\nfoo bar\n\nafter paragraph")))
+        expected = RichText(setOf(Normal("Hello world!\nfoo bar\nafter paragraph")))
     )
 
     @Test
@@ -49,18 +49,22 @@ class RichMessageParserTest {
     )
 
     @Test
-    fun `skips header tags`() = runParserTest(
+    fun `parses header tags`() = runParserTest(
         Case(
             input = "<h1>hello</h1>",
-            expected = RichText(setOf(Normal("hello")))
+            expected = RichText(setOf(Bold("hello")))
+        ),
+        Case(
+            input = "<h1>hello</h1>text after title",
+            expected = RichText(setOf(Bold("hello"), Normal("\ntext after title")))
         ),
         Case(
             input = "<h2>hello</h2>",
-            expected = RichText(setOf(Normal("hello")))
+            expected = RichText(setOf(Bold("hello")))
         ),
         Case(
             input = "<h3>hello</h3>",
-            expected = RichText(setOf(Normal("hello")))
+            expected = RichText(setOf(Bold("hello")))
         ),
     )
 
