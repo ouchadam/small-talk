@@ -5,10 +5,11 @@ import app.dapk.st.matrix.common.UserId
 private const val TAG_OPEN = '<'
 private const val TAG_CLOSE = '>'
 private const val NO_RESULT_FOUND = -1
+private const val LI_VALUE_CAPTURE = "value=\""
 
 internal class HtmlParser {
 
-    fun parseHtmlTags(input: String, searchIndex: Int, builder: PartBuilder) = input.findTag(
+    fun parseHtmlTags(input: String, searchIndex: Int, builder: PartBuilder): SearchIndex = input.findTag(
         fromIndex = searchIndex,
         onInvalidTag = { builder.appendText(input[it].toString()) },
         onTag = { tagOpen, tagClose ->
@@ -59,7 +60,7 @@ internal class HtmlParser {
         wholeTag: String,
         builder: PartBuilder,
         tagContent: String,
-        exitTagCloseIndex: Int
+        exitTagCloseIndex: Int,
     ) = when (tagName) {
         "a" -> {
             val findHrefUrl = wholeTag.substringAfter("href=").replace("\"", "").removeSuffix(">")
@@ -81,6 +82,11 @@ internal class HtmlParser {
         "p" -> {
             builder.appendText(tagContent)
             builder.appendNewline()
+            exitTagCloseIndex
+        }
+
+        "ul", "ol" -> {
+            parseList(tagName, tagContent, builder)
             exitTagCloseIndex
         }
 
@@ -128,8 +134,65 @@ internal class HtmlParser {
         }
     }
 
+    private fun parseList(parentTag: String, parentContent: String, builder: PartBuilder) {
+        var nextIndex = 0
+        var index = 1
+        while (nextIndex != END_SEARCH) {
+            nextIndex = singleTagParser(parentContent, "li", nextIndex, builder) { wholeTag, tagContent ->
+                val content = when (parentTag) {
+                    "ol" -> {
+                        index = wholeTag.indexOf(LI_VALUE_CAPTURE).let {
+                            if (it == -1) {
+                                index
+                            } else {
+                                val start = it + LI_VALUE_CAPTURE.length
+                                wholeTag.substring(start).substringBefore('\"').toInt()
+                            }
+                        }
+
+                        "$index. $tagContent".also {
+                            index++
+                        }
+                    }
+
+                    else -> "- $tagContent"
+                }
+                builder.appendText(content)
+                builder.appendNewline()
+            }
+        }
+    }
+
+
+    private fun singleTagParser(content: String, wantedTagName: String, searchIndex: Int, builder: PartBuilder, onTag: (String, String) -> Unit): SearchIndex {
+        return content.findTag(
+            fromIndex = searchIndex,
+            onInvalidTag = { builder.appendText(content[it].toString()) },
+            onTag = { tagOpen, tagClose ->
+                val wholeTag = content.substring(tagOpen, tagClose + 1)
+                val tagName = wholeTag.substring(1, wholeTag.indexOfFirst { it == '>' || it == ' ' })
+
+                if (tagName == wantedTagName) {
+                    val exitTag = "</$tagName>"
+                    val exitIndex = content.indexOf(exitTag, startIndex = tagClose)
+                    val exitTagCloseIndex = exitIndex + exitTag.length
+                    if (exitIndex == END_SEARCH) {
+                        builder.appendText(content[searchIndex].toString())
+                        searchIndex.next()
+                    } else {
+                        val tagContent = content.substring(tagClose + 1, exitIndex)
+                        onTag(wholeTag, tagContent)
+                        exitTagCloseIndex
+                    }
+                } else {
+                    END_SEARCH
+                }
+            }
+        )
+    }
+
     fun test(startingFrom: Int, intput: String): Int {
-        return intput.indexOf('<', startingFrom)
+        return intput.indexOf(TAG_OPEN, startingFrom)
     }
 
 }

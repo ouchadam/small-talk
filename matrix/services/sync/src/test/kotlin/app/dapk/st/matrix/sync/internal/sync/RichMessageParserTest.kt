@@ -74,6 +74,27 @@ class RichMessageParserTest {
         expected = RichText(setOf(Normal("Hello world!\nnext line\nanother line")))
     )
 
+
+    @Test
+    fun `parses lists`() = runParserTest(
+        Case(
+            input = "<ul><li>content in list item</li><li>another item in list</li></ul>",
+            expected = RichText(setOf(Normal("- content in list item\n- another item in list")))
+        ),
+        Case(
+            input = "<ol><li>content in list item</li><li>another item in list</li></ol>",
+            expected = RichText(setOf(Normal("1. content in list item\n2. another item in list")))
+        ),
+        Case(
+            input = """<ol><li value="5">content in list item</li><li>another item in list</li></ol>""",
+            expected = RichText(setOf(Normal("5. content in list item\n6. another item in list")))
+        ),
+        Case(
+            input = """<ol><li value="3">content in list item</li><li>another item in list</li><li value="10">another change</li><li>without value</li></ol>""",
+            expected = RichText(setOf(Normal("3. content in list item\n4. another item in list\n10. another change\n11. without value")))
+        ),
+    )
+
     @Test
     fun `parses urls`() = runParserTest(
         Case(
