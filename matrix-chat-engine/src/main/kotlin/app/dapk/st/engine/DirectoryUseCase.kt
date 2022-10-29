@@ -1,9 +1,6 @@
 package app.dapk.st.engine
 
-import app.dapk.st.matrix.common.CredentialsStore
-import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.common.RoomMember
-import app.dapk.st.matrix.common.UserId
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomStore
@@ -68,7 +65,7 @@ internal class DirectoryUseCase(
             this.copy(
                 lastMessage = RoomOverview.LastMessage(
                     content = when (val message = latestEcho.message) {
-                        is MessageService.Message.TextMessage -> message.content.body.parts.joinToString("")
+                        is MessageService.Message.TextMessage -> message.content.body.asString()
                         is MessageService.Message.ImageMessage -> "\uD83D\uDCF7"
                     },
                     utcTimestamp = latestEcho.timestampUtc,
