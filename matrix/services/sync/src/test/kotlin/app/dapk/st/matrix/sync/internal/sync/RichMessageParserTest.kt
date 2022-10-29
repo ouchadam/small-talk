@@ -25,6 +25,12 @@ class RichMessageParserTest {
     )
 
     @Test
+    fun `parses nesting within p tags`() = runParserTest(
+        input = "<p><b>Hello world!</b></p>",
+        expected = RichText(setOf(Bold("Hello world!")))
+    )
+
+    @Test
     fun `replaces quote entity`() = runParserTest(
         input = "Hello world! &quot;foo bar&quot;",
         expected = RichText(setOf(Normal("Hello world! \"foo bar\"")))

@@ -9,7 +9,7 @@ private const val LI_VALUE_CAPTURE = "value=\""
 
 internal class HtmlParser {
 
-    fun parseHtmlTags(input: String, searchIndex: Int, builder: PartBuilder): SearchIndex = input.findTag(
+    fun parseHtmlTags(input: String, searchIndex: Int, builder: PartBuilder, nestingLevel: Int = 0): SearchIndex = input.findTag(
         fromIndex = searchIndex,
         onInvalidTag = { builder.appendText(input[it].toString()) },
         onTag = { tagOpen, tagClose ->
@@ -45,7 +45,7 @@ internal class HtmlParser {
                             else -> {
                                 appendTextBeforeTag(searchIndex, tagOpen, builder, input)
                                 val tagContent = input.substring(tagClose + 1, exitIndex)
-                                handleTagWithContent(input, tagName, wholeTag, builder, tagContent, exitTagCloseIndex)
+                                handleTagWithContent(input, tagName, wholeTag, builder, tagContent, exitTagCloseIndex, nestingLevel)
                             }
                         }
                     }
@@ -61,6 +61,7 @@ internal class HtmlParser {
         builder: PartBuilder,
         tagContent: String,
         exitTagCloseIndex: Int,
+        nestingLevel: Int,
     ) = when (tagName) {
         "a" -> {
             val findHrefUrl = wholeTag.substringAfter("href=").replace("\"", "").removeSuffix(">")
@@ -80,7 +81,18 @@ internal class HtmlParser {
         }
 
         "p" -> {
-            builder.appendText(tagContent)
+            if (tagContent.isNotEmpty() && nestingLevel < 2) {
+                var lastIndex = 0
+                iterateIndex(start = 0) { searchIndex ->
+                    lastIndex = searchIndex
+                    parseHtmlTags(tagContent, searchIndex, builder, nestingLevel = nestingLevel + 1)
+                }
+
+                if (lastIndex < tagContent.length) {
+                    builder.appendText(tagContent.substring(lastIndex))
+                }
+            }
+
             builder.appendNewline()
             exitTagCloseIndex
         }
@@ -135,10 +147,9 @@ internal class HtmlParser {
     }
 
     private fun parseList(parentTag: String, parentContent: String, builder: PartBuilder) {
-        var nextIndex = 0
         var index = 1
-        while (nextIndex != END_SEARCH) {
-            nextIndex = singleTagParser(parentContent, "li", nextIndex, builder) { wholeTag, tagContent ->
+        iterateIndex(start = 0) { nextIndex ->
+            singleTagParser(parentContent, "li", nextIndex, builder) { wholeTag, tagContent ->
                 val content = when (parentTag) {
                     "ol" -> {
                         index = wholeTag.indexOf(LI_VALUE_CAPTURE).let {
@@ -162,7 +173,6 @@ internal class HtmlParser {
             }
         }
     }
-
 
     private fun singleTagParser(content: String, wantedTagName: String, searchIndex: Int, builder: PartBuilder, onTag: (String, String) -> Unit): SearchIndex {
         return content.findTag(
@@ -193,6 +203,14 @@ internal class HtmlParser {
 
     fun test(startingFrom: Int, intput: String): Int {
         return intput.indexOf(TAG_OPEN, startingFrom)
+    }
+
+    private fun iterateIndex(start: SearchIndex, action: (SearchIndex) -> SearchIndex): SearchIndex {
+        var nextIndex = start
+        while (nextIndex != END_SEARCH) {
+            nextIndex = action(nextIndex)
+        }
+        return nextIndex
     }
 
 }
