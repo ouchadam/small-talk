@@ -50,7 +50,7 @@ class RichMessageParserTest {
 
     @Test
     fun `replaces matrixdotto with person`() = runParserTest(
-        input = """Hello <a href="https://matrix.to/#/@a-name:foo.bar>a-name</a>: world""",
+        input = """Hello <a href="https://matrix.to/#/@a-name:foo.bar">a-name</a>: world""",
         expected = RichText(setOf(Normal("Hello "), Person(aUserId("@a-name:foo.bar"), "@a-name"), Normal(" world")))
     )
 

@@ -5,16 +5,19 @@ import app.dapk.st.matrix.common.UserId
 private const val TAG_OPEN = '<'
 private const val TAG_CLOSE = '>'
 private const val NO_RESULT_FOUND = -1
-private const val LI_VALUE_CAPTURE = "value=\""
+private val SKIPPED_TAGS = setOf("mx-reply")
 
 internal class HtmlParser {
+
+    fun test(startingFrom: Int, input: String): Int {
+        return input.indexOf(TAG_OPEN, startingFrom)
+    }
 
     fun parseHtmlTags(input: String, searchIndex: Int, builder: PartBuilder, nestingLevel: Int = 0): SearchIndex = input.findTag(
         fromIndex = searchIndex,
         onInvalidTag = { builder.appendText(input[it].toString()) },
         onTag = { tagOpen, tagClose ->
-            val wholeTag = input.substring(tagOpen, tagClose + 1)
-            val tagName = wholeTag.substring(1, wholeTag.indexOfFirst { it == '>' || it == ' ' })
+            val (wholeTag, tagName) = parseTag(input, tagOpen, tagClose)
 
             when {
                 tagName.startsWith('@') -> {
@@ -29,30 +32,39 @@ internal class HtmlParser {
                     tagClose.next()
                 }
 
-                else -> {
-                    val exitTag = "</$tagName>"
-                    val exitIndex = input.indexOf(exitTag, startIndex = tagClose)
-                    val exitTagCloseIndex = exitIndex + exitTag.length
-                    if (exitIndex == END_SEARCH) {
-                        builder.appendText(input[searchIndex].toString())
-                        searchIndex.next()
-                    } else {
-                        when (tagName) {
-                            "mx-reply" -> {
-                                exitTagCloseIndex
-                            }
-
-                            else -> {
-                                appendTextBeforeTag(searchIndex, tagOpen, builder, input)
-                                val tagContent = input.substring(tagClose + 1, exitIndex)
-                                handleTagWithContent(input, tagName, wholeTag, builder, tagContent, exitTagCloseIndex, nestingLevel)
-                            }
-                        }
-                    }
-                }
+                else -> parseTagWithContent(tagName, input, tagClose, builder, searchIndex, tagOpen, wholeTag, nestingLevel)
             }
         }
     )
+
+    private fun parseTagWithContent(
+        tagName: String,
+        input: String,
+        tagClose: Int,
+        builder: PartBuilder,
+        searchIndex: Int,
+        tagOpen: Int,
+        wholeTag: String,
+        nestingLevel: Int
+    ): Int {
+        val exitTag = "</$tagName>"
+        val exitIndex = input.indexOf(exitTag, startIndex = tagClose)
+        val exitTagCloseIndex = exitIndex + exitTag.length
+        return when {
+            exitIndex == NO_RESULT_FOUND -> {
+                builder.appendText(input[searchIndex].toString())
+                searchIndex.next()
+            }
+
+            SKIPPED_TAGS.contains(tagName) -> exitTagCloseIndex
+
+            else -> {
+                appendTextBeforeTag(searchIndex, tagOpen, builder, input)
+                val tagContent = input.substring(tagClose + 1, exitIndex)
+                handleTagWithContent(input, tagName, wholeTag, builder, tagContent, exitTagCloseIndex, nestingLevel)
+            }
+        }
+    }
 
     private fun handleTagWithContent(
         input: String,
@@ -64,14 +76,23 @@ internal class HtmlParser {
         nestingLevel: Int,
     ) = when (tagName) {
         "a" -> {
-            val findHrefUrl = wholeTag.substringAfter("href=").replace("\"", "").removeSuffix(">")
-            if (findHrefUrl.startsWith("https://matrix.to/#/@")) {
-                val userId = UserId(findHrefUrl.substringAfter("https://matrix.to/#/").substringBeforeLast("\""))
-                builder.appendPerson(userId, "@${tagContent.removePrefix("@")}")
-                ignoreMatrixColonMentionSuffix(input, exitTagCloseIndex)
-            } else {
-                builder.appendLink(findHrefUrl, label = tagContent)
-                exitTagCloseIndex
+            val findHrefUrl = wholeTag.findTagAttribute("href")
+            when {
+                findHrefUrl == null -> {
+                    builder.appendText(tagContent)
+                    exitTagCloseIndex
+                }
+
+                findHrefUrl.startsWith("https://matrix.to/#/@") -> {
+                    val userId = UserId(findHrefUrl.substringAfter("https://matrix.to/#/").substringBeforeLast("\""))
+                    builder.appendPerson(userId, "@${tagContent.removePrefix("@")}")
+                    ignoreMatrixColonMentionSuffix(input, exitTagCloseIndex)
+                }
+
+                else -> {
+                    builder.appendLink(findHrefUrl, label = tagContent)
+                    exitTagCloseIndex
+                }
             }
         }
 
@@ -83,7 +104,7 @@ internal class HtmlParser {
         "p" -> {
             if (tagContent.isNotEmpty() && nestingLevel < 2) {
                 var lastIndex = 0
-                iterateIndex(start = 0) { searchIndex ->
+                iterateSearchIndex { searchIndex ->
                     lastIndex = searchIndex
                     parseHtmlTags(tagContent, searchIndex, builder, nestingLevel = nestingLevel + 1)
                 }
@@ -147,23 +168,13 @@ internal class HtmlParser {
     }
 
     private fun parseList(parentTag: String, parentContent: String, builder: PartBuilder) {
-        var index = 1
-        iterateIndex(start = 0) { nextIndex ->
+        var listIndex = 1
+        iterateSearchIndex { nextIndex ->
             singleTagParser(parentContent, "li", nextIndex, builder) { wholeTag, tagContent ->
                 val content = when (parentTag) {
                     "ol" -> {
-                        index = wholeTag.indexOf(LI_VALUE_CAPTURE).let {
-                            if (it == -1) {
-                                index
-                            } else {
-                                val start = it + LI_VALUE_CAPTURE.length
-                                wholeTag.substring(start).substringBefore('\"').toInt()
-                            }
-                        }
-
-                        "$index. $tagContent".also {
-                            index++
-                        }
+                        listIndex = wholeTag.findTagAttribute("value")?.toInt() ?: listIndex
+                        "$listIndex. $tagContent".also { listIndex++ }
                     }
 
                     else -> "- $tagContent"
@@ -179,8 +190,7 @@ internal class HtmlParser {
             fromIndex = searchIndex,
             onInvalidTag = { builder.appendText(content[it].toString()) },
             onTag = { tagOpen, tagClose ->
-                val wholeTag = content.substring(tagOpen, tagClose + 1)
-                val tagName = wholeTag.substring(1, wholeTag.indexOfFirst { it == '>' || it == ' ' })
+                val (wholeTag, tagName) = parseTag(content, tagOpen, tagClose)
 
                 if (tagName == wantedTagName) {
                     val exitTag = "</$tagName>"
@@ -201,16 +211,21 @@ internal class HtmlParser {
         )
     }
 
-    fun test(startingFrom: Int, intput: String): Int {
-        return intput.indexOf(TAG_OPEN, startingFrom)
+    private fun parseTag(input: String, tagOpen: Int, tagClose: Int): Pair<String, String> {
+        val wholeTag = input.substring(tagOpen, tagClose + 1)
+        val tagName = wholeTag.substring(1, wholeTag.indexOfFirst { it == '>' || it == ' ' })
+        return wholeTag to tagName
     }
+}
 
-    private fun iterateIndex(start: SearchIndex, action: (SearchIndex) -> SearchIndex): SearchIndex {
-        var nextIndex = start
-        while (nextIndex != END_SEARCH) {
-            nextIndex = action(nextIndex)
+private fun String.findTagAttribute(name: String): String? {
+    val attribute = "$name="
+    return this.indexOf(attribute).let {
+        if (it == NO_RESULT_FOUND) {
+            null
+        } else {
+            val start = it + attribute.length
+            this.substring(start).substringAfter('\"').substringBefore('\"')
         }
-        return nextIndex
     }
-
 }

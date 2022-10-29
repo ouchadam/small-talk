@@ -14,9 +14,11 @@ class RichMessageParser {
         val input = source
             .removeHtmlEntities()
             .dropTextFallback()
-        val builder = PartBuilder()
-        var nextIndex = 0
-        while (nextIndex != END_SEARCH) {
+        return RichText(collectRichText(input).build())
+    }
+
+    private fun collectRichText(input: String) = PartBuilder().also { builder ->
+        iterateSearchIndex { nextIndex ->
             val htmlStart = htmlParser.test(nextIndex, input)
             val urlStart = urlParser.test(nextIndex, input)
 
@@ -37,9 +39,8 @@ class RichMessageParser {
             if (hasReachedEnd && hasUnprocessedText(firstResult, secondResult, input)) {
                 builder.appendText(input.substring(nextIndex))
             }
-            nextIndex = if (hasReachedEnd) END_SEARCH else max(firstResult, secondResult)
+            if (hasReachedEnd) END_SEARCH else max(firstResult, secondResult)
         }
-        return RichText(builder.build())
     }
 
     private fun hasUnprocessedText(htmlResult: Int, urlResult: Int, input: String) = htmlResult < input.length && urlResult < input.length
@@ -60,3 +61,11 @@ private fun String.removeHtmlEntities() = this.replace("&quot;", "\"").replace("
 private fun String.dropTextFallback() = this.lines()
     .dropWhile { it.startsWith("> ") || it.isEmpty() }
     .joinToString(separator = "\n")
+
+internal fun iterateSearchIndex(action: (SearchIndex) -> SearchIndex): SearchIndex {
+    var nextIndex = 0
+    while (nextIndex != END_SEARCH) {
+        nextIndex = action(nextIndex)
+    }
+    return nextIndex
+}
