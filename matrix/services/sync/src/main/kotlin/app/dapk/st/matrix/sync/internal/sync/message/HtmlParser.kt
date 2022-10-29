@@ -9,9 +9,7 @@ private val SKIPPED_TAGS = setOf("mx-reply")
 
 internal class HtmlParser {
 
-    fun test(startingFrom: Int, input: String): Int {
-        return input.indexOf(TAG_OPEN, startingFrom)
-    }
+    fun test(startingFrom: Int, input: String) = input.indexOf(TAG_OPEN, startingFrom)
 
     fun parseHtmlTags(input: String, searchIndex: Int, builder: PartBuilder, nestingLevel: Int = 0): SearchIndex = input.findTag(
         fromIndex = searchIndex,
@@ -32,19 +30,19 @@ internal class HtmlParser {
                     tagClose.next()
                 }
 
-                else -> parseTagWithContent(tagName, input, tagClose, builder, searchIndex, tagOpen, wholeTag, nestingLevel)
+                else -> parseTagWithContent(input, tagName, tagClose, searchIndex, tagOpen, wholeTag, builder, nestingLevel)
             }
         }
     )
 
     private fun parseTagWithContent(
-        tagName: String,
         input: String,
+        tagName: String,
         tagClose: Int,
-        builder: PartBuilder,
         searchIndex: Int,
         tagOpen: Int,
         wholeTag: String,
+        builder: PartBuilder,
         nestingLevel: Int
     ): Int {
         val exitTag = "</$tagName>"
@@ -124,7 +122,7 @@ internal class HtmlParser {
         }
 
         "h1", "h2", "h3", "h4", "h5" -> {
-            builder.appendBold(tagContent)
+            builder.appendBold(tagContent.trim())
             builder.appendNewline()
             exitTagCloseIndex
         }

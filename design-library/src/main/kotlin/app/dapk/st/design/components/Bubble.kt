@@ -30,7 +30,7 @@ import app.dapk.st.core.RichText
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 
-private val ENCRYPTED_MESSAGE = RichText(setOf(RichText.Part.Normal("Encrypted message")))
+private val ENCRYPTED_MESSAGE = RichText(listOf(RichText.Part.Normal("Encrypted message")))
 
 sealed interface BubbleModel {
     val event: Event

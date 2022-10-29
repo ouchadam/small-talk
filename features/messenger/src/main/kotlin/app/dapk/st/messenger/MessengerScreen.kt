@@ -238,7 +238,7 @@ private fun RichText.toApp(): app.dapk.st.core.RichText {
             is RichText.Part.Normal -> app.dapk.st.core.RichText.Part.Normal(it.content)
             is RichText.Part.Person -> app.dapk.st.core.RichText.Part.Person(it.userId.value)
         }
-    }.toSet())
+    })
 }
 
 @Composable

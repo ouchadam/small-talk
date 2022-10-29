@@ -7,9 +7,11 @@ internal class PartBuilder {
 
     private var normalBuffer = StringBuilder()
 
-    private val parts = mutableSetOf<RichText.Part>()
+    private val parts = mutableListOf<RichText.Part>()
 
     fun appendText(value: String) {
+        println("append text")
+
         normalBuffer.append(value.cleanFirstTextLine())
     }
 
@@ -35,11 +37,11 @@ internal class PartBuilder {
         parts.add(RichText.Part.Link(url, label ?: url))
     }
 
-    fun build(): Set<RichText.Part> {
+    fun build(): List<RichText.Part> {
         flushNormalBuffer()
         val last = parts.last()
         if (last is RichText.Part.Normal) {
-            parts.remove(last)
+            parts.removeLast()
             val newContent = last.content.trimEnd()
             if (newContent.isNotEmpty()) {
                 parts.add(last.copy(content = newContent))

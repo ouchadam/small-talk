@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RichText(@SerialName("parts") val parts: Set<Part>) {
+data class RichText(@SerialName("parts") val parts: List<Part>) {
     @Serializable
     sealed interface Part {
         @Serializable
@@ -27,7 +27,7 @@ data class RichText(@SerialName("parts") val parts: Set<Part>) {
     }
 
     companion object {
-        fun of(text: String) = RichText(setOf(RichText.Part.Normal(text)))
+        fun of(text: String) = RichText(listOf(RichText.Part.Normal(text)))
     }
 }
 

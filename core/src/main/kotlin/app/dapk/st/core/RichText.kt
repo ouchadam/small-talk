@@ -1,6 +1,6 @@
 package app.dapk.st.core
 
-data class RichText(val parts: Set<Part>) {
+data class RichText(val parts: List<Part>) {
     sealed interface Part {
         data class Normal(val content: String) : Part
         data class Link(val url: String, val label: String) : Part

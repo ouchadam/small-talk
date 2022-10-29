@@ -15,69 +15,73 @@ class RichMessageParserTest {
     @Test
     fun `parses plain text`() = runParserTest(
         input = "Hello world!",
-        expected = RichText(setOf(Normal("Hello world!")))
+        expected = RichText(listOf(Normal("Hello world!")))
     )
 
     @Test
     fun `parses p tags`() = runParserTest(
         input = "<p>Hello world!</p><p>foo bar</p>after paragraph",
-        expected = RichText(setOf(Normal("Hello world!\nfoo bar\nafter paragraph")))
+        expected = RichText(listOf(Normal("Hello world!\nfoo bar\nafter paragraph")))
     )
 
     @Test
     fun `parses nesting within p tags`() = runParserTest(
         input = "<p><b>Hello world!</b></p>",
-        expected = RichText(setOf(Bold("Hello world!")))
+        expected = RichText(listOf(Bold("Hello world!")))
     )
 
     @Test
     fun `replaces quote entity`() = runParserTest(
         input = "Hello world! &quot;foo bar&quot;",
-        expected = RichText(setOf(Normal("Hello world! \"foo bar\"")))
+        expected = RichText(listOf(Normal("Hello world! \"foo bar\"")))
     )
 
     @Test
     fun `replaces apostrophe entity`() = runParserTest(
         input = "Hello world! foo&#39;s bar",
-        expected = RichText(setOf(Normal("Hello world! foo's bar")))
+        expected = RichText(listOf(Normal("Hello world! foo's bar")))
     )
 
     @Test
     fun `replaces people`() = runParserTest(
         input = "Hello <@my-name:a-domain.foo>!",
-        expected = RichText(setOf(Normal("Hello "), Person(aUserId("@my-name:a-domain.foo"), "@my-name:a-domain.foo"), Normal("!")))
+        expected = RichText(listOf(Normal("Hello "), Person(aUserId("@my-name:a-domain.foo"), "@my-name:a-domain.foo"), Normal("!")))
     )
 
     @Test
     fun `replaces matrixdotto with person`() = runParserTest(
         input = """Hello <a href="https://matrix.to/#/@a-name:foo.bar">a-name</a>: world""",
-        expected = RichText(setOf(Normal("Hello "), Person(aUserId("@a-name:foo.bar"), "@a-name"), Normal(" world")))
+        expected = RichText(listOf(Normal("Hello "), Person(aUserId("@a-name:foo.bar"), "@a-name"), Normal(" world")))
     )
 
     @Test
     fun `parses header tags`() = runParserTest(
         Case(
             input = "<h1>hello</h1>",
-            expected = RichText(setOf(Bold("hello")))
+            expected = RichText(listOf(Bold("hello")))
         ),
         Case(
             input = "<h1>hello</h1>text after title",
-            expected = RichText(setOf(Bold("hello"), Normal("\ntext after title")))
+            expected = RichText(listOf(Bold("hello"), Normal("\ntext after title")))
         ),
         Case(
             input = "<h2>hello</h2>",
-            expected = RichText(setOf(Bold("hello")))
+            expected = RichText(listOf(Bold("hello")))
         ),
         Case(
             input = "<h3>hello</h3>",
-            expected = RichText(setOf(Bold("hello")))
+            expected = RichText(listOf(Bold("hello")))
+        ),
+        Case(
+            input = "<h1>1</h1>\n<h2>1</h2>\n<h3>1</h3>\n",
+            expected = RichText(listOf(Bold("1"), Normal("\n\n"), Bold("1"), Normal("\n\n"), Bold("1")))
         ),
     )
 
     @Test
     fun `replaces br tags`() = runParserTest(
         input = "Hello world!<br />next line<br />another line",
-        expected = RichText(setOf(Normal("Hello world!\nnext line\nanother line")))
+        expected = RichText(listOf(Normal("Hello world!\nnext line\nanother line")))
     )
 
 
@@ -85,19 +89,19 @@ class RichMessageParserTest {
     fun `parses lists`() = runParserTest(
         Case(
             input = "<ul><li>content in list item</li><li>another item in list</li></ul>",
-            expected = RichText(setOf(Normal("- content in list item\n- another item in list")))
+            expected = RichText(listOf(Normal("- content in list item\n- another item in list")))
         ),
         Case(
             input = "<ol><li>content in list item</li><li>another item in list</li></ol>",
-            expected = RichText(setOf(Normal("1. content in list item\n2. another item in list")))
+            expected = RichText(listOf(Normal("1. content in list item\n2. another item in list")))
         ),
         Case(
             input = """<ol><li value="5">content in list item</li><li>another item in list</li></ol>""",
-            expected = RichText(setOf(Normal("5. content in list item\n6. another item in list")))
+            expected = RichText(listOf(Normal("5. content in list item\n6. another item in list")))
         ),
         Case(
             input = """<ol><li value="3">content in list item</li><li>another item in list</li><li value="10">another change</li><li>without value</li></ol>""",
-            expected = RichText(setOf(Normal("3. content in list item\n4. another item in list\n10. another change\n11. without value")))
+            expected = RichText(listOf(Normal("3. content in list item\n4. another item in list\n10. another change\n11. without value")))
         ),
     )
 
@@ -105,19 +109,19 @@ class RichMessageParserTest {
     fun `parses urls`() = runParserTest(
         Case(
             input = "https://google.com",
-            expected = RichText(setOf(Link("https://google.com", "https://google.com")))
+            expected = RichText(listOf(Link("https://google.com", "https://google.com")))
         ),
         Case(
             input = "https://google.com. after link",
-            expected = RichText(setOf(Link("https://google.com", "https://google.com"), Normal(". after link")))
+            expected = RichText(listOf(Link("https://google.com", "https://google.com"), Normal(". after link")))
         ),
         Case(
             input = "ending sentence with url https://google.com.",
-            expected = RichText(setOf(Normal("ending sentence with url "), Link("https://google.com", "https://google.com"), Normal(".")))
+            expected = RichText(listOf(Normal("ending sentence with url "), Link("https://google.com", "https://google.com"), Normal(".")))
         ),
         Case(
             input = "https://google.com<br>html after url",
-            expected = RichText(setOf(Link("https://google.com", "https://google.com"), Normal("\nhtml after url")))
+            expected = RichText(listOf(Link("https://google.com", "https://google.com"), Normal("\nhtml after url")))
         ),
     )
 
@@ -131,7 +135,7 @@ class RichMessageParserTest {
             </mx-reply>
             Reply to message
         """.trimIndent(),
-        expected = RichText(setOf(Normal("Reply to message")))
+        expected = RichText(listOf(Normal("Reply to message")))
     )
 
     @Test
@@ -142,19 +146,19 @@ class RichMessageParserTest {
             
             Reply to message
         """.trimIndent(),
-        expected = RichText(setOf(Normal("Reply to message")))
+        expected = RichText(listOf(Normal("Reply to message")))
     )
 
     @Test
     fun `parses styling text`() = runParserTest(
         input = "<em>hello</em> <strong>world</strong>",
-        expected = RichText(setOf(Italic("hello"), Normal(" "), Bold("world")))
+        expected = RichText(listOf(Italic("hello"), Normal(" "), Bold("world")))
     )
 
     @Test
     fun `parses invalid tags text`() = runParserTest(
         input = ">><foo> ><>> << more content",
-        expected = RichText(setOf(Normal(">><foo> ><>> << more content")))
+        expected = RichText(listOf(Normal(">><foo> ><>> << more content")))
     )
 
     @Test
@@ -162,7 +166,7 @@ class RichMessageParserTest {
         Case(
             input = """hello <strong>wor</strong>ld""",
             expected = RichText(
-                setOf(
+                listOf(
                     Normal("hello "),
                     Bold("wor"),
                     Normal("ld"),
@@ -176,7 +180,7 @@ class RichMessageParserTest {
         Case(
             input = """hello <em>wor</em>ld""",
             expected = RichText(
-                setOf(
+                listOf(
                     Normal("hello "),
                     Italic("wor"),
                     Normal("ld"),
@@ -191,7 +195,7 @@ class RichMessageParserTest {
         Case(
             input = """hello <b><i>wor<i/><b/>ld""",
             expected = RichText(
-                setOf(
+                listOf(
                     Normal("hello "),
                     BoldItalic("wor"),
                     Normal("ld"),
@@ -201,7 +205,7 @@ class RichMessageParserTest {
         Case(
             input = """<a href="www.google.com"><a href="www.google.com">www.google.com<a/><a/>""",
             expected = RichText(
-                setOf(
+                listOf(
                     Link(url = "www.google.com", label = "www.google.com"),
                     Link(url = "www.bing.com", label = "www.bing.com"),
                 )
@@ -214,7 +218,7 @@ class RichMessageParserTest {
         Case(
             input = """hello world <a href="www.google.com">a link!</a> more content.""",
             expected = RichText(
-                setOf(
+                listOf(
                     Normal("hello world "),
                     Link(url = "www.google.com", label = "a link!"),
                     Normal(" more content."),
@@ -224,7 +228,7 @@ class RichMessageParserTest {
         Case(
             input = """<a href="www.google.com">www.google.com</a><a href="www.bing.com">www.bing.com</a>""",
             expected = RichText(
-                setOf(
+                listOf(
                     Link(url = "www.google.com", label = "www.google.com"),
                     Link(url = "www.bing.com", label = "www.bing.com"),
                 )
