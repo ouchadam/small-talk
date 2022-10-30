@@ -467,6 +467,7 @@ private fun TextComposer(
                                 modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
                                 imageVector = Icons.Filled.Image,
                                 contentDescription = "",
+                                tint = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f),
                             )
                         }
                     }
