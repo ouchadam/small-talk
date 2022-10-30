@@ -60,7 +60,6 @@ internal class SendMessageUseCase(
 
     private suspend fun imageMessageRequest(message: Message.ImageMessage): HttpRequest<ApiSendResponse> {
         val imageMeta = message.content.meta
-
         return when (message.sendEncrypted) {
             true -> {
                 val result = mediaEncrypter.encrypt(imageContentReader.inputStream(message.content.uri))

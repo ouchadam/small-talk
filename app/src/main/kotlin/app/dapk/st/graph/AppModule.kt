@@ -6,6 +6,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
@@ -295,9 +296,14 @@ internal class AndroidImageContentReader(private val contentResolver: ContentRes
             cursor.getLong(columnIndex)
         } ?: throw IllegalArgumentException("Could not process $uri")
 
+        val shouldSwapSizes = ExifInterface(contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")).let {
+            val orientation = it.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
+            orientation == ExifInterface.ORIENTATION_ROTATE_90 || orientation == ExifInterface.ORIENTATION_ROTATE_270
+        }
+
         return ImageContentReader.ImageContent(
-            height = options.outHeight,
-            width = options.outWidth,
+            height = if (shouldSwapSizes) options.outWidth else options.outHeight,
+            width = if (shouldSwapSizes) options.outHeight else options.outWidth,
             size = fileSize,
             mimeType = options.outMimeType,
             fileName = androidUri.lastPathSegment ?: "file",
