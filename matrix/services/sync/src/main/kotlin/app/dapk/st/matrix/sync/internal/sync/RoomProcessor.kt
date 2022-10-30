@@ -1,9 +1,6 @@
 package app.dapk.st.matrix.sync.internal.sync
 
-import app.dapk.st.matrix.common.AvatarUrl
-import app.dapk.st.matrix.common.RoomMember
-import app.dapk.st.matrix.common.UserCredentials
-import app.dapk.st.matrix.common.convertMxUrToUrl
+import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.internal.request.ApiSyncRoom
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
@@ -79,7 +76,7 @@ internal fun List<RoomEvent>.findLastMessage(): LastMessage? {
 
 private fun RoomEvent.toTextContent(): String = when (this) {
     is RoomEvent.Image -> "\uD83D\uDCF7"
-    is RoomEvent.Message -> this.content
+    is RoomEvent.Message -> this.content.asString()
     is RoomEvent.Reply -> this.message.toTextContent()
     is RoomEvent.Encrypted -> "Encrypted message"
 }

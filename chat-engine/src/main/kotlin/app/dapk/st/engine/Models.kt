@@ -125,7 +125,7 @@ sealed class RoomEvent {
     data class Message(
         override val eventId: EventId,
         override val utcTimestamp: Long,
-        val content: String,
+        val content: RichText,
         override val author: RoomMember,
         override val meta: MessageMeta,
         override val edited: Boolean = false,

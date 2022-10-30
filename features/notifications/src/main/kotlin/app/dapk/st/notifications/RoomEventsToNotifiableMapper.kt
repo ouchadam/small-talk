@@ -2,6 +2,7 @@ package app.dapk.st.notifications
 
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomMember
+import app.dapk.st.matrix.common.asString
 
 class RoomEventsToNotifiableMapper {
 
@@ -11,7 +12,7 @@ class RoomEventsToNotifiableMapper {
 
     private fun RoomEvent.toNotifiableContent(): String = when (this) {
         is RoomEvent.Image -> "\uD83D\uDCF7"
-        is RoomEvent.Message -> this.content
+        is RoomEvent.Message -> this.content.asString()
         is RoomEvent.Reply -> this.message.toNotifiableContent()
         is RoomEvent.Encrypted -> "Encrypted message"
     }

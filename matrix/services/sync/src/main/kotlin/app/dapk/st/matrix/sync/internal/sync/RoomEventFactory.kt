@@ -6,21 +6,23 @@ import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomMembersService
 import app.dapk.st.matrix.sync.find
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 
 private val UNKNOWN_AUTHOR = RoomMember(id = UserId("unknown"), displayName = null, avatarUrl = null)
 
 internal class RoomEventFactory(
-    private val roomMembersService: RoomMembersService
+    private val roomMembersService: RoomMembersService,
+    private val richMessageParser: RichMessageParser,
 ) {
 
     suspend fun ApiTimelineEvent.TimelineMessage.toTextMessage(
         roomId: RoomId,
-        content: String = this.asTextContent().formattedBody?.stripTags() ?: this.asTextContent().body ?: "redacted",
+        content: String,
         edited: Boolean = false,
         utcTimestamp: Long = this.utcTimestamp,
     ) = RoomEvent.Message(
         eventId = this.id,
-        content = content,
+        content = richMessageParser.parse(content),
         author = roomMembersService.find(roomId, this.senderId) ?: UNKNOWN_AUTHOR,
         utcTimestamp = utcTimestamp,
         meta = MessageMeta.FromServer,
@@ -52,37 +54,3 @@ internal class RoomEventFactory(
         )
     }
 }
-
-
-private fun String.indexOfOrNull(string: String) = this.indexOf(string).takeIf { it != -1 }
-
-fun String.stripTags() = this
-    .run {
-        this.indexOfOrNull("</mx-reply>")?.let {
-            this.substring(it + "</mx-reply>".length)
-        } ?: this
-    }
-    .trim()
-    .replaceLinks()
-    .removeTag("p")
-    .removeTag("em")
-    .removeTag("strong")
-    .removeTag("code")
-    .removeTag("pre")
-    .replace("&quot;", "\"")
-    .replace("&#39;", "'")
-    .replace("<br />", "\n")
-    .replace("<br/>", "\n")
-
-private fun String.removeTag(name: String) = this.replace("<$name>", "").replace("/$name>", "")
-
-private fun String.replaceLinks(): String {
-    return this.indexOfOrNull("<a href=")?.let { start ->
-        val openTagClose = indexOfOrNull("\">")!!
-        val end = indexOfOrNull("</a>")!!
-        val content = this.substring(openTagClose + "\">".length, end)
-        this.replaceRange(start, end + "</a>".length, content)
-    } ?: this
-}
-
-private fun ApiTimelineEvent.TimelineMessage.asTextContent() = this.content as ApiTimelineEvent.TimelineMessage.Content.Text

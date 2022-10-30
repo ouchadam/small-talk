@@ -42,6 +42,7 @@ import app.dapk.st.engine.MessageMeta
 import app.dapk.st.engine.MessengerState
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.engine.RoomState
+import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
@@ -210,7 +211,7 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, messageActio
 private fun RoomEvent.toModel(): BubbleModel {
     val event = BubbleModel.Event(this.author.id.value, this.author.displayName ?: this.author.id.value, this.edited, this.time)
     return when (this) {
-        is RoomEvent.Message -> BubbleModel.Text(this.content, event)
+        is RoomEvent.Message -> BubbleModel.Text(this.content.toApp(), event)
         is RoomEvent.Encrypted -> BubbleModel.Encrypted(event)
         is RoomEvent.Image -> {
             val imageRequest = LocalImageRequestFactory.current
@@ -225,6 +226,19 @@ private fun RoomEvent.toModel(): BubbleModel {
             BubbleModel.Reply(this.replyingTo.toModel(), this.message.toModel())
         }
     }
+}
+
+private fun RichText.toApp(): app.dapk.st.core.RichText {
+    return app.dapk.st.core.RichText(this.parts.map {
+        when (it) {
+            is RichText.Part.Bold -> app.dapk.st.core.RichText.Part.Bold(it.content)
+            is RichText.Part.BoldItalic -> app.dapk.st.core.RichText.Part.BoldItalic(it.content)
+            is RichText.Part.Italic -> app.dapk.st.core.RichText.Part.Italic(it.content)
+            is RichText.Part.Link -> app.dapk.st.core.RichText.Part.Link(it.url, it.label)
+            is RichText.Part.Normal -> app.dapk.st.core.RichText.Part.Normal(it.content)
+            is RichText.Part.Person -> app.dapk.st.core.RichText.Part.Person(it.userId.value)
+        }
+    })
 }
 
 @Composable
@@ -320,7 +334,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                             )
 
                             Text(
-                                text = it.content,
+                                text = it.content.toApp().toAnnotatedText(),
                                 color = SmallTalkTheme.extendedColors.onOthersBubble,
                                 fontSize = 14.sp,
                                 maxLines = 2,

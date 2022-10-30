@@ -12,6 +12,7 @@ import app.dapk.st.matrix.sync.RoomMembersService
 import app.dapk.st.matrix.sync.find
 import app.dapk.st.matrix.sync.internal.request.ApiEncryptedContent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 
 private typealias Lookup = suspend (EventId) -> LookupResult
 
@@ -19,6 +20,7 @@ internal class RoomEventCreator(
     private val roomMembersService: RoomMembersService,
     private val errorTracker: ErrorTracker,
     private val roomEventFactory: RoomEventFactory,
+    private val richMessageParser: RichMessageParser,
 ) {
 
     suspend fun ApiTimelineEvent.Encrypted.toRoomEvent(roomId: RoomId): RoomEvent? {
@@ -44,7 +46,7 @@ internal class RoomEventCreator(
     }
 
     suspend fun ApiTimelineEvent.TimelineMessage.toRoomEvent(userCredentials: UserCredentials, roomId: RoomId, lookup: Lookup): RoomEvent? {
-        return TimelineEventMapper(userCredentials, roomId, roomEventFactory).mapToRoomEvent(this, lookup)
+        return TimelineEventMapper(userCredentials, roomId, roomEventFactory, richMessageParser).mapToRoomEvent(this, lookup)
     }
 }
 
@@ -52,6 +54,7 @@ internal class TimelineEventMapper(
     private val userCredentials: UserCredentials,
     private val roomId: RoomId,
     private val roomEventFactory: RoomEventFactory,
+    private val richMessageParser: RichMessageParser,
 ) {
 
     suspend fun mapToRoomEvent(event: ApiTimelineEvent.TimelineMessage, lookup: Lookup): RoomEvent? {
@@ -138,7 +141,7 @@ internal class TimelineEventMapper(
 
                 is ApiTimelineEvent.TimelineMessage.Content.Text -> original.toTextMessage(
                     utcTimestamp = incomingEdit.utcTimestamp,
-                    content = incomingEdit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
+                    content = incomingEdit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted",
                     edited = true,
                 )
 
@@ -148,7 +151,7 @@ internal class TimelineEventMapper(
     }
 
     private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
-        content = edit.asTextContent().body?.removePrefix(" * ")?.trim() ?: "redacted",
+        content = richMessageParser.parse(edit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted"),
         utcTimestamp = edit.utcTimestamp,
         edited = true,
     )
@@ -156,13 +159,17 @@ internal class TimelineEventMapper(
     private suspend fun RoomEventFactory.mapToRoomEvent(source: ApiTimelineEvent.TimelineMessage): RoomEvent {
         return when (source.content) {
             is ApiTimelineEvent.TimelineMessage.Content.Image -> source.toImageMessage(userCredentials, roomId)
-            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(roomId)
+            is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(
+                roomId,
+                content = source.asTextContent().formattedBody ?: source.content.body ?: "redacted"
+            )
+
             ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
         }
     }
 
     private suspend fun ApiTimelineEvent.TimelineMessage.toTextMessage(
-        content: String = this.asTextContent().formattedBody?.stripTags() ?: this.asTextContent().body ?: "redacted",
+        content: String = this.asTextContent().formattedBody ?: this.asTextContent().body ?: "redacted",
         edited: Boolean = false,
         utcTimestamp: Long = this.utcTimestamp,
     ) = with(roomEventFactory) { toTextMessage(roomId, content, edited, utcTimestamp) }

@@ -1,5 +1,6 @@
 package app.dapk.st.engine
 
+import app.dapk.st.matrix.common.RichText
 import fake.FakeRoomStore
 import fixture.NotificationDiffFixtures.aNotificationDiff
 import fixture.aMatrixRoomMessageEvent
@@ -15,8 +16,8 @@ import app.dapk.st.matrix.sync.RoomEvent as MatrixRoomEvent
 import app.dapk.st.matrix.sync.RoomOverview as MatrixRoomOverview
 
 private val NO_UNREADS = emptyMap<MatrixRoomOverview, List<MatrixRoomEvent>>()
-private val A_MESSAGE = aMatrixRoomMessageEvent(eventId = anEventId("1"), content = "hello", utcTimestamp = 1000)
-private val A_MESSAGE_2 = aMatrixRoomMessageEvent(eventId = anEventId("2"), content = "world", utcTimestamp = 2000)
+private val A_MESSAGE = aMatrixRoomMessageEvent(eventId = anEventId("1"), content = RichText.of("hello"), utcTimestamp = 1000)
+private val A_MESSAGE_2 = aMatrixRoomMessageEvent(eventId = anEventId("2"), content = RichText.of("world"), utcTimestamp = 2000)
 private val A_ROOM_OVERVIEW = aMatrixRoomOverview(roomId = aRoomId("1"))
 private val A_ROOM_OVERVIEW_2 = aMatrixRoomOverview(roomId = aRoomId("2"))
 

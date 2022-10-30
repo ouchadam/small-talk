@@ -7,7 +7,7 @@ import app.dapk.st.matrix.sync.RoomEvent
 fun aMatrixRoomMessageEvent(
     eventId: EventId = anEventId(),
     utcTimestamp: Long = 0L,
-    content: String = "message-content",
+    content: RichText = RichText.of("message-content"),
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
     edited: Boolean = false,
