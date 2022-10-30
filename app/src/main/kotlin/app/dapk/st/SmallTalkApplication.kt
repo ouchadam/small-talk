@@ -60,13 +60,12 @@ class SmallTalkApplication : Application(), ModuleProvider {
 
     private fun onApplicationLaunch(notificationsModule: NotificationsModule, storeModule: StoreModule) {
         applicationScope.launch {
+            featureModules.homeModule.betaVersionUpgradeUseCase.waitUnitReady()
+
             storeModule.credentialsStore().credentials()?.let {
                 featureModules.pushModule.pushTokenRegistrar().registerCurrentToken()
             }
             runCatching { storeModule.localEchoStore.preload() }
-        }
-
-        applicationScope.launch {
             val notificationsUseCase = notificationsModule.notificationsUseCase()
             notificationsUseCase.listenForNotificationChanges(this)
         }

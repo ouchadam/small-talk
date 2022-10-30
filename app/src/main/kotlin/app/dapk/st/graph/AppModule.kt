@@ -20,6 +20,7 @@ import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.engine.MatrixEngine
 import app.dapk.st.firebase.messaging.MessagingModule
+import app.dapk.st.home.BetaVersionUpgradeUseCase
 import app.dapk.st.home.HomeModule
 import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
@@ -164,7 +165,16 @@ internal class FeatureModules internal constructor(
             deviceMeta,
         )
     }
-    val homeModule by unsafeLazy { HomeModule(chatEngineModule.engine, storeModule.value, buildMeta) }
+    val homeModule by unsafeLazy {
+        HomeModule(
+            chatEngineModule.engine,
+            storeModule.value,
+            BetaVersionUpgradeUseCase(
+                storeModule.value.applicationStore(),
+                buildMeta,
+            ),
+        )
+    }
     val settingsModule by unsafeLazy {
         SettingsModule(
             chatEngineModule.engine,
