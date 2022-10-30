@@ -1,6 +1,7 @@
 package app.dapk.st.messenger
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -8,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -24,7 +26,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -51,6 +57,8 @@ import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Composable
 internal fun MessengerScreen(
@@ -76,7 +84,8 @@ internal fun MessengerScreen(
     val messageActions = MessageActions(
         onReply = { viewModel.post(MessengerAction.ComposerEnterReplyMode(it)) },
         onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) },
-        onLongClick = { viewModel.post(MessengerAction.CopyToClipboard(it)) }
+        onLongClick = { viewModel.post(MessengerAction.CopyToClipboard(it)) },
+        onImageClick = { viewModel.selectImage(it) }
     )
 
     Column {
@@ -85,6 +94,7 @@ internal fun MessengerScreen(
 //                DropdownMenuItem(text = { Text("Settings", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {})
 //            }
         })
+
         when (state.composerState) {
             is ComposerState.Text -> {
                 Room(state.roomState, messageActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
@@ -105,6 +115,86 @@ internal fun MessengerScreen(
                 )
             }
         }
+    }
+
+    when (state.viewerState) {
+        null -> {
+            // do nothing
+        }
+
+        else -> {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                BackHandler(onBack = { viewModel.unselectImage() })
+                ZoomableImage(state.viewerState)
+                Toolbar(
+                    onNavigate = { viewModel.unselectImage() },
+                    title = state.viewerState.event.event.authorName,
+                    color = Color.Black.copy(alpha = 0.4f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ZoomableImage(viewerState: ViewerState) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val angle by remember { mutableStateOf(0f) }
+        var zoom by remember { mutableStateOf(1f) }
+        var offsetX by remember { mutableStateOf(0f) }
+        var offsetY by remember { mutableStateOf(0f) }
+
+        val screenWidth = constraints.maxWidth
+        val screenHeight = constraints.maxHeight
+
+        val renderedSize = remember {
+            val imageContent = viewerState.event.imageContent
+            val imageHeight = imageContent.height ?: 120
+            val heightScaleFactor = screenHeight.toFloat() / imageHeight.toFloat()
+            val imageWidth = imageContent.width ?: 120
+            val widthScaleFactor = screenWidth.toFloat() / imageWidth.toFloat()
+            val scaler = min(heightScaleFactor, widthScaleFactor)
+            IntSize((imageWidth * scaler).roundToInt(), (imageHeight * scaler).roundToInt())
+        }
+
+        Image(
+            painter = rememberAsyncImagePainter(model = viewerState.event.imageRequest),
+            contentDescription = "",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = zoom
+                    scaleY = zoom
+                    rotationZ = angle
+                    translationX = offsetX
+                    translationY = offsetY
+                }
+                .pointerInput(Unit) {
+                    detectTransformGestures(
+                        onGesture = { _, pan, gestureZoom, _ ->
+                            zoom = (zoom * gestureZoom).coerceIn(1F..4F)
+                            if (zoom > 1) {
+                                val x = (pan.x * zoom)
+                                val y = (pan.y * zoom)
+
+                                if (renderedSize.width * zoom > screenWidth) {
+                                    val maxZoomedWidthOffset = ((renderedSize.width * zoom) - screenWidth) / 2
+                                    offsetX = (offsetX + x).coerceIn(-maxZoomedWidthOffset..maxZoomedWidthOffset)
+                                }
+
+                                if (renderedSize.height * zoom > screenHeight) {
+                                    val maxZoomedHeightOffset = ((renderedSize.height * zoom) - screenHeight) / 2
+                                    offsetY = (offsetY + y).coerceIn(-maxZoomedHeightOffset..maxZoomedHeightOffset)
+                                }
+                            } else {
+                                offsetX = 0F
+                                offsetY = 0F
+                            }
+                        }
+                    )
+                }
+                .fillMaxSize()
+        )
     }
 }
 
@@ -180,6 +270,11 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, messageActio
         }
     }
 
+    val bubbleActions = BubbleModel.Action(
+        onLongClick = { messageActions.onLongClick(it) },
+        onImageClick = { messageActions.onImageClick(it) }
+    )
+
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
@@ -201,7 +296,7 @@ private fun ColumnScope.RoomContent(self: UserId, state: RoomState, messageActio
                 onReply = { messageActions.onReply(item) },
             ) {
                 val status = @Composable { SendStatus(item) }
-                MessageBubble(this, item.toModel(), status, onLongClick = messageActions.onLongClick)
+                MessageBubble(this, item.toModel(), status, bubbleActions)
             }
         }
     }
@@ -283,7 +378,13 @@ private fun SendStatus(message: RoomEvent) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Unit, onSend: () -> Unit, onAttach: () -> Unit, messageActions: MessageActions) {
+private fun TextComposer(
+    state: ComposerState.Text,
+    onTextChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onAttach: () -> Unit,
+    messageActions: MessageActions
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -366,6 +467,7 @@ private fun TextComposer(state: ComposerState.Text, onTextChange: (String) -> Un
                                 modifier = Modifier.clickable { onAttach() }.wrapContentWidth().align(Alignment.Bottom),
                                 imageVector = Icons.Filled.Image,
                                 contentDescription = "",
+                                tint = SmallTalkTheme.extendedColors.onOthersBubble.copy(alpha = 0.5f),
                             )
                         }
                     }
@@ -447,4 +549,5 @@ class MessageActions(
     val onReply: (RoomEvent) -> Unit,
     val onDismiss: () -> Unit,
     val onLongClick: (BubbleModel) -> Unit,
+    val onImageClick: (BubbleModel.Image) -> Unit,
 )

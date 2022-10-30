@@ -47,24 +47,29 @@ sealed interface BubbleModel {
 
     data class Event(val authorId: String, val authorName: String, val edited: Boolean, val time: String)
 
+
+    data class Action(
+        val onLongClick: (BubbleModel) -> Unit,
+        val onImageClick: (Image) -> Unit,
+    )
 }
 
 private fun BubbleModel.Reply.isReplyingToSelf() = this.replyingTo.event.authorId == this.reply.event.authorId
 
 @Composable
-fun MessageBubble(bubble: BubbleMeta, model: BubbleModel, status: @Composable () -> Unit, onLongClick: (BubbleModel) -> Unit) {
-    val itemisedLongClick = { onLongClick.invoke(model) }
+fun MessageBubble(bubble: BubbleMeta, model: BubbleModel, status: @Composable () -> Unit, actions: BubbleModel.Action) {
+    val itemisedLongClick = { actions.onLongClick.invoke(model) }
     when (model) {
         is BubbleModel.Text -> TextBubble(bubble, model, status, itemisedLongClick)
         is BubbleModel.Encrypted -> EncryptedBubble(bubble, model, status, itemisedLongClick)
-        is BubbleModel.Image -> ImageBubble(bubble, model, status, itemisedLongClick)
+        is BubbleModel.Image -> ImageBubble(bubble, model, status, onItemClick = { actions.onImageClick(model) }, itemisedLongClick)
         is BubbleModel.Reply -> ReplyBubble(bubble, model, status, itemisedLongClick)
     }
 }
 
 @Composable
 private fun TextBubble(bubble: BubbleMeta, model: BubbleModel.Text, status: @Composable () -> Unit, onLongClick: () -> Unit) {
-    Bubble(bubble, onLongClick) {
+    Bubble(bubble, onItemClick = {}, onLongClick) {
         if (bubble.isNotSelf()) {
             AuthorName(model.event, bubble)
         }
@@ -79,8 +84,8 @@ private fun EncryptedBubble(bubble: BubbleMeta, model: BubbleModel.Encrypted, st
 }
 
 @Composable
-private fun ImageBubble(bubble: BubbleMeta, model: BubbleModel.Image, status: @Composable () -> Unit, onLongClick: () -> Unit) {
-    Bubble(bubble, onLongClick) {
+private fun ImageBubble(bubble: BubbleMeta, model: BubbleModel.Image, status: @Composable () -> Unit, onItemClick: () -> Unit, onLongClick: () -> Unit) {
+    Bubble(bubble, onItemClick, onLongClick) {
         if (bubble.isNotSelf()) {
             AuthorName(model.event, bubble)
         }
@@ -97,7 +102,7 @@ private fun ImageBubble(bubble: BubbleMeta, model: BubbleModel.Image, status: @C
 
 @Composable
 private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @Composable () -> Unit, onLongClick: () -> Unit) {
-    Bubble(bubble, onLongClick) {
+    Bubble(bubble, onItemClick = {}, onLongClick) {
         Column(
             Modifier
                 .fillMaxWidth()
@@ -204,7 +209,7 @@ private fun Int.scalerFor(max: Float): Float {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Bubble(bubble: BubbleMeta, onLongClick: () -> Unit, content: @Composable () -> Unit) {
+private fun Bubble(bubble: BubbleMeta, onItemClick: () -> Unit, onLongClick: () -> Unit, content: @Composable () -> Unit) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
             Modifier
@@ -212,7 +217,7 @@ private fun Bubble(bubble: BubbleMeta, onLongClick: () -> Unit, content: @Compos
                 .clip(bubble.shape)
                 .background(bubble.background)
                 .height(IntrinsicSize.Max)
-                .combinedClickable(onLongClick = onLongClick, onClick = {}),
+                .combinedClickable(onLongClick = onLongClick, onClick = onItemClick),
         ) {
             Column(
                 Modifier
