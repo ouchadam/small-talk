@@ -48,7 +48,8 @@ class MessengerViewModelTest {
             MessengerScreenState(
                 roomId = null,
                 roomState = Lce.Loading(),
-                composerState = ComposerState.Text(value = "", reply = null)
+                composerState = ComposerState.Text(value = "", reply = null),
+                viewerState = null,
             )
         )
     }
@@ -114,7 +115,8 @@ class MessengerViewModelTest {
 fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerState, messageContent: String?) = MessengerScreenState(
     roomId = roomId,
     roomState = Lce.Content(roomState),
-    composerState = ComposerState.Text(value = messageContent ?: "", reply = null)
+    composerState = ComposerState.Text(value = messageContent ?: "", reply = null),
+    viewerState = null,
 )
 
 class FakeCopyToClipboard {

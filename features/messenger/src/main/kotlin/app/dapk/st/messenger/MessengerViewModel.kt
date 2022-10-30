@@ -32,7 +32,8 @@ internal class MessengerViewModel(
     initialState = MessengerScreenState(
         roomId = null,
         roomState = Lce.Loading(),
-        composerState = ComposerState.Text(value = "", reply = null)
+        composerState = ComposerState.Text(value = "", reply = null),
+        viewerState = null,
     ),
     factory = factory,
 ) {
@@ -154,6 +155,18 @@ internal class MessengerViewModel(
     fun startAttachment() {
         viewModelScope.launch {
             _events.emit(MessengerEvent.SelectImageAttachment)
+        }
+    }
+
+    fun selectImage(image: BubbleModel.Image) {
+        updateState {
+            copy(viewerState = ViewerState(image))
+        }
+    }
+
+    fun unselectImage() {
+        updateState {
+            copy(viewerState = null)
         }
     }
 

@@ -1,6 +1,7 @@
 package app.dapk.st.messenger
 
 import app.dapk.st.core.Lce
+import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.engine.MessengerState
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomId
@@ -10,6 +11,11 @@ data class MessengerScreenState(
     val roomId: RoomId?,
     val roomState: Lce<MessengerState>,
     val composerState: ComposerState,
+    val viewerState: ViewerState?
+)
+
+data class ViewerState(
+    val event: BubbleModel.Image,
 )
 
 sealed interface MessengerEvent {
