@@ -1,6 +1,7 @@
 package app.dapk.st.home
 
 import androidx.lifecycle.viewModelScope
+import app.dapk.st.directory.DirectorySideEffect
 import app.dapk.st.directory.DirectoryViewModel
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.engine.ChatEngine
@@ -92,7 +93,7 @@ class HomeViewModel(
     }
 
     fun scrollToTopOfMessages() {
-        directoryViewModel.scrollToTopOfMessages()
+        directoryViewModel.dispatch(DirectorySideEffect.ScrollToTop)
     }
 
     fun changePage(page: Page) {

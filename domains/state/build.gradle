@@ -1,0 +1,8 @@
+plugins {
+    id 'kotlin'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    implementation Dependencies.mavenCentral.kotlinCoroutinesCore
+}

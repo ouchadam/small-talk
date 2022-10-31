@@ -68,8 +68,8 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     directoryViewModel.ObserveEvents(listState, toolbarOffsetHeightPx)
 
     LifecycleEffect(
-        onStart = { directoryViewModel.start() },
-        onStop = { directoryViewModel.stop() }
+        onStart = { directoryViewModel.dispatch(ComponentLifecycle.OnVisible) },
+        onStop = { directoryViewModel.dispatch(ComponentLifecycle.OnGone) }
     )
 
     val nestedScrollConnection = remember {
