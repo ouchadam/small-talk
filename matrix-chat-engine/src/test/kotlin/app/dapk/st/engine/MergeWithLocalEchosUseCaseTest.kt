@@ -1,6 +1,7 @@
 package app.dapk.st.engine
 
 import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.message.MessageService
 import fixture.*
 import org.amshove.kluent.shouldBeEqualTo
@@ -54,7 +55,7 @@ class MergeWithLocalEchosUseCaseTest {
 
     private fun createLocalEcho(eventId: EventId, body: String, state: MessageService.LocalEcho.State) = aLocalEcho(
         eventId,
-        aTextMessage(aTextContent(body)),
+        aTextMessage(aTextContent(RichText.of(body))),
         state,
     )
 }

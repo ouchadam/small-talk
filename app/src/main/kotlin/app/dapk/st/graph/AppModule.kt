@@ -6,6 +6,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
@@ -19,6 +20,7 @@ import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.engine.MatrixEngine
 import app.dapk.st.firebase.messaging.MessagingModule
+import app.dapk.st.home.BetaVersionUpgradeUseCase
 import app.dapk.st.home.HomeModule
 import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
@@ -163,7 +165,16 @@ internal class FeatureModules internal constructor(
             deviceMeta,
         )
     }
-    val homeModule by unsafeLazy { HomeModule(chatEngineModule.engine, storeModule.value, buildMeta) }
+    val homeModule by unsafeLazy {
+        HomeModule(
+            chatEngineModule.engine,
+            storeModule.value,
+            BetaVersionUpgradeUseCase(
+                storeModule.value.applicationStore(),
+                buildMeta,
+            ),
+        )
+    }
     val settingsModule by unsafeLazy {
         SettingsModule(
             chatEngineModule.engine,
@@ -295,9 +306,14 @@ internal class AndroidImageContentReader(private val contentResolver: ContentRes
             cursor.getLong(columnIndex)
         } ?: throw IllegalArgumentException("Could not process $uri")
 
+        val shouldSwapSizes = ExifInterface(contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")).let {
+            val orientation = it.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
+            orientation == ExifInterface.ORIENTATION_ROTATE_90 || orientation == ExifInterface.ORIENTATION_ROTATE_270
+        }
+
         return ImageContentReader.ImageContent(
-            height = options.outHeight,
-            width = options.outWidth,
+            height = if (shouldSwapSizes) options.outWidth else options.outHeight,
+            width = if (shouldSwapSizes) options.outHeight else options.outWidth,
             size = fileSize,
             mimeType = options.outMimeType,
             fileName = androidUri.lastPathSegment ?: "file",

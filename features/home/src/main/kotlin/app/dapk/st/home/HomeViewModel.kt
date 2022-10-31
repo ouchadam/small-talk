@@ -12,7 +12,6 @@ import app.dapk.st.profile.ProfileViewModel
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -87,6 +86,7 @@ class HomeViewModel(
     fun clearCache() {
         viewModelScope.launch {
             cacheCleaner.cleanCache(removeCredentials = false)
+            betaVersionUpgradeUseCase.notifyUpgraded()
             _events.emit(HomeEvent.Relaunch)
         }
     }

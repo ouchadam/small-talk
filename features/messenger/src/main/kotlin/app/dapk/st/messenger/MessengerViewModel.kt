@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.lifecycle.viewModelScope
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.Lce
+import app.dapk.st.core.asString
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.domain.application.message.MessageOptionsStore
@@ -11,6 +12,7 @@ import app.dapk.st.engine.ChatEngine
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.engine.SendMessage
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.common.asString
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.viewmodel.DapkViewModel
 import app.dapk.st.viewmodel.MutableStateFactory
@@ -30,7 +32,8 @@ internal class MessengerViewModel(
     initialState = MessengerScreenState(
         roomId = null,
         roomState = Lce.Loading(),
-        composerState = ComposerState.Text(value = "", reply = null)
+        composerState = ComposerState.Text(value = "", reply = null),
+        viewerState = null,
     ),
     factory = factory,
 ) {
@@ -116,7 +119,7 @@ internal class MessengerViewModel(
                                         originalMessage = when (it) {
                                             is RoomEvent.Image -> TODO()
                                             is RoomEvent.Reply -> TODO()
-                                            is RoomEvent.Message -> it.content
+                                            is RoomEvent.Message -> it.content.asString()
                                             is RoomEvent.Encrypted -> error("Should never happen")
                                         },
                                         eventId = it.eventId,
@@ -155,13 +158,25 @@ internal class MessengerViewModel(
         }
     }
 
+    fun selectImage(image: BubbleModel.Image) {
+        updateState {
+            copy(viewerState = ViewerState(image))
+        }
+    }
+
+    fun unselectImage() {
+        updateState {
+            copy(viewerState = null)
+        }
+    }
+
 }
 
 private fun BubbleModel.findCopyableContent(): CopyableResult = when (this) {
     is BubbleModel.Encrypted -> CopyableResult.NothingToCopy
     is BubbleModel.Image -> CopyableResult.NothingToCopy
     is BubbleModel.Reply -> this.reply.findCopyableContent()
-    is BubbleModel.Text -> CopyableResult.Content(CopyToClipboard.Copyable.Text(this.content))
+    is BubbleModel.Text -> CopyableResult.Content(CopyToClipboard.Copyable.Text(this.content.asString()))
 }
 
 private sealed interface CopyableResult {

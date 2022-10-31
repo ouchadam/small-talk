@@ -13,6 +13,7 @@ import app.dapk.st.matrix.sync.internal.room.RoomEventsDecrypter
 import app.dapk.st.matrix.sync.internal.room.SyncEventDecrypter
 import app.dapk.st.matrix.sync.internal.room.SyncSideEffects
 import app.dapk.st.matrix.sync.internal.sync.*
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -41,13 +42,14 @@ internal class DefaultSyncService(
     errorTracker: ErrorTracker,
     private val coroutineDispatchers: CoroutineDispatchers,
     syncConfig: SyncConfig,
+    richMessageParser: RichMessageParser,
 ) : SyncService {
 
     private val syncEventsFlow = MutableStateFlow<List<SyncService.SyncEvent>>(emptyList())
 
     private val roomDataSource by lazy { RoomDataSource(roomStore, logger) }
     private val eventDecrypter by lazy { SyncEventDecrypter(messageDecrypter, json, logger) }
-    private val roomEventsDecrypter by lazy { RoomEventsDecrypter(messageDecrypter, json, logger) }
+    private val roomEventsDecrypter by lazy { RoomEventsDecrypter(messageDecrypter, richMessageParser, json, logger) }
     private val roomRefresher by lazy { RoomRefresher(roomDataSource, roomEventsDecrypter, logger) }
 
     private val sync2 by lazy {
@@ -57,7 +59,7 @@ internal class DefaultSyncService(
                 roomMembersService,
                 roomDataSource,
                 TimelineEventsProcessor(
-                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService)),
+                    RoomEventCreator(roomMembersService, errorTracker, RoomEventFactory(roomMembersService, richMessageParser), richMessageParser),
                     roomEventsDecrypter,
                     eventDecrypter,
                     EventLookupUseCase(roomStore)

@@ -1,6 +1,5 @@
 package app.dapk.st.home
 
-import app.dapk.st.core.BuildMeta
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.directory.DirectoryViewModel
 import app.dapk.st.domain.StoreModule
@@ -11,7 +10,7 @@ import app.dapk.st.profile.ProfileViewModel
 class HomeModule(
     private val chatEngine: ChatEngine,
     private val storeModule: StoreModule,
-    private val buildMeta: BuildMeta,
+    val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
 ) : ProvidableModule {
 
     fun homeViewModel(directory: DirectoryViewModel, login: LoginViewModel, profileViewModel: ProfileViewModel): HomeViewModel {
@@ -22,10 +21,7 @@ class HomeModule(
             login,
             profileViewModel,
             storeModule.cacheCleaner(),
-            BetaVersionUpgradeUseCase(
-                storeModule.applicationStore(),
-                buildMeta,
-            ),
+            betaVersionUpgradeUseCase,
         )
     }
 

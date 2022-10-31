@@ -1,5 +1,6 @@
 package app.dapk.st.engine
 
+import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.internal.ImageContentReader
 import java.time.Clock
@@ -41,7 +42,7 @@ internal class SendMessageUseCase(
     }
 
     private fun createTextMessage(message: SendMessage.TextMessage, room: RoomOverview) = MessageService.Message.TextMessage(
-        content = MessageService.Message.Content.TextContent(message.content),
+        content = MessageService.Message.Content.TextContent(RichText.of(message.content)),
         roomId = room.roomId,
         sendEncrypted = room.isEncrypted,
         localId = localIdFactory.create(),
@@ -49,7 +50,7 @@ internal class SendMessageUseCase(
         reply = message.reply?.let {
             MessageService.Message.TextMessage.Reply(
                 author = it.author,
-                originalMessage = it.originalMessage,
+                originalMessage = RichText.of(it.originalMessage),
                 replyContent = message.content,
                 eventId = it.eventId,
                 timestampUtc = it.timestampUtc,

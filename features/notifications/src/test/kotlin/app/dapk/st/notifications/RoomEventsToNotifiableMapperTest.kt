@@ -1,5 +1,7 @@
 package app.dapk.st.notifications
 
+import app.dapk.st.matrix.common.RichText
+import app.dapk.st.matrix.common.asString
 import fixture.aRoomImageMessageEvent
 import fixture.aRoomMessageEvent
 import fixture.aRoomReplyMessageEvent
@@ -18,7 +20,7 @@ class RoomEventsToNotifiableMapperTest {
 
         result shouldBeEqualTo listOf(
             Notifiable(
-                content = event.content,
+                content = event.content.asString(),
                 utcTimestamp = event.utcTimestamp,
                 author = event.author
             )
@@ -42,14 +44,14 @@ class RoomEventsToNotifiableMapperTest {
 
     @Test
     fun `given reply event with message, when mapping, then uses message for content`() {
-        val reply = aRoomMessageEvent(utcTimestamp = -1, content = "hello")
+        val reply = aRoomMessageEvent(utcTimestamp = -1, content = RichText.of("hello"))
         val event = aRoomReplyMessageEvent(reply, replyingTo = aRoomImageMessageEvent(utcTimestamp = -1))
 
         val result = mapper.map(listOf(event))
 
         result shouldBeEqualTo listOf(
             Notifiable(
-                content = reply.content,
+                content = reply.content.asString(),
                 utcTimestamp = event.utcTimestamp,
                 author = event.author
             )

@@ -1,9 +1,12 @@
 package app.dapk.st.matrix.sync.internal.sync
 
 import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.RichText
+import app.dapk.st.matrix.common.asString
 import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.internal.request.ApiEncryptedContent
 import app.dapk.st.matrix.sync.internal.request.ApiTimelineEvent
+import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import fake.FakeErrorTracker
 import fake.FakeRoomMembersService
 import fixture.*
@@ -15,11 +18,11 @@ import org.junit.Test
 private val A_ROOM_ID = aRoomId()
 private val A_SENDER = aRoomMember()
 private val EMPTY_LOOKUP = FakeLookup(LookupResult(apiTimelineEvent = null, roomEvent = null))
-private const val A_TEXT_EVENT_MESSAGE = "a text message"
-private const val A_REPLY_EVENT_MESSAGE = "a reply to another message"
+private val A_TEXT_EVENT_MESSAGE = RichText.of("a text message")
+private val A_REPLY_EVENT_MESSAGE = RichText.of("a reply to another message")
 private val A_TEXT_EVENT = anApiTimelineTextEvent(
     senderId = A_SENDER.id,
-    content = aTimelineTextEventContent(body = A_TEXT_EVENT_MESSAGE)
+    content = aTimelineTextEventContent(body = A_TEXT_EVENT_MESSAGE.asString())
 )
 private val A_TEXT_EVENT_WITHOUT_CONTENT = anApiTimelineTextEvent(
     senderId = A_SENDER.id,
@@ -31,7 +34,11 @@ internal class RoomEventCreatorTest {
 
     private val fakeRoomMembersService = FakeRoomMembersService()
 
-    private val roomEventCreator = RoomEventCreator(fakeRoomMembersService, FakeErrorTracker(), RoomEventFactory(fakeRoomMembersService))
+    private val richMessageParser = RichMessageParser()
+    private val roomEventCreator = RoomEventCreator(
+        fakeRoomMembersService, FakeErrorTracker(), RoomEventFactory(fakeRoomMembersService, richMessageParser),
+        richMessageParser
+    )
 
     @Test
     fun `given Megolm encrypted event then maps to encrypted room message`() = runTest {
@@ -89,7 +96,7 @@ internal class RoomEventCreatorTest {
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = A_TEXT_EVENT_WITHOUT_CONTENT.id,
             utcTimestamp = A_TEXT_EVENT_WITHOUT_CONTENT.utcTimestamp,
-            content = "redacted",
+            content = RichText.of("redacted"),
             author = A_SENDER,
         )
     }
@@ -97,14 +104,14 @@ internal class RoomEventCreatorTest {
     @Test
     fun `given edited event with no relation then maps to new room message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
-        val editEvent = anApiTimelineTextEvent().toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editEvent = anApiTimelineTextEvent().toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE.asString())
 
         val result = with(roomEventCreator) { editEvent.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
 
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = editEvent.id,
             utcTimestamp = editEvent.utcTimestamp,
-            content = editEvent.asTextContent().body!!,
+            content = RichText.of(editEvent.asTextContent().body!!.trimStart()),
             author = A_SENDER,
             edited = true
         )
@@ -114,7 +121,7 @@ internal class RoomEventCreatorTest {
     fun `given edited event which relates to a timeline event then updates existing message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = anApiTimelineTextEvent(utcTimestamp = 0)
-        val editedMessage = originalMessage.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editedMessage = originalMessage.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -132,7 +139,7 @@ internal class RoomEventCreatorTest {
     fun `given edited event which relates to a room event then updates existing message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = aMatrixRoomMessageEvent()
-        val editedMessage = originalMessage.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editedMessage = originalMessage.toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -150,7 +157,7 @@ internal class RoomEventCreatorTest {
     fun `given edited event which relates to a room reply event then only updates message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = aRoomReplyMessageEvent(message = aMatrixRoomMessageEvent())
-        val editedMessage = (originalMessage.message as RoomEvent.Message).toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editedMessage = (originalMessage.message as RoomEvent.Message).toEditEvent(newTimestamp = 1000, messageContent = A_TEXT_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -170,7 +177,7 @@ internal class RoomEventCreatorTest {
     @Test
     fun `given edited event is older than related known timeline event then ignores edit`() = runTest {
         val originalMessage = anApiTimelineTextEvent(utcTimestamp = 1000)
-        val editedMessage = originalMessage.toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editedMessage = originalMessage.toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -181,7 +188,7 @@ internal class RoomEventCreatorTest {
     @Test
     fun `given edited event is older than related room event then ignores edit`() = runTest {
         val originalMessage = aMatrixRoomMessageEvent(utcTimestamp = 1000)
-        val editedMessage = originalMessage.toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE)
+        val editedMessage = originalMessage.toEditEvent(newTimestamp = 0, messageContent = A_TEXT_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { editedMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -192,7 +199,7 @@ internal class RoomEventCreatorTest {
     @Test
     fun `given reply event with no relation then maps to new room message using the full body`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
-        val replyEvent = anApiTimelineTextEvent().toReplyEvent(messageContent = A_TEXT_EVENT_MESSAGE)
+        val replyEvent = anApiTimelineTextEvent().toReplyEvent(messageContent = A_TEXT_EVENT_MESSAGE.asString())
 
         println(replyEvent.content)
         val result = with(roomEventCreator) { replyEvent.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
@@ -200,7 +207,7 @@ internal class RoomEventCreatorTest {
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = replyEvent.id,
             utcTimestamp = replyEvent.utcTimestamp,
-            content = replyEvent.asTextContent().body!!,
+            content = RichText.of(replyEvent.asTextContent().body!!),
             author = A_SENDER,
         )
     }
@@ -209,7 +216,7 @@ internal class RoomEventCreatorTest {
     fun `given reply event which relates to a timeline event then maps to reply`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = anApiTimelineTextEvent(content = aTimelineTextEventContent(body = "message being replied to"))
-        val replyMessage = originalMessage.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
+        val replyMessage = originalMessage.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -218,7 +225,7 @@ internal class RoomEventCreatorTest {
             replyingTo = aMatrixRoomMessageEvent(
                 eventId = originalMessage.id,
                 utcTimestamp = originalMessage.utcTimestamp,
-                content = originalMessage.asTextContent().body!!,
+                content = RichText.of(originalMessage.asTextContent().body!!),
                 author = A_SENDER,
             ),
             message = aMatrixRoomMessageEvent(
@@ -234,7 +241,7 @@ internal class RoomEventCreatorTest {
     fun `given reply event which relates to a room event then maps to reply`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = aMatrixRoomMessageEvent()
-        val replyMessage = originalMessage.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
+        val replyMessage = originalMessage.toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }
@@ -254,7 +261,7 @@ internal class RoomEventCreatorTest {
     fun `given reply event which relates to another room reply event then maps to reply with the reply's message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
         val originalMessage = aRoomReplyMessageEvent()
-        val replyMessage = (originalMessage.message as RoomEvent.Message).toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE)
+        val replyMessage = (originalMessage.message as RoomEvent.Message).toReplyEvent(messageContent = A_REPLY_EVENT_MESSAGE.asString())
         val lookup = givenLookup(originalMessage)
 
         val result = with(roomEventCreator) { replyMessage.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, lookup) }

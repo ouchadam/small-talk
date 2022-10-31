@@ -51,7 +51,7 @@ class RoomDataSource(
     }
 }
 
-private fun RoomEvent.redact() = RoomEvent.Message(this.eventId, this.utcTimestamp, "Redacted", this.author, this.meta, redacted = true)
+private fun RoomEvent.redact() = RoomEvent.Message(this.eventId, this.utcTimestamp, RichText.of("Redacted"), this.author, this.meta, redacted = true)
 
 private fun RoomState.replaceEvent(old: RoomEvent, new: RoomEvent): RoomState {
     val updatedEvents = this.events.toMutableList().apply {

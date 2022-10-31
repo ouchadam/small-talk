@@ -5,8 +5,10 @@ package test
 import TestMessage
 import TestUser
 import app.dapk.st.core.extensions.ifNull
+import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
+import app.dapk.st.matrix.common.asString
 import app.dapk.st.matrix.crypto.MatrixMediaDecrypter
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.message.messageService
@@ -138,7 +140,7 @@ class MatrixTestScope(private val testScope: TestScope) {
     suspend fun TestMatrix.expectTextMessage(roomId: RoomId, message: TestMessage) {
         println("expecting ${message.content}")
         this.client.syncService().room(roomId)
-            .map { it.events.filterIsInstance<RoomEvent.Message>().map { TestMessage(it.content, it.author) }.firstOrNull() }
+            .map { it.events.filterIsInstance<RoomEvent.Message>().map { TestMessage(it.content.asString(), it.author) }.firstOrNull() }
             .assert(message)
     }
 
@@ -170,7 +172,7 @@ class MatrixTestScope(private val testScope: TestScope) {
         println("sending $content")
         this.client.messageService().scheduleMessage(
             MessageService.Message.TextMessage(
-                content = MessageService.Message.Content.TextContent(body = content),
+                content = MessageService.Message.Content.TextContent(body = RichText.of(content)),
                 roomId = roomId,
                 sendEncrypted = isEncrypted,
                 localId = "local.${UUID.randomUUID()}",

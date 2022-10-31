@@ -7,7 +7,7 @@ const config = {
     rcBranchesFrom: "main",
     rcMergesTo: "release",
     packageName: "app.dapk.st",
-    matrixRoomId: "!jgNenzNPtSpJLjjsxe:matrix.org"
+    matrixRoomId: "!fuHEgUsoPRBQynkdkF:iswell.cool"
 }
 
 const rcBranchName = "release-candidate"
