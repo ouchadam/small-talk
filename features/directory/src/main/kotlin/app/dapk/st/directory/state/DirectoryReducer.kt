@@ -7,7 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-fun directoryReducer(
+internal fun directoryReducer(
     chatEngine: ChatEngine,
     shortcutHandler: ShortcutHandler,
     eventEmitter: suspend (DirectoryEvent) -> Unit,
