@@ -99,6 +99,25 @@ internal class HtmlParser {
             exitTagCloseIndex
         }
 
+        "blockquote" -> {
+            if (tagContent.isNotEmpty() && nestingLevel < 3) {
+                var lastIndex = 0
+                val trimmedTagContent = tagContent.trim()
+                builder.appendText("> ")
+                iterateSearchIndex { searchIndex ->
+                    lastIndex = searchIndex
+                    parseHtmlTags(trimmedTagContent, searchIndex, builder, nestingLevel = nestingLevel + 1)
+                }
+
+                if (lastIndex < trimmedTagContent.length) {
+                    builder.appendText(trimmedTagContent.substring(lastIndex))
+                }
+            }
+
+            builder.appendNewline()
+            exitTagCloseIndex
+        }
+
         "p" -> {
             if (tagContent.isNotEmpty() && nestingLevel < 2) {
                 var lastIndex = 0

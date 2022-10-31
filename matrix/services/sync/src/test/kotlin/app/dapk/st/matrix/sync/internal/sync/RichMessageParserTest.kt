@@ -84,6 +84,11 @@ class RichMessageParserTest {
         expected = RichText(listOf(Normal("Hello world!\nnext line\nanother line")))
     )
 
+    @Test
+    fun `parses blockquote tags`() = runParserTest(
+        input = "<blockquote>\n<p><strong>hello</strong> <em>world</em></p>\n</blockquote>\n",
+        expected = RichText(listOf(Normal("> "), Bold("hello"), Normal(" "), Italic("world")))
+    )
 
     @Test
     fun `parses lists`() = runParserTest(

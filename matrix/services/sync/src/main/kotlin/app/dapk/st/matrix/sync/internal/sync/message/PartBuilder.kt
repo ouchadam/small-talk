@@ -10,8 +10,6 @@ internal class PartBuilder {
     private val parts = mutableListOf<RichText.Part>()
 
     fun appendText(value: String) {
-        println("append text")
-
         normalBuffer.append(value.cleanFirstTextLine())
     }
 
