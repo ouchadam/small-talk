@@ -15,7 +15,7 @@ class DirectoryModule(
     private val chatEngine: ChatEngine,
 ) : ProvidableModule {
 
-    internal fun directoryViewModel(): StateViewModel<DirectoryScreenState, DirectoryEvent> {
+    fun directoryViewModel(): StateViewModel<DirectoryScreenState, DirectoryEvent> {
         return createStateViewModel { directoryReducer(chatEngine, ShortcutHandler(context), JobBag(), it) }
     }
 }

@@ -13,7 +13,7 @@ class HomeModule(
     val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
 ) : ProvidableModule {
 
-    fun homeViewModel(directory: DirectoryState, login: LoginViewModel, profileViewModel: ProfileViewModel): HomeViewModel {
+    internal fun homeViewModel(directory: DirectoryState, login: LoginViewModel, profileViewModel: ProfileViewModel): HomeViewModel {
         return HomeViewModel(
             chatEngine,
             storeModule.credentialsStore(),

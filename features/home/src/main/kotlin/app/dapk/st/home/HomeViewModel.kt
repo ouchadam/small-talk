@@ -18,10 +18,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-class HomeViewModel(
+internal class HomeViewModel(
     private val chatEngine: ChatEngine,
     private val credentialsProvider: CredentialsStore,
-    private val directoryViewModel: DirectoryState,
+    private val directoryState: DirectoryState,
     private val loginViewModel: LoginViewModel,
     private val profileViewModel: ProfileViewModel,
     private val cacheCleaner: StoreCleaner,
@@ -32,7 +32,7 @@ class HomeViewModel(
 
     private var listenForInvitesJob: Job? = null
 
-    fun directory() = directoryViewModel
+    fun directory() = directoryState
     fun login() = loginViewModel
     fun profile() = profileViewModel
 
@@ -93,7 +93,7 @@ class HomeViewModel(
     }
 
     fun scrollToTopOfMessages() {
-        directoryViewModel.dispatch(DirectorySideEffect.ScrollToTop)
+        directoryState.dispatch(DirectorySideEffect.ScrollToTop)
     }
 
     fun changePage(page: Page) {

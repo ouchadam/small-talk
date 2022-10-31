@@ -57,7 +57,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 @Composable
-internal fun DirectoryScreen(directoryViewModel: DirectoryState) {
+fun DirectoryScreen(directoryViewModel: DirectoryState) {
     val state = directoryViewModel.current
 
     val listState: LazyListState = rememberLazyListState(

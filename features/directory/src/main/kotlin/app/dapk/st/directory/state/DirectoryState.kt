@@ -3,9 +3,9 @@ package app.dapk.st.directory.state
 import app.dapk.st.core.State
 import app.dapk.st.engine.DirectoryState
 
-internal typealias DirectoryState = State<DirectoryScreenState, DirectoryEvent>
+typealias DirectoryState = State<DirectoryScreenState, DirectoryEvent>
 
-internal sealed interface DirectoryScreenState {
+sealed interface DirectoryScreenState {
     object EmptyLoading : DirectoryScreenState
     object Empty : DirectoryScreenState
     data class Content(
@@ -13,7 +13,7 @@ internal sealed interface DirectoryScreenState {
     ) : DirectoryScreenState
 }
 
-internal sealed interface DirectoryEvent {
+sealed interface DirectoryEvent {
     data class OpenDownloadUrl(val url: String) : DirectoryEvent
     object ScrollToTop : DirectoryEvent
 }
