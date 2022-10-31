@@ -3,32 +3,33 @@ package app.dapk.st.directory.state
 import app.dapk.st.directory.ShortcutHandler
 import app.dapk.st.engine.ChatEngine
 import app.dapk.state.*
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+
+private const val KEY_SYNCING_JOB = "sync"
 
 internal fun directoryReducer(
     chatEngine: ChatEngine,
     shortcutHandler: ShortcutHandler,
+    jobBag: JobBag,
     eventEmitter: suspend (DirectoryEvent) -> Unit,
 ): ReducerFactory<DirectoryScreenState> {
-    var syncJob: Job? = null
     return createReducer(
         initialState = DirectoryScreenState.EmptyLoading,
 
         multi(ComponentLifecycle::class) { action ->
             when (action) {
                 ComponentLifecycle.OnVisible -> async { _ ->
-                    syncJob = chatEngine.directory().onEach {
+                    jobBag.add(KEY_SYNCING_JOB, chatEngine.directory().onEach {
                         shortcutHandler.onDirectoryUpdate(it.map { it.overview })
                         when (it.isEmpty()) {
                             true -> dispatch(DirectoryStateChange.Empty)
                             false -> dispatch(DirectoryStateChange.Content(it))
                         }
-                    }.launchIn(coroutineScope)
+                    }.launchIn(coroutineScope))
                 }
 
-                ComponentLifecycle.OnGone -> sideEffect { _, _ -> syncJob?.cancel() }
+                ComponentLifecycle.OnGone -> sideEffect { _, _ -> jobBag.cancel(KEY_SYNCING_JOB) }
             }
         },
 

@@ -76,7 +76,7 @@ fun <S> createReducer(
             return Reducer { action ->
                 val result = reducersMap.keys
                     .filter { it.java.isAssignableFrom(action::class.java) }
-                    .fold(scope.getState() ?: initialState) { acc, key ->
+                    .fold(scope.getState()) { acc, key ->
                         val actionHandlers = reducersMap[key]!!
                         actionHandlers.fold(acc) { acc, handler ->
                             when (handler) {
