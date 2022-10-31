@@ -1,8 +1,8 @@
 package app.dapk.st.home
 
 import androidx.lifecycle.viewModelScope
-import app.dapk.st.directory.DirectorySideEffect
-import app.dapk.st.directory.DirectoryViewModel
+import app.dapk.st.directory.state.DirectorySideEffect
+import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.home.HomeScreenState.*
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val chatEngine: ChatEngine,
     private val credentialsProvider: CredentialsStore,
-    private val directoryViewModel: DirectoryViewModel,
+    private val directoryViewModel: DirectoryState,
     private val loginViewModel: LoginViewModel,
     private val profileViewModel: ProfileViewModel,
     private val cacheCleaner: StoreCleaner,

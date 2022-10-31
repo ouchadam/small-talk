@@ -16,11 +16,11 @@ import kotlinx.coroutines.launch
 class StateViewModel<S, E>(
     reducerFactory: ReducerFactory<S>,
     eventSource: MutableSharedFlow<E>,
-) : ViewModel(), StateStore<S, E> {
+) : ViewModel(), State<S, E> {
 
     private val store: Store<S> = createStore(reducerFactory, viewModelScope)
     override val events: SharedFlow<E> = eventSource
-    override val state
+    override val current
         get() = _state!!
     private var _state: S by mutableStateOf(store.getState())
 
@@ -42,8 +42,8 @@ fun <S, E> createStateViewModel(block: (suspend (E) -> Unit) -> ReducerFactory<S
     return StateViewModel(reducer, eventSource)
 }
 
-interface StateStore<S, E> {
+interface State<S, E> {
     fun dispatch(action: Action)
     val events: SharedFlow<E>
-    val state: S
+    val current: S
 }

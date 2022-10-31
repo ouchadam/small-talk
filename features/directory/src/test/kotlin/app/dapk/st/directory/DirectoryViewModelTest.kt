@@ -1,6 +1,8 @@
 package app.dapk.st.directory
 
 import ViewModelTest
+import app.dapk.st.directory.state.DirectoryScreenState
+import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.UnreadCount
 import fake.FakeChatEngine
@@ -18,7 +20,7 @@ class DirectoryViewModelTest {
     private val fakeShortcutHandler = FakeShortcutHandler()
     private val fakeChatEngine = FakeChatEngine()
 
-    private val viewModel = DirectoryViewModel(
+    private val viewModel = DirectoryState(
         fakeShortcutHandler.instance,
         fakeChatEngine,
         runViewModelTest.testMutableStateFactory(),

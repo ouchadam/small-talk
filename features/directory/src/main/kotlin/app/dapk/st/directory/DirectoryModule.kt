@@ -4,6 +4,9 @@ import android.content.Context
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.core.StateViewModel
 import app.dapk.st.core.createStateViewModel
+import app.dapk.st.directory.state.DirectoryEvent
+import app.dapk.st.directory.state.DirectoryScreenState
+import app.dapk.st.directory.state.directoryReducer
 import app.dapk.st.engine.ChatEngine
 
 class DirectoryModule(
