@@ -12,16 +12,31 @@ import org.amshove.kluent.shouldBeEqualTo
 import test.ExpectTest
 import test.ExpectTestScope
 
-fun <S> runReducerTest(reducerFactory: ReducerFactory<S>, block: suspend ReducerTestScope<S>.() -> Unit) {
+interface ReducerTest<S, E> {
+    operator fun invoke(block: suspend ReducerTestScope<S, E>.() -> Unit)
+}
+
+fun <S, E> testReducer(block: ((E) -> Unit) -> ReducerFactory<S>): ReducerTest<S, E> {
+    val fakeEventSource = FakeEventSource<E>()
+    val reducerFactory = block(fakeEventSource)
+    return object : ReducerTest<S, E> {
+        override fun invoke(block: suspend ReducerTestScope<S, E>.() -> Unit) {
+            runReducerTest(reducerFactory, fakeEventSource, block)
+        }
+    }
+}
+
+fun <S, E> runReducerTest(reducerFactory: ReducerFactory<S>, fakeEventSource: FakeEventSource<E>, block: suspend ReducerTestScope<S, E>.() -> Unit) {
     runTest {
         val expectTestScope = ExpectTest(coroutineContext)
-        block(ReducerTestScope(reducerFactory, expectTestScope))
+        block(ReducerTestScope(reducerFactory, fakeEventSource, expectTestScope))
         expectTestScope.verifyExpects()
     }
 }
 
-class ReducerTestScope<S>(
+class ReducerTestScope<S, E>(
     private val reducerFactory: ReducerFactory<S>,
+    private val fakeEventSource: FakeEventSource<E>,
     private val expectTestScope: ExpectTestScope
 ) : ExpectTestScope by expectTestScope, Reducer<S> {
 
@@ -51,7 +66,17 @@ class ReducerTestScope<S>(
         reducerFactory.initialState() shouldBeEqualTo expected
     }
 
-    fun <S> assertDispatches(expected: List<S>) {
+    fun assertOnlyStateChange(expected: S) {
+        assertStateChange(expected)
+        assertNoDispatches()
+        fakeEventSource.assertNoEvents()
+    }
+
+    fun assertStateChange(expected: S) {
+        capturedResult shouldBeEqualTo expected
+    }
+
+    fun assertDispatches(expected: List<Action>) {
         assertEquals(expected, actionCaptures)
     }
 
@@ -61,5 +86,23 @@ class ReducerTestScope<S>(
 
     fun assertNoStateChange() {
         assertEquals(reducerFactory.initialState(), capturedResult)
+    }
+
+    fun assertOnlyDispatches(expected: List<Action>) {
+        assertDispatches(expected)
+        fakeEventSource.assertNoEvents()
+        assertNoStateChange()
+    }
+
+    fun assertOnlyEvents(events: List<E>) {
+        fakeEventSource.assertEvents(events)
+        assertNoDispatches()
+        assertNoStateChange()
+    }
+
+    fun assertNoChanges() {
+        assertNoStateChange()
+        fakeEventSource.assertNoEvents()
+        assertNoDispatches()
     }
 }

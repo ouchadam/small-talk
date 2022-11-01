@@ -27,6 +27,7 @@ inline fun <reified S, E> ComponentActivity.state(
     noinline factory: () -> StateViewModel<S, E>
 ): Lazy<State<S, E>> {
     val factoryPromise = object : Factory {
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return when(modelClass) {
                 StateViewModel::class.java -> factory() as T
@@ -34,7 +35,7 @@ inline fun <reified S, E> ComponentActivity.state(
             }
         }
     }
-    return FooViewModelLazy(
+    return KeyedViewModelLazy(
         key = S::class.java.canonicalName!!,
         StateViewModel::class,
         { viewModelStore },
@@ -42,12 +43,11 @@ inline fun <reified S, E> ComponentActivity.state(
     ) as Lazy<State<S, E>>
 }
 
-class FooViewModelLazy<VM : ViewModel> @JvmOverloads constructor(
+class KeyedViewModelLazy<VM : ViewModel> @JvmOverloads constructor(
     private val key: String,
     private val viewModelClass: KClass<VM>,
     private val storeProducer: () -> ViewModelStore,
     private val factoryProducer: () -> ViewModelProvider.Factory,
-    private val extrasProducer: () -> CreationExtras = { CreationExtras.Empty }
 ) : Lazy<VM> {
     private var cached: VM? = null
 
@@ -60,7 +60,7 @@ class FooViewModelLazy<VM : ViewModel> @JvmOverloads constructor(
                 ViewModelProvider(
                     store,
                     factory,
-                    extrasProducer()
+                    CreationExtras.Empty
                 ).get(key, viewModelClass.java).also {
                     cached = it
                 }
