@@ -45,14 +45,13 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.*
 import app.dapk.st.engine.MessageMeta
-import app.dapk.st.engine.MessengerState
+import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.engine.RoomState
 import app.dapk.st.matrix.common.RichText
-import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
-import app.dapk.st.navigator.MessageAttachment
+import app.dapk.st.messenger.state.*
 import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -62,18 +61,16 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun MessengerScreen(
-    roomId: RoomId,
-    attachments: List<MessageAttachment>?,
-    viewModel: MessengerViewModel,
+    viewModel: MessengerState,
     navigator: Navigator,
     galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>
 ) {
-    val state = viewModel.state
+    val state = viewModel.current
 
     viewModel.ObserveEvents(galleryLauncher)
     LifecycleEffect(
-        onStart = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) },
-        onStop = { viewModel.post(MessengerAction.OnMessengerGone) }
+        onStart = { viewModel.dispatch(ComponentLifecycle.Visible) },
+        onStop = { viewModel.dispatch(ComponentLifecycle.Gone) }
     )
 
     val roomTitle = when (val roomState = state.roomState) {
@@ -82,10 +79,10 @@ internal fun MessengerScreen(
     }
 
     val messageActions = MessageActions(
-        onReply = { viewModel.post(MessengerAction.ComposerEnterReplyMode(it)) },
-        onDismiss = { viewModel.post(MessengerAction.ComposerExitReplyMode) },
-        onLongClick = { viewModel.post(MessengerAction.CopyToClipboard(it)) },
-        onImageClick = { viewModel.selectImage(it) }
+        onReply = { viewModel.dispatch(ComposerStateChange.ReplyMode.Enter(it)) },
+        onDismiss = { viewModel.dispatch(ComposerStateChange.ReplyMode.Exit) },
+        onLongClick = { viewModel.dispatch(ScreenAction.CopyToClipboard(it)) },
+        onImageClick = { viewModel.dispatch(ComposerStateChange.ImagePreview.Show(it)) }
     )
 
     Column {
@@ -97,12 +94,12 @@ internal fun MessengerScreen(
 
         when (state.composerState) {
             is ComposerState.Text -> {
-                Room(state.roomState, messageActions, onRetry = { viewModel.post(MessengerAction.OnMessengerVisible(roomId, attachments)) })
+                Room(state.roomState, messageActions, onRetry = { viewModel.dispatch(ComponentLifecycle.Visible) })
                 TextComposer(
                     state.composerState,
-                    onTextChange = { viewModel.post(MessengerAction.ComposerTextUpdate(it)) },
-                    onSend = { viewModel.post(MessengerAction.ComposerSendText) },
-                    onAttach = { viewModel.startAttachment() },
+                    onTextChange = { viewModel.dispatch(ComposerStateChange.TextUpdate(it)) },
+                    onSend = { viewModel.dispatch(ScreenAction.SendMessage) },
+                    onAttach = { viewModel.dispatch(ScreenAction.OpenGalleryPicker) },
                     messageActions = messageActions,
                 )
             }
@@ -110,8 +107,8 @@ internal fun MessengerScreen(
             is ComposerState.Attachments -> {
                 AttachmentComposer(
                     state.composerState,
-                    onSend = { viewModel.post(MessengerAction.ComposerSendText) },
-                    onCancel = { viewModel.post(MessengerAction.ComposerClear) }
+                    onSend = { viewModel.dispatch(ScreenAction.SendMessage) },
+                    onCancel = { viewModel.dispatch(ComposerStateChange.Clear) }
                 )
             }
         }
@@ -124,10 +121,10 @@ internal fun MessengerScreen(
 
         else -> {
             Box(Modifier.fillMaxSize().background(Color.Black)) {
-                BackHandler(onBack = { viewModel.unselectImage() })
+                BackHandler(onBack = { viewModel.dispatch(ComposerStateChange.ImagePreview.Hide) })
                 ZoomableImage(state.viewerState)
                 Toolbar(
-                    onNavigate = { viewModel.unselectImage() },
+                    onNavigate = { viewModel.dispatch(ComposerStateChange.ImagePreview.Hide) },
                     title = state.viewerState.event.event.authorName,
                     color = Color.Black.copy(alpha = 0.4f),
                 )
@@ -199,13 +196,13 @@ private fun ZoomableImage(viewerState: ViewerState) {
 }
 
 @Composable
-private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
+private fun MessengerState.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
                 MessengerEvent.SelectImageAttachment -> {
-                    state.roomState.takeIfContent()?.let {
+                    current.roomState.takeIfContent()?.let {
                         galleryLauncher.launch(ImageGalleryActivityPayload(it.roomState.roomOverview.roomName ?: ""))
                     }
                 }
@@ -219,7 +216,7 @@ private fun MessengerViewModel.ObserveEvents(galleryLauncher: ActivityResultLaun
 }
 
 @Composable
-private fun ColumnScope.Room(roomStateLce: Lce<MessengerState>, messageActions: MessageActions, onRetry: () -> Unit) {
+private fun ColumnScope.Room(roomStateLce: Lce<MessengerPageState>, messageActions: MessageActions, onRetry: () -> Unit) {
     when (val state = roomStateLce) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {

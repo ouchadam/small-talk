@@ -19,7 +19,7 @@ class ReadMarkingTimeline(
     private val roomService: RoomService,
 ) {
 
-    fun fetch(roomId: RoomId, isReadReceiptsDisabled: Boolean): Flow<MessengerState> {
+    fun fetch(roomId: RoomId, isReadReceiptsDisabled: Boolean): Flow<MessengerPageState> {
         return flow {
             val credentials = credentialsStore.credentials()!!
             roomStore.markRead(roomId)
@@ -37,7 +37,7 @@ class ReadMarkingTimeline(
         }
     }
 
-    private suspend fun updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerState, isReadReceiptsDisabled: Boolean): Deferred<*> {
+    private suspend fun updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerPageState, isReadReceiptsDisabled: Boolean): Deferred<*> {
         return coroutineScope {
             async {
                 runCatching {
@@ -50,7 +50,7 @@ class ReadMarkingTimeline(
 
 }
 
-private fun MessengerState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
+private fun MessengerPageState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
     .filterIsInstance<RoomEvent.Message>()
     .filterNot { it.author.id == self }
     .firstOrNull()

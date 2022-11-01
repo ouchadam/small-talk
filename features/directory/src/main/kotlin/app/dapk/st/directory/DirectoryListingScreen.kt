@@ -35,9 +35,13 @@ import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.design.components.GenericEmpty
 import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Toolbar
-import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
-import app.dapk.st.directory.DirectoryScreenState.Content
-import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
+import app.dapk.st.directory.state.ComponentLifecycle
+import app.dapk.st.directory.state.DirectoryEvent
+import app.dapk.st.directory.state.DirectoryEvent.OpenDownloadUrl
+import app.dapk.st.directory.state.DirectoryScreenState
+import app.dapk.st.directory.state.DirectoryScreenState.Content
+import app.dapk.st.directory.state.DirectoryScreenState.EmptyLoading
+import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.RoomOverview
 import app.dapk.st.engine.Typing
@@ -53,8 +57,8 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 @Composable
-fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
-    val state = directoryViewModel.state
+fun DirectoryScreen(directoryViewModel: DirectoryState) {
+    val state = directoryViewModel.current
 
     val listState: LazyListState = rememberLazyListState(
         initialFirstVisibleItemIndex = 0,
@@ -68,8 +72,8 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     directoryViewModel.ObserveEvents(listState, toolbarOffsetHeightPx)
 
     LifecycleEffect(
-        onStart = { directoryViewModel.start() },
-        onStop = { directoryViewModel.stop() }
+        onStart = { directoryViewModel.dispatch(ComponentLifecycle.OnVisible) },
+        onStop = { directoryViewModel.dispatch(ComponentLifecycle.OnGone) }
     )
 
     val nestedScrollConnection = remember {
@@ -101,7 +105,7 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
 }
 
 @Composable
-private fun DirectoryViewModel.ObserveEvents(listState: LazyListState, toolbarPosition: MutableState<Float>) {
+private fun DirectoryState.ObserveEvents(listState: LazyListState, toolbarPosition: MutableState<Float>) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {

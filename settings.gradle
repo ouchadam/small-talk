@@ -33,6 +33,7 @@ include ':domains:android:viewmodel'
 include ':domains:store'
 include ':domains:olm-stub'
 include ':domains:olm'
+include ':domains:state'
 
 include ':domains:firebase:crashlytics'
 include ':domains:firebase:crashlytics-noop'

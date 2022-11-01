@@ -14,6 +14,10 @@ import app.dapk.st.core.*
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.messenger.gallery.GetImageFromGallery
+import app.dapk.st.messenger.state.ComposerStateChange
+import app.dapk.st.messenger.state.MessengerEvent
+import app.dapk.st.messenger.state.MessengerScreenState
+import app.dapk.st.messenger.state.MessengerState
 import app.dapk.st.navigator.MessageAttachment
 import coil.request.ImageRequest
 import kotlinx.parcelize.Parcelize
@@ -23,7 +27,7 @@ val LocalImageRequestFactory = staticCompositionLocalOf<ImageRequest.Builder> { 
 class MessengerActivity : DapkActivity() {
 
     private val module by unsafeLazy { module<MessengerModule>() }
-    private val viewModel by viewModel { module.messengerViewModel() }
+    private val state by state { module.messengerState(readPayload()) }
 
     companion object {
 
@@ -54,8 +58,8 @@ class MessengerActivity : DapkActivity() {
 
         val galleryLauncher = registerForActivityResult(GetImageFromGallery()) {
             it?.let { uri ->
-                viewModel.post(
-                    MessengerAction.ComposerImageUpdate(
+                state.dispatch(
+                    ComposerStateChange.SelectAttachmentToSend(
                         MessageAttachment(
                             AndroidUri(it.toString()),
                             MimeType.Image,
@@ -68,7 +72,7 @@ class MessengerActivity : DapkActivity() {
         setContent {
             Surface(Modifier.fillMaxSize()) {
                 CompositionLocalProvider(LocalImageRequestFactory provides factory) {
-                    MessengerScreen(RoomId(payload.roomId), payload.attachments, viewModel, navigator, galleryLauncher)
+                    MessengerScreen(state, navigator, galleryLauncher)
                 }
             }
         }

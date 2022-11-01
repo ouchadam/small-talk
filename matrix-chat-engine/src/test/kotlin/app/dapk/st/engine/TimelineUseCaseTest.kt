@@ -135,4 +135,4 @@ fun aMessengerState(
     self: UserId = aUserId(),
     roomState: app.dapk.st.engine.RoomState,
     typing: Typing? = null
-) = MessengerState(self, roomState, typing)
+) = MessengerPageState(self, roomState, typing)

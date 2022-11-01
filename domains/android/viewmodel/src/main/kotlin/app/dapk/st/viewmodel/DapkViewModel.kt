@@ -25,4 +25,3 @@ abstract class DapkViewModel<S, VE>(initialState: S, factory: MutableStateFactor
         state = reducer(state)
     }
 }
-
