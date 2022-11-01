@@ -24,35 +24,41 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Spider
 import app.dapk.st.design.components.SpiderPage
+import app.dapk.st.messenger.gallery.state.ImageGalleryActions
+import app.dapk.st.messenger.gallery.state.ImageGalleryPage
+import app.dapk.st.messenger.gallery.state.ImageGalleryState
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 
 @Composable
-fun ImageGalleryScreen(viewModel: ImageGalleryViewModel, onTopLevelBack: () -> Unit, onImageSelected: (Media) -> Unit) {
+fun ImageGalleryScreen(state: ImageGalleryState, onTopLevelBack: () -> Unit, onImageSelected: (Media) -> Unit) {
     LifecycleEffect(onStart = {
-        viewModel.start()
+        state.dispatch(ImageGalleryActions.Visible)
     })
 
     val onNavigate: (SpiderPage<out ImageGalleryPage>?) -> Unit = {
         when (it) {
             null -> onTopLevelBack()
-            else -> viewModel.goTo(it)
+            else -> state.dispatch(PageAction.GoTo(it))
         }
     }
 
-    Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
+    Spider(currentPage = state.current.state1.page, onNavigate = onNavigate) {
         item(ImageGalleryPage.Routes.folders) {
-            ImageGalleryFolders(it, onClick = { viewModel.selectFolder(it) }, onRetry = { viewModel.start() })
+            ImageGalleryFolders(
+                it,
+                onClick = { state.dispatch(ImageGalleryActions.SelectFolder(it)) },
+                onRetry = { state.dispatch(ImageGalleryActions.Visible) }
+            )
         }
         item(ImageGalleryPage.Routes.files) {
-            ImageGalleryMedia(it, onImageSelected, onRetry = { viewModel.selectFolder(it.folder) })
+            ImageGalleryMedia(it, onImageSelected, onRetry = { state.dispatch(ImageGalleryActions.SelectFolder(it.folder)) })
         }
     }
-
 }
 
 @Composable
-fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit, onRetry: () -> Unit) {
+private fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Unit, onRetry: () -> Unit) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
 
     val gradient = Brush.verticalGradient(
@@ -108,7 +114,7 @@ fun ImageGalleryFolders(state: ImageGalleryPage.Folders, onClick: (Folder) -> Un
 }
 
 @Composable
-fun ImageGalleryMedia(state: ImageGalleryPage.Files, onFileSelected: (Media) -> Unit, onRetry: () -> Unit) {
+private fun ImageGalleryMedia(state: ImageGalleryPage.Files, onFileSelected: (Media) -> Unit, onRetry: () -> Unit) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
 
     Column {

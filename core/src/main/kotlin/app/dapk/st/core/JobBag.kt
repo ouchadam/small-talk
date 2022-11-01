@@ -10,6 +10,11 @@ class JobBag {
         jobs[key] = job
     }
 
+    fun replace(key: String, job: Job) {
+        jobs[key]?.cancel()
+        jobs[key] = job
+    }
+
     fun cancel(key: String) {
         jobs.remove(key)?.cancel()
     }

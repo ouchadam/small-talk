@@ -1,10 +1,10 @@
 package app.dapk.st.directory
 
-import app.dapk.st.core.JobBag
 import app.dapk.st.directory.state.*
 import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.UnreadCount
 import fake.FakeChatEngine
+import fake.FakeJobBag
 import fixture.aRoomOverview
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -91,8 +91,3 @@ class DirectoryReducerTest {
 internal class FakeShortcutHandler {
     val instance = mockk<ShortcutHandler>()
 }
-
-class FakeJobBag {
-    val instance = mockk<JobBag>()
-}
-

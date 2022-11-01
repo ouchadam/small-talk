@@ -64,6 +64,48 @@ sealed interface ActionHandler<S> {
     class Delegate<S>(override val key: KClass<Action>, val handler: ReducerScope<S>.(Action) -> ActionHandler<S>) : ActionHandler<S>
 }
 
+data class Combined2<S1, S2>(val state1: S1, val state2: S2)
+
+fun interface SharedStateScope<C> {
+    fun getSharedState(): C
+}
+
+fun <S> shareState(block: SharedStateScope<S>.() -> ReducerFactory<S>): ReducerFactory<S> {
+    var internalScope: ReducerScope<S>? = null
+    val scope = SharedStateScope { internalScope!!.getState() }
+    val combinedFactory = block(scope)
+    return object : ReducerFactory<S> {
+        override fun create(scope: ReducerScope<S>) = combinedFactory.create(scope).also { internalScope = scope }
+        override fun initialState() = combinedFactory.initialState()
+    }
+}
+
+fun <S1, S2> combineReducers(r1: ReducerFactory<S1>, r2: ReducerFactory<S2>): ReducerFactory<Combined2<S1, S2>> {
+    return object : ReducerFactory<Combined2<S1, S2>> {
+        override fun create(scope: ReducerScope<Combined2<S1, S2>>): Reducer<Combined2<S1, S2>> {
+            val r1Scope = object : ReducerScope<S1> {
+                override val coroutineScope: CoroutineScope = scope.coroutineScope
+                override suspend fun dispatch(action: Action) = scope.dispatch(action)
+                override fun getState() = scope.getState().state1
+            }
+
+            val r2Scope = object : ReducerScope<S2> {
+                override val coroutineScope: CoroutineScope = scope.coroutineScope
+                override suspend fun dispatch(action: Action) = scope.dispatch(action)
+                override fun getState() = scope.getState().state2
+            }
+
+            val r1Reducer = r1.create(r1Scope)
+            val r2Reducer = r2.create(r2Scope)
+            return Reducer {
+                Combined2(r1Reducer.reduce(it), r2Reducer.reduce(it))
+            }
+        }
+
+        override fun initialState(): Combined2<S1, S2> = Combined2(r1.initialState(), r2.initialState())
+    }
+}
+
 fun <S> createReducer(
     initialState: S,
     vararg reducers: (ReducerScope<S>) -> ActionHandler<S>,
