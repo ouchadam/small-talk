@@ -1,9 +1,9 @@
 package app.dapk.st.directory
 
+import app.dapk.st.core.JobBag
 import app.dapk.st.directory.state.*
 import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.UnreadCount
-import app.dapk.state.ReducerFactory
 import fake.FakeChatEngine
 import fixture.aRoomOverview
 import io.mockk.mockk

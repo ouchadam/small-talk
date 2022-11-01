@@ -1,4 +1,4 @@
-package app.dapk.st.directory.state
+package app.dapk.st.core
 
 import kotlinx.coroutines.Job
 

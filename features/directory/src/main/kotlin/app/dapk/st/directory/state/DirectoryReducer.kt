@@ -1,5 +1,6 @@
 package app.dapk.st.directory.state
 
+import app.dapk.st.core.JobBag
 import app.dapk.st.directory.ShortcutHandler
 import app.dapk.st.engine.ChatEngine
 import app.dapk.state.*

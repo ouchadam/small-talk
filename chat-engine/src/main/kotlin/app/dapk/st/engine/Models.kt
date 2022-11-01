@@ -84,7 +84,7 @@ sealed interface ImportResult {
     data class Update(val importedKeysCount: Long) : ImportResult
 }
 
-data class MessengerState(
+data class MessengerPageState(
     val self: UserId,
     val roomState: RoomState,
     val typing: Typing?

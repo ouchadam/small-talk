@@ -24,7 +24,7 @@ inline fun <reified VM : ViewModel> ComponentActivity.viewModel(
 
 
 inline fun <reified S, E> ComponentActivity.state(
-    noinline factory: () -> StateViewModel<S, E>
+    noinline factory: () -> State<S, E>
 ): Lazy<State<S, E>> {
     val factoryPromise = object : Factory {
         @Suppress("UNCHECKED_CAST")

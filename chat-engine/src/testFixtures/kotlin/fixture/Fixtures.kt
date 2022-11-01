@@ -7,7 +7,7 @@ fun aMessengerState(
     self: UserId = aUserId(),
     roomState: RoomState,
     typing: Typing? = null
-) = MessengerState(self, roomState, typing)
+) = MessengerPageState(self, roomState, typing)
 
 fun aRoomOverview(
     roomId: RoomId = aRoomId(),

@@ -14,8 +14,9 @@ fun <S> createStore(reducerFactory: ReducerFactory<S>, coroutineScope: Coroutine
         override suspend fun dispatch(action: Action) {
             scope.coroutineScope.launch {
                 state = reducer.reduce(action).also { nextState ->
-                    println("!!! next state: $nextState")
-                    subscribers.forEach { it.invoke(nextState) }
+                    if (nextState != state) {
+                        subscribers.forEach { it.invoke(nextState) }
+                    }
                 }
             }
         }

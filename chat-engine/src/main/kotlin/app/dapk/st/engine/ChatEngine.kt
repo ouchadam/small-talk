@@ -11,7 +11,7 @@ interface ChatEngine : TaskRunner {
 
     fun directory(): Flow<DirectoryState>
     fun invites(): Flow<InviteState>
-    fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerState>
+    fun messages(roomId: RoomId, disableReadReceipts: Boolean): Flow<MessengerPageState>
 
     fun notificationsMessages(): Flow<UnreadNotifications>
     fun notificationsInvites(): Flow<InviteNotification>

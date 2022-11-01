@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerState>
+internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerPageState>
 
 internal class TimelineUseCaseImpl(
     private val syncService: SyncService,
@@ -19,13 +19,13 @@ internal class TimelineUseCaseImpl(
     private val mergeWithLocalEchosUseCase: MergeWithLocalEchosUseCase
 ) : ObserveTimelineUseCase {
 
-    override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerState> {
+    override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerPageState> {
         return combine(
             roomDatasource(roomId),
             messageService.localEchos(roomId),
             syncService.events(roomId)
         ) { roomState, localEchos, events ->
-            MessengerState(
+            MessengerPageState(
                 roomState = when {
                     localEchos.isEmpty() -> roomState
                     else -> {

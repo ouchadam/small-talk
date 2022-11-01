@@ -4,12 +4,14 @@ import ViewModelTest
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.Lce
 import app.dapk.st.core.extensions.takeIfContent
-import app.dapk.st.engine.MessengerState
+import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomState
 import app.dapk.st.engine.SendMessage
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
+import app.dapk.st.messenger.state.ComposerState
+import app.dapk.st.messenger.state.MessengerScreenState
 import fake.FakeChatEngine
 import fake.FakeMessageOptionsStore
 import fixture.*
@@ -112,7 +114,7 @@ class MessengerViewModelTest {
 
 }
 
-fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerState, messageContent: String?) = MessengerScreenState(
+fun aMessageScreenState(roomId: RoomId = aRoomId(), roomState: MessengerPageState, messageContent: String?) = MessengerScreenState(
     roomId = roomId,
     roomState = Lce.Content(roomState),
     composerState = ComposerState.Text(value = messageContent ?: "", reply = null),

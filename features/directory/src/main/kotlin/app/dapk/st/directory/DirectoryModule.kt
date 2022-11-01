@@ -2,11 +2,9 @@ package app.dapk.st.directory
 
 import android.content.Context
 import app.dapk.st.core.ProvidableModule
-import app.dapk.st.core.StateViewModel
 import app.dapk.st.core.createStateViewModel
-import app.dapk.st.directory.state.DirectoryEvent
-import app.dapk.st.directory.state.DirectoryScreenState
-import app.dapk.st.directory.state.JobBag
+import app.dapk.st.core.JobBag
+import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.directory.state.directoryReducer
 import app.dapk.st.engine.ChatEngine
 
@@ -15,7 +13,7 @@ class DirectoryModule(
     private val chatEngine: ChatEngine,
 ) : ProvidableModule {
 
-    fun directoryViewModel(): StateViewModel<DirectoryScreenState, DirectoryEvent> {
+    fun directoryState(): DirectoryState {
         return createStateViewModel { directoryReducer(chatEngine, ShortcutHandler(context), JobBag(), it) }
     }
 }
