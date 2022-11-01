@@ -9,6 +9,7 @@ import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
+import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.engine.SendMessage
 import app.dapk.st.matrix.common.RoomId
@@ -33,7 +34,7 @@ internal fun messengerReducer(
         initialState = MessengerScreenState(
             roomId = roomId,
             roomState = Lce.Loading(),
-            composerState = initialAttachments?.let { ComposerState.Attachments(it, null) } ?: ComposerState.Text(value = "", reply = null),
+            composerState = initialComposerState(initialAttachments),
             viewerState = null,
         ),
 
@@ -120,32 +121,12 @@ internal fun messengerReducer(
                 is ComposerState.Text -> {
                     dispatch(ComposerStateChange.Clear)
                     state.roomState.takeIfContent()?.let { content ->
-                        val roomState = content.roomState
-                        chatEngine.send(
-                            message = SendMessage.TextMessage(
-                                content = composerState.value,
-                                reply = composerState.reply?.let {
-                                    SendMessage.TextMessage.Reply(
-                                        author = it.author,
-                                        originalMessage = when (it) {
-                                            is RoomEvent.Image -> TODO()
-                                            is RoomEvent.Reply -> TODO()
-                                            is RoomEvent.Message -> it.content.asString()
-                                            is RoomEvent.Encrypted -> error("Should never happen")
-                                        },
-                                        eventId = it.eventId,
-                                        timestampUtc = it.utcTimestamp,
-                                    )
-                                }
-                            ),
-                            room = roomState.roomOverview,
-                        )
+                        chatEngine.sendTextMessage(content, composerState)
                     }
                 }
 
                 is ComposerState.Attachments -> {
                     dispatch(ComposerStateChange.Clear)
-
                     state.roomState.takeIfContent()?.let { content ->
                         val roomState = content.roomState
                         chatEngine.send(SendMessage.ImageMessage(uri = composerState.values.first().uri.value), roomState.roomOverview)
@@ -155,6 +136,33 @@ internal fun messengerReducer(
         },
     )
 }
+
+private suspend fun ChatEngine.sendTextMessage(content: MessengerPageState, composerState: ComposerState.Text) {
+    val roomState = content.roomState
+    val message = SendMessage.TextMessage(
+        content = composerState.value,
+        reply = composerState.reply?.toSendMessageReply(),
+    )
+    this.send(message = message, room = roomState.roomOverview)
+}
+
+private fun RoomEvent.toSendMessageReply() = SendMessage.TextMessage.Reply(
+    author = this.author,
+    originalMessage = when (this) {
+        is RoomEvent.Image -> TODO()
+        is RoomEvent.Reply -> TODO()
+        is RoomEvent.Message -> this.content.asString()
+        is RoomEvent.Encrypted -> error("Should never happen")
+    },
+    eventId = this.eventId,
+    timestampUtc = this.utcTimestamp,
+)
+
+
+private fun initialComposerState(initialAttachments: List<MessageAttachment>?) = initialAttachments
+    ?.takeIf { it.isNotEmpty() }
+    ?.let { ComposerState.Attachments(it, null) }
+    ?: ComposerState.Text(value = "", reply = null)
 
 private fun BubbleModel.findCopyableContent(): CopyableResult = when (this) {
     is BubbleModel.Encrypted -> CopyableResult.NothingToCopy

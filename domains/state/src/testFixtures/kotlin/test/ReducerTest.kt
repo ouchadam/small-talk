@@ -10,8 +10,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.internal.assertEquals
 import org.amshove.kluent.shouldBeEqualTo
-import test.ExpectTest
-import test.ExpectTestScope
 
 interface ReducerTest<S, E> {
     operator fun invoke(block: suspend ReducerTestScope<S, E>.() -> Unit)
@@ -63,11 +61,26 @@ class ReducerTestScope<S, E>(
         manualState = state
     }
 
+    fun setState(block: (S) -> S) {
+        manualState = block(reducerScope.getState())
+    }
+
     fun assertInitialState(expected: S) {
         reducerFactory.initialState() shouldBeEqualTo expected
     }
 
+    fun assertEvents(events: List<E>) {
+        fakeEventSource.assertEvents(events)
+    }
+
     fun assertOnlyStateChange(expected: S) {
+        assertStateChange(expected)
+        assertNoDispatches()
+        fakeEventSource.assertNoEvents()
+    }
+
+    fun assertOnlyStateChange(block: (S) -> S) {
+        val expected = block(reducerScope.getState())
         assertStateChange(expected)
         assertNoDispatches()
         fakeEventSource.assertNoEvents()
@@ -86,7 +99,11 @@ class ReducerTestScope<S, E>(
     }
 
     fun assertNoStateChange() {
-        assertEquals(reducerFactory.initialState(), capturedResult)
+        assertEquals(reducerScope.getState(), capturedResult)
+    }
+
+    fun assertNoEvents() {
+        fakeEventSource.assertNoEvents()
     }
 
     fun assertOnlyDispatches(expected: List<Action>) {
@@ -103,7 +120,7 @@ class ReducerTestScope<S, E>(
 
     fun assertNoChanges() {
         assertNoStateChange()
-        fakeEventSource.assertNoEvents()
+        assertNoEvents()
         assertNoDispatches()
     }
 }
