@@ -10,6 +10,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 import test.expect
+import test.testReducer
 
 private val AN_OVERVIEW = aRoomOverview()
 private val AN_OVERVIEW_STATE = DirectoryItem(AN_OVERVIEW, UnreadCount(1), null)

@@ -1,9 +1,10 @@
-package app.dapk.st.directory
+package test
 
 import app.dapk.state.Action
 import app.dapk.state.Reducer
 import app.dapk.state.ReducerFactory
 import app.dapk.state.ReducerScope
+import fake.FakeEventSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest

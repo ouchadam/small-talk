@@ -1,4 +1,4 @@
-package app.dapk.st.directory
+package fake
 
 import org.amshove.kluent.internal.assertEquals
 
