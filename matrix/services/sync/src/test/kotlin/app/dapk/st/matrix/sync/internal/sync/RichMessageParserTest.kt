@@ -38,8 +38,14 @@ class RichMessageParserTest {
 
     @Test
     fun `replaces apostrophe entity`() = runParserTest(
-        input = "Hello world! foo&#39;s bar",
-        expected = RichText(listOf(Normal("Hello world! foo's bar")))
+        Case(
+            input = "Hello world! foo&#39;s bar",
+            expected = RichText(listOf(Normal("Hello world! foo's bar")))
+        ),
+        Case(
+            input = "Hello world! foo&apos;s bar",
+            expected = RichText(listOf(Normal("Hello world! foo's bar")))
+        ),
     )
 
     @Test
