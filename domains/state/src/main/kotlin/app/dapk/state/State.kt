@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
-fun <S> createStore(reducerFactory: ReducerFactory<S>, coroutineScope: CoroutineScope, log: Boolean = false): Store<S> {
+fun <S> createStore(reducerFactory: ReducerFactory<S>, coroutineScope: CoroutineScope): Store<S> {
     val subscribers = mutableListOf<(S) -> Unit>()
     var state: S = reducerFactory.initialState()
     return object : Store<S> {
@@ -13,17 +13,9 @@ fun <S> createStore(reducerFactory: ReducerFactory<S>, coroutineScope: Coroutine
 
         override fun dispatch(action: Action) {
             coroutineScope.launch {
-                if (log) println("??? dispatch $action")
                 state = reducer.reduce(action).also { nextState ->
                     if (nextState != state) {
-                        if (log) {
-                            println("??? action: $action result...")
-                            println("??? current: $state")
-                            println("??? next: $nextState")
-                        }
                         subscribers.forEach { it.invoke(nextState) }
-                    } else {
-                        if (log) println("??? action: $action skipped, no change")
                     }
                 }
             }
