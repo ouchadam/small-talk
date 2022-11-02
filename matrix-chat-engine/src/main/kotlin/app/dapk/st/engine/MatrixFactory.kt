@@ -146,11 +146,7 @@ internal object MatrixFactory {
                 roomInviteRemover = {
                     overviewStore.removeInvites(listOf(it))
                 },
-                singleRoomStore = object : SingleRoomStore {
-                    override suspend fun mute(roomId: RoomId) = roomStore.mute(roomId)
-                    override suspend fun unmute(roomId: RoomId) = roomStore.unmute(roomId)
-                    override fun isMuted(roomId: RoomId): Flow<Boolean> = roomStore.observeMuted().map { it.contains(roomId) }.distinctUntilChanged()
-                }
+                singleRoomStore = singleRoomStoreAdapter(roomStore)
             )
 
             installProfileService(profileStore, singletonFlows, credentialsStore)
@@ -251,6 +247,12 @@ internal object MatrixFactory {
 
             installPushService(credentialsStore)
         }
+    }
+
+    private fun singleRoomStoreAdapter(roomStore: RoomStore) = object : SingleRoomStore {
+        override suspend fun mute(roomId: RoomId) = roomStore.mute(roomId)
+        override suspend fun unmute(roomId: RoomId) = roomStore.unmute(roomId)
+        override fun isMuted(roomId: RoomId): Flow<Boolean> = roomStore.observeMuted().map { it.contains(roomId) }.distinctUntilChanged()
     }
 
 }

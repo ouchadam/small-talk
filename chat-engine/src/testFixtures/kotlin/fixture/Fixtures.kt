@@ -6,8 +6,9 @@ import app.dapk.st.matrix.common.*
 fun aMessengerState(
     self: UserId = aUserId(),
     roomState: RoomState,
-    typing: Typing? = null
-) = MessengerPageState(self, roomState, typing)
+    typing: Typing? = null,
+    isMuted: Boolean = false,
+) = MessengerPageState(self, roomState, typing, isMuted)
 
 fun aRoomOverview(
     roomId: RoomId = aRoomId(),

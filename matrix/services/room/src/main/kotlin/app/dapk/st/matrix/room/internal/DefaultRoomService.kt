@@ -102,7 +102,7 @@ class DefaultRoomService(
         singleRoomStore.unmute(roomId)
     }
 
-    override fun observeIssMuted(roomId: RoomId): Flow<Boolean> = singleRoomStore.isMuted(roomId)
+    override fun observeIsMuted(roomId: RoomId): Flow<Boolean> = singleRoomStore.isMuted(roomId)
 }
 
 interface SingleRoomStore {

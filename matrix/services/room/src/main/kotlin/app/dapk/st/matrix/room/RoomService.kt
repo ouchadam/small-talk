@@ -27,7 +27,7 @@ interface RoomService : MatrixService {
 
     suspend fun muteRoom(roomId: RoomId)
     suspend fun unmuteRoom(roomId: RoomId)
-    fun observeIssMuted(roomId: RoomId): Flow<Boolean>
+    fun observeIsMuted(roomId: RoomId): Flow<Boolean>
 
     data class JoinedMember(
         val userId: UserId,

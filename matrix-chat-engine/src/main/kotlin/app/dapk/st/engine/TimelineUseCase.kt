@@ -24,7 +24,7 @@ internal class TimelineUseCaseImpl(
             roomDatasource(roomId),
             messageService.localEchos(roomId),
             syncService.events(roomId),
-            roomService.observeIssMuted(roomId),
+            roomService.observeIsMuted(roomId),
         ) { roomState, localEchos, events, isMuted ->
             MessengerPageState(
                 roomState = when {

@@ -61,7 +61,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
 
     @Test
     fun `given initial unreads, when receiving new message, then emits all messages`() = runTest {
-        fakeRoomStore.givenUnreadEvents(
+        fakeRoomStore.givenNotMutedUnreadEvents(
             flowOf(A_ROOM_OVERVIEW.withUnreads(A_MESSAGE), A_ROOM_OVERVIEW.withUnreads(A_MESSAGE, A_MESSAGE_2))
         )
 
@@ -74,7 +74,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
 
     @Test
     fun `given initial unreads, when reading a message, then emits nothing`() = runTest {
-        fakeRoomStore.givenUnreadEvents(
+        fakeRoomStore.givenNotMutedUnreadEvents(
             flowOf(A_ROOM_OVERVIEW.withUnreads(A_MESSAGE) + A_ROOM_OVERVIEW_2.withUnreads(A_MESSAGE_2), A_ROOM_OVERVIEW.withUnreads(A_MESSAGE))
         )
 
@@ -85,7 +85,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
 
     @Test
     fun `given new and then historical message, when reading a message, then only emits the latest`() = runTest {
-        fakeRoomStore.givenUnreadEvents(
+        fakeRoomStore.givenNotMutedUnreadEvents(
             flowOf(
                 NO_UNREADS,
                 A_ROOM_OVERVIEW.withUnreads(A_MESSAGE),
@@ -105,7 +105,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
 
     @Test
     fun `given initial unreads, when reading a duplicate unread, then emits nothing`() = runTest {
-        fakeRoomStore.givenUnreadEvents(
+        fakeRoomStore.givenNotMutedUnreadEvents(
             flowOf(A_ROOM_OVERVIEW.withUnreads(A_MESSAGE), A_ROOM_OVERVIEW.withUnreads(A_MESSAGE))
         )
 
@@ -115,7 +115,7 @@ class ObserveUnreadRenderNotificationsUseCaseTest {
     }
 
     private fun givenNoInitialUnreads(vararg unreads: Map<MatrixRoomOverview, List<MatrixRoomEvent>>) =
-        fakeRoomStore.givenUnreadEvents(flowOf(NO_UNREADS, *unreads))
+        fakeRoomStore.givenNotMutedUnreadEvents(flowOf(NO_UNREADS, *unreads))
 }
 
 private fun Map<MatrixRoomOverview, List<MatrixRoomEvent>>.engine() = this

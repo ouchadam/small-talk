@@ -2,7 +2,6 @@ package app.dapk.st.directory
 
 import app.dapk.st.core.JobBag
 import app.dapk.st.directory.state.*
-import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.UnreadCount
 import fake.FakeChatEngine
 import fixture.aRoomOverview
@@ -13,7 +12,7 @@ import test.expect
 import test.testReducer
 
 private val AN_OVERVIEW = aRoomOverview()
-private val AN_OVERVIEW_STATE = DirectoryItem(AN_OVERVIEW, UnreadCount(1), null)
+private val AN_OVERVIEW_STATE = app.dapk.st.engine.DirectoryItem(AN_OVERVIEW, UnreadCount(1), null, isMuted = false)
 
 class DirectoryReducerTest {
 
