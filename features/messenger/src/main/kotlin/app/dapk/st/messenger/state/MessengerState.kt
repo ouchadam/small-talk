@@ -14,7 +14,8 @@ data class MessengerScreenState(
     val roomId: RoomId,
     val roomState: Lce<MessengerPageState>,
     val composerState: ComposerState,
-    val viewerState: ViewerState?
+    val viewerState: ViewerState?,
+    val isMuted: Boolean,
 )
 
 data class ViewerState(

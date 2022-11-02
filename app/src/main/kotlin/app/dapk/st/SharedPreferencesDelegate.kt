@@ -19,9 +19,21 @@ internal class SharedPreferencesDelegate(
         }
     }
 
+    override suspend fun store(key: String, value: Set<String>) {
+        coroutineDispatchers.withIoContext {
+            preferences.edit().putStringSet(key, value).apply()
+        }
+    }
+
     override suspend fun readString(key: String): String? {
         return coroutineDispatchers.withIoContext {
             preferences.getString(key, null)
+        }
+    }
+
+    override suspend fun readStrings(key: String): Set<String>? {
+        return coroutineDispatchers.withIoContext {
+            preferences.getStringSet(key, null)
         }
     }
 

@@ -18,6 +18,7 @@ import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
+import app.dapk.st.domain.room.MutedRoomsStorePersistence
 import app.dapk.st.engine.MatrixEngine
 import app.dapk.st.firebase.messaging.MessagingModule
 import app.dapk.st.home.BetaVersionUpgradeUseCase
@@ -163,6 +164,7 @@ internal class FeatureModules internal constructor(
             context,
             storeModule.value.messageStore(),
             deviceMeta,
+            MutedRoomsStorePersistence(storeModule.value.cachingPreferences)
         )
     }
     val homeModule by unsafeLazy {

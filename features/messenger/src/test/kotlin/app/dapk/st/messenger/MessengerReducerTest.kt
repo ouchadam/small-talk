@@ -3,10 +3,12 @@ package app.dapk.st.messenger
 import android.os.Build
 import app.dapk.st.core.*
 import app.dapk.st.design.components.BubbleModel
+import app.dapk.st.domain.room.MutedRoomsStore
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.engine.RoomState
 import app.dapk.st.engine.SendMessage
 import app.dapk.st.matrix.common.EventId
+import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.common.asString
 import app.dapk.st.messenger.state.*
@@ -14,6 +16,7 @@ import app.dapk.st.navigator.MessageAttachment
 import fake.FakeChatEngine
 import fake.FakeMessageOptionsStore
 import fixture.*
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -27,6 +30,7 @@ private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
 private const val A_MESSAGE_CONTENT = "message content"
 private val AN_EVENT_ID = anEventId("state event")
+private const val ROOM_IS_MUTED = true
 private val A_SELF_ID = aUserId("self")
 private val A_MESSENGER_PAGE_STATE = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
 private val A_MESSAGE_ATTACHMENT = MessageAttachment(AndroidUri("a-uri"), MimeType.Image)
@@ -48,6 +52,7 @@ class MessengerReducerTest {
     private val fakeChatEngine = FakeChatEngine()
     private val fakeCopyToClipboard = FakeCopyToClipboard()
     private val fakeDeviceMeta = FakeDeviceMeta()
+    private val fakeMutedRoomsStore = FakeMutedRoomsStore()
     private val fakeJobBag = FakeJobBag()
 
     private val runReducerTest = testReducer { fakeEventSource ->
@@ -57,6 +62,7 @@ class MessengerReducerTest {
             fakeCopyToClipboard.instance,
             fakeDeviceMeta.instance,
             fakeMessageOptionsStore.instance,
+            fakeMutedRoomsStore,
             A_ROOM_ID,
             emptyList(),
             fakeEventSource,
@@ -71,6 +77,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
+                isMuted = false,
             )
         )
     }
@@ -83,6 +90,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
+                isMuted = false,
             )
         )
     }
@@ -95,20 +103,22 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Attachments(listOf(A_MESSAGE_ATTACHMENT), reply = null),
                 viewerState = null,
+                isMuted = false,
             )
         )
     }
 
     @Test
-    fun `given messages emits state, when Visible, then dispatches content`() = runReducerTest {
-        fakeJobBag.instance.expect { it.add("messages", any()) }
+    fun `given room is muted and messages emits state, when Visible, then dispatches content and mute changes`() = runReducerTest {
+        fakeMutedRoomsStore.givenIsMuted(A_ROOM_ID).returns(ROOM_IS_MUTED)
+        fakeJobBag.instance.expect { it.replace("messages", any()) }
         fakeMessageOptionsStore.givenReadReceiptsDisabled().returns(READ_RECEIPTS_ARE_DISABLED)
         val state = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
         fakeChatEngine.givenMessages(A_ROOM_ID, READ_RECEIPTS_ARE_DISABLED).returns(flowOf(state))
 
         reduce(ComponentLifecycle.Visible)
 
-        assertOnlyDispatches(listOf(MessagesStateChange.Content(state)))
+        assertOnlyDispatches(listOf(MessagesStateChange.MuteContent(isMuted = ROOM_IS_MUTED), MessagesStateChange.Content(state)))
     }
 
     @Test
@@ -330,6 +340,7 @@ class MessengerReducerTest {
             fakeCopyToClipboard.instance,
             fakeDeviceMeta.instance,
             fakeMessageOptionsStore.instance,
+            FakeMutedRoomsStore(),
             A_ROOM_ID,
             initialAttachments = initialAttachments,
             fakeEventSource,
@@ -359,4 +370,8 @@ class FakeDeviceMeta {
     val instance = mockk<DeviceMeta>()
 
     fun givenApiVersion() = every { instance.apiVersion }.delegateReturn()
+}
+
+class FakeMutedRoomsStore : MutedRoomsStore by mockk() {
+    fun givenIsMuted(roomId: RoomId) = coEvery { isMuted(roomId) }.delegateReturn()
 }

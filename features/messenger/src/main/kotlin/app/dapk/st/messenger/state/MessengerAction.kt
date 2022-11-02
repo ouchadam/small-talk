@@ -10,6 +10,11 @@ sealed interface ScreenAction : Action {
     data class CopyToClipboard(val model: BubbleModel) : ScreenAction
     object SendMessage : ScreenAction
     object OpenGalleryPicker : ScreenAction
+
+    sealed interface Notifications : ScreenAction {
+        object Mute : Notifications
+        object Unmute : Notifications
+    }
 }
 
 sealed interface ComponentLifecycle : Action {
@@ -18,7 +23,8 @@ sealed interface ComponentLifecycle : Action {
 }
 
 sealed interface MessagesStateChange : Action {
-    data class Content(val content: MessengerPageState) : ComposerStateChange
+    data class Content(val content: MessengerPageState) : MessagesStateChange
+    data class MuteContent(val isMuted: Boolean) : MessagesStateChange
 }
 
 sealed interface ComposerStateChange : Action {

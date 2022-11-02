@@ -38,7 +38,7 @@ class DirectoryReducerTest {
     @Test
     fun `given directory content, when Visible, then updates shortcuts and dispatches room state`() = runReducerTest {
         fakeShortcutHandler.instance.expectUnit { it.onDirectoryUpdate(listOf(AN_OVERVIEW)) }
-        fakeJobBag.instance.expect { it.add("sync", any()) }
+        fakeJobBag.instance.expect { it.replace("sync", any()) }
         fakeChatEngine.givenDirectory().returns(flowOf(listOf(AN_OVERVIEW_STATE)))
 
         reduce(ComponentLifecycle.OnVisible)
@@ -49,7 +49,7 @@ class DirectoryReducerTest {
     @Test
     fun `given no directory content, when Visible, then updates shortcuts and dispatches empty state`() = runReducerTest {
         fakeShortcutHandler.instance.expectUnit { it.onDirectoryUpdate(emptyList()) }
-        fakeJobBag.instance.expect { it.add("sync", any()) }
+        fakeJobBag.instance.expect { it.replace("sync", any()) }
         fakeChatEngine.givenDirectory().returns(flowOf(emptyList()))
 
         reduce(ComponentLifecycle.OnVisible)

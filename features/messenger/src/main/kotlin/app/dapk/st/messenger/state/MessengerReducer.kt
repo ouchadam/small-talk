@@ -8,6 +8,7 @@ import app.dapk.st.core.asString
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.domain.application.message.MessageOptionsStore
+import app.dapk.st.domain.room.MutedRoomsStore
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent
@@ -26,6 +27,7 @@ internal fun messengerReducer(
     copyToClipboard: CopyToClipboard,
     deviceMeta: DeviceMeta,
     messageOptionsStore: MessageOptionsStore,
+    mutedRoomsStore: MutedRoomsStore,
     roomId: RoomId,
     initialAttachments: List<MessageAttachment>?,
     eventEmitter: suspend (MessengerEvent) -> Unit,
@@ -36,16 +38,19 @@ internal fun messengerReducer(
             roomState = Lce.Loading(),
             composerState = initialComposerState(initialAttachments),
             viewerState = null,
+            isMuted = false,
         ),
 
         async(ComponentLifecycle::class) { action ->
             val state = getState()
             when (action) {
                 is ComponentLifecycle.Visible -> {
-                    jobBag.add("messages", chatEngine.messages(state.roomId, disableReadReceipts = messageOptionsStore.isReadReceiptsDisabled())
-                        .onEach { dispatch(MessagesStateChange.Content(it)) }
-                        .launchIn(coroutineScope)
+                    jobBag.replace(
+                        "messages", chatEngine.messages(state.roomId, disableReadReceipts = messageOptionsStore.isReadReceiptsDisabled())
+                            .onEach { dispatch(MessagesStateChange.Content(it)) }
+                            .launchIn(coroutineScope)
                     )
+                    dispatch(MessagesStateChange.MuteContent(mutedRoomsStore.isMuted(roomId)))
                 }
 
                 ComponentLifecycle.Gone -> jobBag.cancel("messages")
@@ -134,6 +139,28 @@ internal fun messengerReducer(
                 }
             }
         },
+
+        change(MessagesStateChange.MuteContent::class) { action, state ->
+            state.copy(isMuted = action.isMuted).also {
+                println("??? action - $action previous state: ${state.isMuted} next: ${it.isMuted}")
+            }
+        },
+
+        async(ScreenAction.Notifications::class) { action ->
+            when (action) {
+                ScreenAction.Notifications.Mute -> mutedRoomsStore.mute(roomId)
+                ScreenAction.Notifications.Unmute -> mutedRoomsStore.unmute(roomId)
+            }
+
+            dispatch(
+                MessagesStateChange.MuteContent(
+                    isMuted = when (action) {
+                        ScreenAction.Notifications.Mute -> true
+                        ScreenAction.Notifications.Unmute -> false
+                    }
+                )
+            )
+        },
     )
 }
 
@@ -157,7 +184,6 @@ private fun RoomEvent.toSendMessageReply() = SendMessage.TextMessage.Reply(
     eventId = this.eventId,
     timestampUtc = this.utcTimestamp,
 )
-
 
 private fun initialComposerState(initialAttachments: List<MessageAttachment>?) = initialAttachments
     ?.takeIf { it.isNotEmpty() }
