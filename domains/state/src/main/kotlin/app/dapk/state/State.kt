@@ -40,7 +40,7 @@ fun interface Reducer<S> {
 
 private fun <S> createScope(coroutineScope: CoroutineScope, store: Store<S>) = object : ReducerScope<S> {
     override val coroutineScope = coroutineScope
-    override suspend fun dispatch(action: Action) = store.dispatch(action)
+    override fun dispatch(action: Action) = store.dispatch(action)
     override fun getState(): S = store.getState()
 }
 
@@ -52,7 +52,7 @@ interface Store<S> {
 
 interface ReducerScope<S> {
     val coroutineScope: CoroutineScope
-    suspend fun dispatch(action: Action)
+    fun dispatch(action: Action)
     fun getState(): S
 }
 
@@ -85,13 +85,13 @@ fun <S1, S2> combineReducers(r1: ReducerFactory<S1>, r2: ReducerFactory<S2>): Re
         override fun create(scope: ReducerScope<Combined2<S1, S2>>): Reducer<Combined2<S1, S2>> {
             val r1Scope = object : ReducerScope<S1> {
                 override val coroutineScope: CoroutineScope = scope.coroutineScope
-                override suspend fun dispatch(action: Action) = scope.dispatch(action)
+                override fun dispatch(action: Action) = scope.dispatch(action)
                 override fun getState() = scope.getState().state1
             }
 
             val r2Scope = object : ReducerScope<S2> {
                 override val coroutineScope: CoroutineScope = scope.coroutineScope
-                override suspend fun dispatch(action: Action) = scope.dispatch(action)
+                override fun dispatch(action: Action) = scope.dispatch(action)
                 override fun getState() = scope.getState().state2
             }
 
@@ -174,9 +174,10 @@ fun <A : Action, S> async(klass: KClass<A>, block: suspend ReducerScope<S>.(A) -
 
 fun <A : Action, S> multi(klass: KClass<A>, block: Multi<A, S>.(A) -> (ReducerScope<S>) -> ActionHandler<S>): (ReducerScope<S>) -> ActionHandler<S> {
     val multiScope = object : Multi<A, S> {
-        override fun sideEffect(block: (A, S) -> Unit): (ReducerScope<S>) -> ActionHandler<S> = sideEffect(klass, block)
+        override fun sideEffect(block: suspend (S) -> Unit): (ReducerScope<S>) -> ActionHandler<S> = sideEffect(klass) { _, state -> block(state) }
         override fun change(block: (A, S) -> S): (ReducerScope<S>) -> ActionHandler<S> = change(klass, block)
         override fun async(block: suspend ReducerScope<S>.(A) -> Unit): (ReducerScope<S>) -> ActionHandler<S> = async(klass, block)
+        override fun nothing() = sideEffect { }
     }
 
     return {
@@ -187,7 +188,8 @@ fun <A : Action, S> multi(klass: KClass<A>, block: Multi<A, S>.(A) -> (ReducerSc
 }
 
 interface Multi<A : Action, S> {
-    fun sideEffect(block: (A, S) -> Unit): (ReducerScope<S>) -> ActionHandler<S>
+    fun sideEffect(block: suspend (S) -> Unit): (ReducerScope<S>) -> ActionHandler<S>
+    fun nothing(): (ReducerScope<S>) -> ActionHandler<S>
     fun change(block: (A, S) -> S): (ReducerScope<S>) -> ActionHandler<S>
     fun async(block: suspend ReducerScope<S>.(A) -> Unit): (ReducerScope<S>) -> ActionHandler<S>
 }
