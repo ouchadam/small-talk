@@ -28,6 +28,7 @@ private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
 private const val A_MESSAGE_CONTENT = "message content"
 private val AN_EVENT_ID = anEventId("state event")
+private const val ROOM_IS_MUTED = true
 private val A_SELF_ID = aUserId("self")
 private val A_MESSENGER_PAGE_STATE = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
 private val A_MESSAGE_ATTACHMENT = MessageAttachment(AndroidUri("a-uri"), MimeType.Image)
@@ -102,7 +103,7 @@ class MessengerReducerTest {
 
     @Test
     fun `given messages emits state, when Visible, then dispatches content`() = runReducerTest {
-        fakeJobBag.instance.expect { it.add("messages", any()) }
+        fakeJobBag.instance.expect { it.replace("messages", any()) }
         fakeMessageOptionsStore.givenReadReceiptsDisabled().returns(READ_RECEIPTS_ARE_DISABLED)
         val state = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
         fakeChatEngine.givenMessages(A_ROOM_ID, READ_RECEIPTS_ARE_DISABLED).returns(flowOf(state))

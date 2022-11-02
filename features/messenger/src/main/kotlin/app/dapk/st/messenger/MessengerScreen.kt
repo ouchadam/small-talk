@@ -87,9 +87,20 @@ internal fun MessengerScreen(
 
     Column {
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
-//            OverflowMenu {
-//                DropdownMenuItem(text = { Text("Settings", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {})
-//            }
+            state.roomState.takeIfContent()?.let {
+                OverflowMenu {
+                    when (it.isMuted) {
+                        true -> DropdownMenuItem(text = { Text("Unmute notifications", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
+                            viewModel.dispatch(ScreenAction.Notifications.Unmute)
+                        })
+
+                        false -> DropdownMenuItem(text = { Text("Mute notifications", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
+                            viewModel.dispatch(ScreenAction.Notifications.Mute)
+                        })
+                    }
+                }
+
+            }
         })
 
         when (state.composerState) {

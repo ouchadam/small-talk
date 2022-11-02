@@ -42,9 +42,10 @@ internal fun messengerReducer(
             val state = getState()
             when (action) {
                 is ComponentLifecycle.Visible -> {
-                    jobBag.add("messages", chatEngine.messages(state.roomId, disableReadReceipts = messageOptionsStore.isReadReceiptsDisabled())
-                        .onEach { dispatch(MessagesStateChange.Content(it)) }
-                        .launchIn(coroutineScope)
+                    jobBag.replace(
+                        "messages", chatEngine.messages(state.roomId, disableReadReceipts = messageOptionsStore.isReadReceiptsDisabled())
+                            .onEach { dispatch(MessagesStateChange.Content(it)) }
+                            .launchIn(coroutineScope)
                     )
                 }
 
@@ -134,6 +135,30 @@ internal fun messengerReducer(
                 }
             }
         },
+
+        change(MessagesStateChange.MuteContent::class) { action, state ->
+            when (val roomState = state.roomState) {
+                is Lce.Content -> state.copy(roomState = roomState.copy(value = roomState.value.copy(isMuted = action.isMuted)))
+                is Lce.Error -> state
+                is Lce.Loading -> state
+            }
+        },
+
+        async(ScreenAction.Notifications::class) { action ->
+            when (action) {
+                ScreenAction.Notifications.Mute -> chatEngine.muteRoom(roomId)
+                ScreenAction.Notifications.Unmute -> chatEngine.unmuteRoom(roomId)
+            }
+
+            dispatch(
+                MessagesStateChange.MuteContent(
+                    isMuted = when (action) {
+                        ScreenAction.Notifications.Mute -> true
+                        ScreenAction.Notifications.Unmute -> false
+                    }
+                )
+            )
+        },
     )
 }
 
@@ -157,7 +182,6 @@ private fun RoomEvent.toSendMessageReply() = SendMessage.TextMessage.Reply(
     eventId = this.eventId,
     timestampUtc = this.utcTimestamp,
 )
-
 
 private fun initialComposerState(initialAttachments: List<MessageAttachment>?) = initialAttachments
     ?.takeIf { it.isNotEmpty() }

@@ -16,7 +16,6 @@ FROM dbRoomMember
 WHERE room_id = ?
 LIMIT ?;
 
-
 insert:
 INSERT OR REPLACE INTO dbRoomMember(user_id, room_id, blob)
 VALUES (?, ?, ?);

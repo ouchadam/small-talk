@@ -1,7 +1,6 @@
 package app.dapk.st.directory
 
 import app.dapk.st.directory.state.*
-import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.UnreadCount
 import fake.FakeChatEngine
 import fake.FakeJobBag
@@ -13,7 +12,7 @@ import test.expect
 import test.testReducer
 
 private val AN_OVERVIEW = aRoomOverview()
-private val AN_OVERVIEW_STATE = DirectoryItem(AN_OVERVIEW, UnreadCount(1), null)
+private val AN_OVERVIEW_STATE = app.dapk.st.engine.DirectoryItem(AN_OVERVIEW, UnreadCount(1), null, isMuted = false)
 
 class DirectoryReducerTest {
 
@@ -38,7 +37,7 @@ class DirectoryReducerTest {
     @Test
     fun `given directory content, when Visible, then updates shortcuts and dispatches room state`() = runReducerTest {
         fakeShortcutHandler.instance.expectUnit { it.onDirectoryUpdate(listOf(AN_OVERVIEW)) }
-        fakeJobBag.instance.expect { it.add("sync", any()) }
+        fakeJobBag.instance.expect { it.replace("sync", any()) }
         fakeChatEngine.givenDirectory().returns(flowOf(listOf(AN_OVERVIEW_STATE)))
 
         reduce(ComponentLifecycle.OnVisible)
@@ -49,7 +48,7 @@ class DirectoryReducerTest {
     @Test
     fun `given no directory content, when Visible, then updates shortcuts and dispatches empty state`() = runReducerTest {
         fakeShortcutHandler.instance.expectUnit { it.onDirectoryUpdate(emptyList()) }
-        fakeJobBag.instance.expect { it.add("sync", any()) }
+        fakeJobBag.instance.expect { it.replace("sync", any()) }
         fakeChatEngine.givenDirectory().returns(flowOf(emptyList()))
 
         reduce(ComponentLifecycle.OnVisible)

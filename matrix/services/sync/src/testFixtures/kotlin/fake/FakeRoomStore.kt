@@ -34,4 +34,8 @@ class FakeRoomStore : RoomStore by mockk() {
         every { observeUnread() } returns unreadEvents
     }
 
+    fun givenNotMutedUnreadEvents(unreadEvents: Flow<Map<RoomOverview, List<RoomEvent>>>) {
+        every { observeNotMutedUnread() } returns unreadEvents
+    }
+
 }
