@@ -24,11 +24,13 @@ internal class DirectoryUseCase(
                 roomStore.observeUnreadCountById(),
                 syncService.events()
             ) { overviewState, localEchos, unread, events ->
+                val allMuted = roomStore.allMuted()
                 overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
                     DirectoryItem(
                         overview = roomOverview,
                         unreadCount = UnreadCount(unread[roomOverview.roomId] ?: 0),
-                        typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }?.engine()
+                        typing = events.filterIsInstance<Typing>().firstOrNull { it.roomId == roomOverview.roomId }?.engine(),
+                        isMuted = allMuted.contains(roomOverview.roomId),
                     )
                 }
             }

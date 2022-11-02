@@ -13,7 +13,8 @@ typealias InviteState = List<RoomInvite>
 data class DirectoryItem(
     val overview: RoomOverview,
     val unreadCount: UnreadCount,
-    val typing: Typing?
+    val typing: Typing?,
+    val isMuted: Boolean,
 )
 
 data class RoomOverview(
