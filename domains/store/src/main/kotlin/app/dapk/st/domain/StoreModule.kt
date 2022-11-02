@@ -34,13 +34,17 @@ class StoreModule(
     private val coroutineDispatchers: CoroutineDispatchers,
 ) {
 
+    private val muteableStore by unsafeLazy { MutedStorePersistence(preferences) }
+
     fun overviewStore(): OverviewStore = OverviewPersistence(database, coroutineDispatchers)
-    fun roomStore(): RoomStore = RoomPersistence(
-        database = database,
-        overviewPersistence = OverviewPersistence(database, coroutineDispatchers),
-        coroutineDispatchers = coroutineDispatchers,
-        muteableStore = MutedStorePersistence(preferences),
-    )
+    fun roomStore(): RoomStore {
+        return RoomPersistence(
+            database = database,
+            overviewPersistence = OverviewPersistence(database, coroutineDispatchers),
+            coroutineDispatchers = coroutineDispatchers,
+            muteableStore = muteableStore,
+        )
+    }
 
     fun credentialsStore(): CredentialsStore = CredentialsPreferences(credentialPreferences)
     fun syncStore(): SyncStore = SyncTokenPreferences(preferences)

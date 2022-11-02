@@ -28,6 +28,9 @@ import app.dapk.st.matrix.sync.internal.room.MessageDecrypter
 import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmStore
 import app.dapk.st.olm.OlmWrapper
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import java.time.Clock
 
 internal object MatrixFactory {
@@ -146,7 +149,7 @@ internal object MatrixFactory {
                 singleRoomStore = object : SingleRoomStore {
                     override suspend fun mute(roomId: RoomId) = roomStore.mute(roomId)
                     override suspend fun unmute(roomId: RoomId) = roomStore.unmute(roomId)
-                    override suspend fun isMuted(roomId: RoomId) = roomStore.isMuted(roomId)
+                    override fun isMuted(roomId: RoomId): Flow<Boolean> = roomStore.observeMuted().map { it.contains(roomId) }.distinctUntilChanged()
                 }
             )
 

@@ -23,8 +23,9 @@ internal class TimelineUseCaseImpl(
         return combine(
             roomDatasource(roomId),
             messageService.localEchos(roomId),
-            syncService.events(roomId)
-        ) { roomState, localEchos, events ->
+            syncService.events(roomId),
+            roomService.observeIssMuted(roomId),
+        ) { roomState, localEchos, events, isMuted ->
             MessengerPageState(
                 roomState = when {
                     localEchos.isEmpty() -> roomState
@@ -38,7 +39,7 @@ internal class TimelineUseCaseImpl(
                 },
                 typing = events.filterIsInstance<SyncService.SyncEvent.Typing>().firstOrNull { it.roomId == roomId }?.engine(),
                 self = userId,
-                isMuted = roomService.isMuted(roomId)
+                isMuted = isMuted,
             )
         }
     }

@@ -25,9 +25,8 @@ interface MuteableStore {
     suspend fun mute(roomId: RoomId)
     suspend fun unmute(roomId: RoomId)
     suspend fun isMuted(roomId: RoomId): Boolean
-    suspend fun allMuted(): Set<RoomId>
+    fun observeMuted(): Flow<Set<RoomId>>
 }
-
 
 interface FilterStore {
 

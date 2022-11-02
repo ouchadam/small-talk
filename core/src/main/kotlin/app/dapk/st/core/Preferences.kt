@@ -20,13 +20,13 @@ suspend fun CachedPreferences.readBoolean(key: String, defaultValue: Boolean) = 
 
 suspend fun Preferences.readBoolean(key: String) = this.readString(key)?.toBooleanStrict()
 suspend fun Preferences.store(key: String, value: Boolean) = this.store(key, value.toString())
-suspend fun Preferences.append(key: String, value: String) {
+suspend fun Preferences.append(key: String, value: String): Set<String> {
     val current = this.readStrings(key) ?: emptySet()
-    this.store(key, current + value)
+    return (current + value).also { this.store(key, it) }
 }
 
-suspend fun Preferences.removeFromSet(key: String, value: String) {
+suspend fun Preferences.removeFromSet(key: String, value: String): Set<String> {
     val current = this.readStrings(key) ?: emptySet()
-    this.store(key, current - value)
+    return (current - value).also { this.store(key, it) }
 }
 

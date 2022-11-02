@@ -6,6 +6,7 @@ import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.internal.*
+import kotlinx.coroutines.flow.Flow
 
 private val SERVICE_KEY = RoomService::class
 
@@ -26,7 +27,7 @@ interface RoomService : MatrixService {
 
     suspend fun muteRoom(roomId: RoomId)
     suspend fun unmuteRoom(roomId: RoomId)
-    suspend fun isMuted(roomId: RoomId): Boolean
+    fun observeIssMuted(roomId: RoomId): Flow<Boolean>
 
     data class JoinedMember(
         val userId: UserId,
