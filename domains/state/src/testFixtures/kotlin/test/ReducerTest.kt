@@ -53,7 +53,7 @@ class ReducerTestScope<S, E>(
     }
     private val reducer: Reducer<S> = reducerFactory.create(reducerScope)
 
-    override suspend fun reduce(action: Action) = reducer.reduce(action).also {
+    override fun reduce(action: Action) = reducer.reduce(action).also {
         capturedResult = it
     }
 

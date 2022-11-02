@@ -36,6 +36,8 @@ interface ChatEngine : TaskRunner {
 
     fun pushHandler(): PushHandler
 
+    suspend fun muteRoom(roomId: RoomId)
+    suspend fun unmuteRoom(roomId: RoomId)
 }
 
 interface TaskRunner {

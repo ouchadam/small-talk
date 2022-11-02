@@ -10,6 +10,7 @@ import app.dapk.st.matrix.room.RoomMessenger
 import app.dapk.st.matrix.room.RoomService
 import io.ktor.client.plugins.*
 import io.ktor.http.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -19,6 +20,7 @@ class DefaultRoomService(
     private val roomMembers: RoomMembers,
     private val roomMessenger: RoomMessenger,
     private val roomInviteRemover: RoomInviteRemover,
+    private val singleRoomStore: SingleRoomStore,
 ) : RoomService {
 
     override suspend fun joinedMembers(roomId: RoomId): List<RoomService.JoinedMember> {
@@ -82,6 +84,7 @@ class DefaultRoomService(
                         } else {
                             throw it
                         }
+
                     }
 
                     else -> throw it
@@ -90,6 +93,22 @@ class DefaultRoomService(
         )
         roomInviteRemover.remove(roomId)
     }
+
+    override suspend fun muteRoom(roomId: RoomId) {
+        singleRoomStore.mute(roomId)
+    }
+
+    override suspend fun unmuteRoom(roomId: RoomId) {
+        singleRoomStore.unmute(roomId)
+    }
+
+    override fun observeIsMuted(roomId: RoomId): Flow<Boolean> = singleRoomStore.isMuted(roomId)
+}
+
+interface SingleRoomStore {
+    suspend fun mute(roomId: RoomId)
+    suspend fun unmute(roomId: RoomId)
+    fun isMuted(roomId: RoomId): Flow<Boolean>
 }
 
 internal fun joinedMembersRequest(roomId: RoomId) = httpRequest<JoinedMembersResponse>(

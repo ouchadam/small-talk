@@ -11,7 +11,6 @@ import app.dapk.state.Store
 import app.dapk.state.createStore
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.launch
 
 class StateViewModel<S, E>(
     reducerFactory: ReducerFactory<S>,
@@ -32,7 +31,7 @@ class StateViewModel<S, E>(
     }
 
     override fun dispatch(action: Action) {
-        viewModelScope.launch { store.dispatch(action) }
+        store.dispatch(action)
     }
 }
 

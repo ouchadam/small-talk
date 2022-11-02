@@ -6,7 +6,8 @@ class JobBag {
 
     private val jobs = mutableMapOf<String, Job>()
 
-    fun add(key: String, job: Job) {
+    fun replace(key: String, job: Job) {
+        jobs[key]?.cancel()
         jobs[key] = job
     }
 

@@ -4,6 +4,7 @@ import app.dapk.st.core.CachedPreferences
 import app.dapk.st.core.Preferences
 
 class CachingPreferences(private val cache: PropertyCache, private val preferences: Preferences) : CachedPreferences {
+
     override suspend fun store(key: String, value: String) {
         cache.setValue(key, value)
         preferences.store(key, value)

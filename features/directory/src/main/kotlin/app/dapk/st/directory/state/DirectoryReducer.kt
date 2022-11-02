@@ -21,7 +21,7 @@ internal fun directoryReducer(
         multi(ComponentLifecycle::class) { action ->
             when (action) {
                 ComponentLifecycle.OnVisible -> async { _ ->
-                    jobBag.add(KEY_SYNCING_JOB, chatEngine.directory().onEach {
+                    jobBag.replace(KEY_SYNCING_JOB, chatEngine.directory().onEach {
                         shortcutHandler.onDirectoryUpdate(it.map { it.overview })
                         when (it.isEmpty()) {
                             true -> dispatch(DirectoryStateChange.Empty)

@@ -13,7 +13,8 @@ typealias InviteState = List<RoomInvite>
 data class DirectoryItem(
     val overview: RoomOverview,
     val unreadCount: UnreadCount,
-    val typing: Typing?
+    val typing: Typing?,
+    val isMuted: Boolean,
 )
 
 data class RoomOverview(
@@ -87,7 +88,8 @@ sealed interface ImportResult {
 data class MessengerPageState(
     val self: UserId,
     val roomState: RoomState,
-    val typing: Typing?
+    val typing: Typing?,
+    val isMuted: Boolean,
 )
 
 data class RoomState(

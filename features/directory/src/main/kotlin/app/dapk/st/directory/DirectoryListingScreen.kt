@@ -2,6 +2,7 @@ package app.dapk.st.directory
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,13 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Speaker
+import androidx.compose.material.icons.filled.VolumeMute
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.SpeakerNotesOff
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -198,35 +206,23 @@ private fun DirectoryItem(room: DirectoryItem, onClick: (RoomId) -> Unit, clock:
                     )
                 }
 
-                if (hasUnread) {
+                if (hasUnread || room.isMuted) {
                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                         Box(modifier = Modifier.weight(1f)) {
                             body(overview, secondaryText, room.typing)
                         }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(Modifier.align(Alignment.CenterVertically)) {
-                            Box(
-                                Modifier
-                                    .align(Alignment.Center)
-                                    .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
-                                    .size(22.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val unreadTextSize = when (room.unreadCount.value > 99) {
-                                    true -> 9.sp
-                                    false -> 10.sp
-                                }
-                                val unreadLabelContent = when {
-                                    room.unreadCount.value > 99 -> "99+"
-                                    else -> room.unreadCount.value.toString()
-                                }
-                                Text(
-                                    fontSize = unreadTextSize,
-                                    fontWeight = FontWeight.Medium,
-                                    text = unreadLabelContent,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
+                        if (hasUnread) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(Modifier.align(Alignment.CenterVertically)) {
+                                UnreadCircle(room)
                             }
+                        }
+                        if (room.isMuted) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Filled.VolumeOff,
+                                contentDescription = "",
+                            )
                         }
                     }
                 } else {
@@ -234,6 +230,32 @@ private fun DirectoryItem(room: DirectoryItem, onClick: (RoomId) -> Unit, clock:
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BoxScope.UnreadCircle(room: DirectoryItem) {
+    Box(
+        Modifier.Companion
+            .align(Alignment.Center)
+            .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+            .size(22.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val unreadTextSize = when (room.unreadCount.value > 99) {
+            true -> 9.sp
+            false -> 10.sp
+        }
+        val unreadLabelContent = when {
+            room.unreadCount.value > 99 -> "99+"
+            else -> room.unreadCount.value.toString()
+        }
+        Text(
+            fontSize = unreadTextSize,
+            fontWeight = FontWeight.Medium,
+            text = unreadLabelContent,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }
 
