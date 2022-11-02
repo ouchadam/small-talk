@@ -38,3 +38,8 @@ sealed interface PageAction : Action {
 data class PageContainer<P>(
     val page: SpiderPage<out P>
 )
+
+fun PageContainer<*>.isDifferentPage(page: SpiderPage<*>): Boolean {
+    return page::class != this.page::class
+}
+

@@ -56,4 +56,10 @@ private fun SharedStateScope<Combined2<PageContainer<ImageGalleryPage>, Unit>>.c
             dispatch(PageAction.UpdatePage(page.state.copy(content = Lce.Content(media))))
         })
     },
+
+    sideEffect(PageAction.GoTo::class) { action, _ ->
+        if (getSharedState().state1.isDifferentPage(action.page)) {
+            jobBag.cancel("page")
+        }
+    }
 )
