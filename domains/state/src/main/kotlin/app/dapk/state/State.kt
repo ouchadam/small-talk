@@ -4,18 +4,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
-fun <S> createStore(reducerFactory: ReducerFactory<S>, coroutineScope: CoroutineScope): Store<S> {
+fun <S> createStore(reducerFactory: ReducerFactory<S>, coroutineScope: CoroutineScope, log: Boolean = false): Store<S> {
     val subscribers = mutableListOf<(S) -> Unit>()
     var state: S = reducerFactory.initialState()
     return object : Store<S> {
         private val scope = createScope(coroutineScope, this)
         private val reducer = reducerFactory.create(scope)
 
-        override suspend fun dispatch(action: Action) {
-            scope.coroutineScope.launch {
+        override fun dispatch(action: Action) {
+            coroutineScope.launch {
+                if (log) println("??? dispatch $action")
                 state = reducer.reduce(action).also { nextState ->
                     if (nextState != state) {
+                        if (log) {
+                            println("??? action: $action result...")
+                            println("??? current: $state")
+                            println("??? next: $nextState")
+                        }
                         subscribers.forEach { it.invoke(nextState) }
+                    } else {
+                        if (log) println("??? action: $action skipped, no change")
                     }
                 }
             }
@@ -35,7 +43,7 @@ interface ReducerFactory<S> {
 }
 
 fun interface Reducer<S> {
-    suspend fun reduce(action: Action): S
+    fun reduce(action: Action): S
 }
 
 private fun <S> createScope(coroutineScope: CoroutineScope, store: Store<S>) = object : ReducerScope<S> {
@@ -45,7 +53,7 @@ private fun <S> createScope(coroutineScope: CoroutineScope, store: Store<S>) = o
 }
 
 interface Store<S> {
-    suspend fun dispatch(action: Action)
+    fun dispatch(action: Action)
     fun getState(): S
     fun subscribe(subscriber: (S) -> Unit)
 }
@@ -82,14 +90,18 @@ fun <S> createReducer(
                         actionHandlers.fold(acc) { acc, handler ->
                             when (handler) {
                                 is ActionHandler.Async -> {
-                                    handler.handler.invoke(scope, action)
+                                    scope.coroutineScope.launch {
+                                        handler.handler.invoke(scope, action)
+                                    }
                                     acc
                                 }
 
                                 is ActionHandler.Sync -> handler.handler.invoke(action, acc)
                                 is ActionHandler.Delegate -> when (val next = handler.handler.invoke(scope, action)) {
                                     is ActionHandler.Async -> {
-                                        next.handler.invoke(scope, action)
+                                        scope.coroutineScope.launch {
+                                            next.handler.invoke(scope, action)
+                                        }
                                         acc
                                     }
 
