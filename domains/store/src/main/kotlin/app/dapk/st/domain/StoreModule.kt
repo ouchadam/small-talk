@@ -13,6 +13,7 @@ import app.dapk.st.domain.preference.CachingPreferences
 import app.dapk.st.domain.preference.PropertyCache
 import app.dapk.st.domain.profile.ProfilePersistence
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
+import app.dapk.st.domain.room.MutedStorePersistence
 import app.dapk.st.domain.sync.OverviewPersistence
 import app.dapk.st.domain.sync.RoomPersistence
 import app.dapk.st.matrix.common.CredentialsStore
@@ -34,7 +35,13 @@ class StoreModule(
 ) {
 
     fun overviewStore(): OverviewStore = OverviewPersistence(database, coroutineDispatchers)
-    fun roomStore(): RoomStore = RoomPersistence(database, OverviewPersistence(database, coroutineDispatchers), coroutineDispatchers)
+    fun roomStore(): RoomStore = RoomPersistence(
+        database = database,
+        overviewPersistence = OverviewPersistence(database, coroutineDispatchers),
+        coroutineDispatchers = coroutineDispatchers,
+        muteableStore = MutedStorePersistence(preferences),
+    )
+
     fun credentialsStore(): CredentialsStore = CredentialsPreferences(credentialPreferences)
     fun syncStore(): SyncStore = SyncTokenPreferences(preferences)
     fun filterStore(): FilterStore = FilterPreferences(preferences)

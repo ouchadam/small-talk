@@ -4,19 +4,13 @@ import app.dapk.st.core.Preferences
 import app.dapk.st.core.append
 import app.dapk.st.core.removeFromSet
 import app.dapk.st.matrix.common.RoomId
+import app.dapk.st.matrix.sync.MuteableStore
 
 private const val KEY_MUTE = "mute"
 
-interface MutedRoomsStore {
-    suspend fun mute(roomId: RoomId)
-    suspend fun unmute(roomId: RoomId)
-    suspend fun isMuted(roomId: RoomId): Boolean
-    suspend fun allMuted(): Set<RoomId>
-}
-
-class MutedRoomsStorePersistence(
+internal class MutedStorePersistence(
     private val preferences: Preferences
-) : MutedRoomsStore {
+) : MuteableStore {
 
     override suspend fun mute(roomId: RoomId) {
         preferences.append(KEY_MUTE, roomId.value)
@@ -28,8 +22,6 @@ class MutedRoomsStorePersistence(
 
     override suspend fun isMuted(roomId: RoomId): Boolean {
         val allMuted = allMuted()
-        println("??? isMuted - $roomId")
-        println("??? all - $allMuted")
         return allMuted.contains(roomId)
     }
 

@@ -38,6 +38,7 @@ internal class TimelineUseCaseImpl(
                 },
                 typing = events.filterIsInstance<SyncService.SyncEvent.Typing>().firstOrNull { it.roomId == roomId }?.engine(),
                 self = userId,
+                isMuted = roomService.isMuted(roomId)
             )
         }
     }

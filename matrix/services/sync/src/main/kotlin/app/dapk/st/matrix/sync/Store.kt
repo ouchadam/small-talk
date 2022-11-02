@@ -5,7 +5,7 @@ import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.SyncToken
 import kotlinx.coroutines.flow.Flow
 
-interface RoomStore {
+interface RoomStore : MuteableStore {
 
     suspend fun persist(roomId: RoomId, events: List<RoomEvent>)
     suspend fun remove(rooms: List<RoomId>)
@@ -20,6 +20,14 @@ interface RoomStore {
     suspend fun findEvent(eventId: EventId): RoomEvent?
 
 }
+
+interface MuteableStore {
+    suspend fun mute(roomId: RoomId)
+    suspend fun unmute(roomId: RoomId)
+    suspend fun isMuted(roomId: RoomId): Boolean
+    suspend fun allMuted(): Set<RoomId>
+}
+
 
 interface FilterStore {
 

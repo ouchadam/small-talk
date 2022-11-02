@@ -8,7 +8,6 @@ import app.dapk.st.core.asString
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.domain.application.message.MessageOptionsStore
-import app.dapk.st.domain.room.MutedRoomsStore
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent
@@ -27,7 +26,6 @@ internal fun messengerReducer(
     copyToClipboard: CopyToClipboard,
     deviceMeta: DeviceMeta,
     messageOptionsStore: MessageOptionsStore,
-    mutedRoomsStore: MutedRoomsStore,
     roomId: RoomId,
     initialAttachments: List<MessageAttachment>?,
     eventEmitter: suspend (MessengerEvent) -> Unit,
@@ -38,7 +36,6 @@ internal fun messengerReducer(
             roomState = Lce.Loading(),
             composerState = initialComposerState(initialAttachments),
             viewerState = null,
-            isMuted = false,
         ),
 
         async(ComponentLifecycle::class) { action ->
@@ -50,7 +47,6 @@ internal fun messengerReducer(
                             .onEach { dispatch(MessagesStateChange.Content(it)) }
                             .launchIn(coroutineScope)
                     )
-                    dispatch(MessagesStateChange.MuteContent(mutedRoomsStore.isMuted(roomId)))
                 }
 
                 ComponentLifecycle.Gone -> jobBag.cancel("messages")
@@ -141,15 +137,17 @@ internal fun messengerReducer(
         },
 
         change(MessagesStateChange.MuteContent::class) { action, state ->
-            state.copy(isMuted = action.isMuted).also {
-                println("??? action - $action previous state: ${state.isMuted} next: ${it.isMuted}")
+            when (val roomState = state.roomState) {
+                is Lce.Content -> state.copy(roomState = roomState.copy(value = roomState.value.copy(isMuted = action.isMuted)))
+                is Lce.Error -> state
+                is Lce.Loading -> state
             }
         },
 
         async(ScreenAction.Notifications::class) { action ->
             when (action) {
-                ScreenAction.Notifications.Mute -> mutedRoomsStore.mute(roomId)
-                ScreenAction.Notifications.Unmute -> mutedRoomsStore.unmute(roomId)
+                ScreenAction.Notifications.Mute -> chatEngine.muteRoom(roomId)
+                ScreenAction.Notifications.Unmute -> chatEngine.unmuteRoom(roomId)
             }
 
             dispatch(

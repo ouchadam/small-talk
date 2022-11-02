@@ -19,6 +19,7 @@ class DefaultRoomService(
     private val roomMembers: RoomMembers,
     private val roomMessenger: RoomMessenger,
     private val roomInviteRemover: RoomInviteRemover,
+    private val singleRoomStore: SingleRoomStore,
 ) : RoomService {
 
     override suspend fun joinedMembers(roomId: RoomId): List<RoomService.JoinedMember> {
@@ -82,6 +83,7 @@ class DefaultRoomService(
                         } else {
                             throw it
                         }
+
                     }
 
                     else -> throw it
@@ -90,6 +92,22 @@ class DefaultRoomService(
         )
         roomInviteRemover.remove(roomId)
     }
+
+    override suspend fun muteRoom(roomId: RoomId) {
+        singleRoomStore.mute(roomId)
+    }
+
+    override suspend fun unmuteRoom(roomId: RoomId) {
+        singleRoomStore.unmute(roomId)
+    }
+
+    override suspend fun isMuted(roomId: RoomId) = singleRoomStore.isMuted(roomId)
+}
+
+interface SingleRoomStore {
+    suspend fun mute(roomId: RoomId)
+    suspend fun unmute(roomId: RoomId)
+    suspend fun isMuted(roomId: RoomId): Boolean
 }
 
 internal fun joinedMembersRequest(roomId: RoomId) = httpRequest<JoinedMembersResponse>(

@@ -87,7 +87,8 @@ sealed interface ImportResult {
 data class MessengerPageState(
     val self: UserId,
     val roomState: RoomState,
-    val typing: Typing?
+    val typing: Typing?,
+    val isMuted: Boolean,
 )
 
 data class RoomState(
