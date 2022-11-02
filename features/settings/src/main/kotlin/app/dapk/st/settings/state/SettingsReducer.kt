@@ -5,10 +5,7 @@ import app.dapk.st.core.JobBag
 import app.dapk.st.core.Lce
 import app.dapk.st.core.State
 import app.dapk.st.core.ThemeStore
-import app.dapk.st.core.page.PageAction
-import app.dapk.st.core.page.PageContainer
-import app.dapk.st.core.page.createPageReducer
-import app.dapk.st.core.page.withPageContext
+import app.dapk.st.core.page.*
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.domain.application.eventlog.LoggingStore
@@ -57,14 +54,14 @@ internal fun settingsReducer(
 
             async(RootActions.FetchProviders::class) {
                 withPageContext<Page.PushProviders> {
-                    pageDispatch(PageAction.UpdatePage(it.copy(options = Lce.Loading())))
+                    pageDispatch(PageStateChange.UpdatePage(it.copy(options = Lce.Loading())))
                 }
 
                 val currentSelection = pushTokenRegistrars.currentSelection()
                 val options = pushTokenRegistrars.options()
                 withPageContext<Page.PushProviders> {
                     pageDispatch(
-                        PageAction.UpdatePage(
+                        PageStateChange.UpdatePage(
                             it.copy(
                                 selection = currentSelection,
                                 options = Lce.Content(options)
@@ -82,7 +79,7 @@ internal fun settingsReducer(
 
             async(RootActions.ImportKeysFromFile::class) { action ->
                 withPageContext<Page.ImportRoomKey> {
-                    pageDispatch(PageAction.UpdatePage(it.copy(importProgress = ImportResult.Update(0))))
+                    pageDispatch(PageStateChange.UpdatePage(it.copy(importProgress = ImportResult.Update(0))))
                 }
 
                 with(chatEngine) {
@@ -92,7 +89,7 @@ internal fun settingsReducer(
                                 fileStream.importRoomKeys(action.passphrase)
                                     .onEach { progress ->
                                         withPageContext<Page.ImportRoomKey> {
-                                            pageDispatch(PageAction.UpdatePage(it.copy(importProgress = progress)))
+                                            pageDispatch(PageStateChange.UpdatePage(it.copy(importProgress = progress)))
                                         }
                                     }
                                     .launchIn(coroutineScope)
@@ -100,7 +97,7 @@ internal fun settingsReducer(
                             onFailure = {
 
                                 withPageContext<Page.ImportRoomKey> {
-                                    pageDispatch(PageAction.UpdatePage(it.copy(importProgress = ImportResult.Error(ImportResult.Error.Type.UnableToOpenFile))))
+                                    pageDispatch(PageStateChange.UpdatePage(it.copy(importProgress = ImportResult.Error(ImportResult.Error.Type.UnableToOpenFile))))
                                 }
                             }
                         )
@@ -114,7 +111,7 @@ internal fun settingsReducer(
                 )
 
                 withPageContext<Page.ImportRoomKey> {
-                    pageDispatch(PageAction.UpdatePage(it.copy(selectedFile = namedFile)))
+                    pageDispatch(PageStateChange.UpdatePage(it.copy(selectedFile = namedFile)))
                 }
             },
 
@@ -180,6 +177,5 @@ internal fun settingsReducer(
         )
     }
 )
-
 
 internal typealias SettingsState = State<Combined2<PageContainer<Page>, Unit>, SettingsEvent>

@@ -3,11 +3,15 @@ package app.dapk.st.messenger.gallery.state
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.Lce
 import app.dapk.st.core.page.PageAction
-import app.dapk.st.core.page.PageContainer
-import app.dapk.st.core.page.isDifferentPage
+import app.dapk.st.core.page.PageStateChange
+import app.dapk.st.core.page.createPageReducer
+import app.dapk.st.core.page.withPageContext
 import app.dapk.st.design.components.SpiderPage
-import app.dapk.st.messenger.gallery.*
-import app.dapk.state.*
+import app.dapk.st.messenger.gallery.FetchMediaFoldersUseCase
+import app.dapk.st.messenger.gallery.FetchMediaUseCase
+import app.dapk.state.async
+import app.dapk.state.createReducer
+import app.dapk.state.sideEffect
 import kotlinx.coroutines.launch
 
 fun imageGalleryReducer(
@@ -15,54 +19,47 @@ fun imageGalleryReducer(
     foldersUseCase: FetchMediaFoldersUseCase,
     fetchMediaUseCase: FetchMediaUseCase,
     jobBag: JobBag,
-) = shareState {
-    combineReducers(
-        createPageReducer(roomName),
-        createImageGalleryPageReducer(jobBag, foldersUseCase, fetchMediaUseCase),
-    )
-}
-
-private fun createPageReducer(roomName: String): ReducerFactory<PageContainer<ImageGalleryPage>> = app.dapk.st.core.page.createPageReducer(
-    initialPage = SpiderPage(
+) = createPageReducer(
+    initialPage = SpiderPage<ImageGalleryPage>(
         route = ImageGalleryPage.Routes.folders,
         label = "Send to $roomName",
         parent = null,
         state = ImageGalleryPage.Folders(Lce.Loading())
-    )
-)
+    ),
+    factory = {
+        createReducer(
+            initialState = Unit,
 
-private fun SharedStateScope<Combined2<PageContainer<ImageGalleryPage>, Unit>>.createImageGalleryPageReducer(
-    jobBag: JobBag,
-    foldersUseCase: FetchMediaFoldersUseCase,
-    fetchMediaUseCase: FetchMediaUseCase
-) = createReducer(
-    initialState = Unit,
+            async(ImageGalleryActions.Visible::class) {
+                jobBag.replace(ImageGalleryPage.Folders::class, coroutineScope.launch {
+                    val folders = foldersUseCase.fetchFolders()
+                    withPageContext<ImageGalleryPage.Folders> {
+                        pageDispatch(PageStateChange.UpdatePage(it.copy(content = Lce.Content(folders))))
+                    }
+                })
+            },
 
-    async(ImageGalleryActions.Visible::class) {
-        jobBag.replace("page", coroutineScope.launch {
-            val folders = foldersUseCase.fetchFolders()
-            dispatch(PageAction.UpdatePage(ImageGalleryPage.Folders(Lce.Content(folders))))
-        })
-    },
+            async(ImageGalleryActions.SelectFolder::class) { action ->
+                val page = SpiderPage(
+                    route = ImageGalleryPage.Routes.files,
+                    label = rawPage().label,
+                    parent = ImageGalleryPage.Routes.folders,
+                    state = ImageGalleryPage.Files(Lce.Loading(), action.folder)
+                )
 
-    async(ImageGalleryActions.SelectFolder::class) { action ->
-        val page = SpiderPage(
-            route = ImageGalleryPage.Routes.files,
-            label = getSharedState().state1.page.label,
-            parent = ImageGalleryPage.Routes.folders,
-            state = ImageGalleryPage.Files(Lce.Loading(), action.folder)
+                dispatch(PageAction.GoTo(page))
+
+                jobBag.replace(ImageGalleryPage.Files::class, coroutineScope.launch {
+                    val media = fetchMediaUseCase.getMediaInBucket(action.folder.bucketId)
+                    withPageContext<ImageGalleryPage.Files> {
+                        pageDispatch(PageStateChange.UpdatePage(it.copy(content = Lce.Content(media))))
+                    }
+                })
+            },
+
+            sideEffect(PageStateChange.ChangePage::class) { action, _ ->
+                jobBag.cancel(action.previous::class)
+            },
         )
-        dispatch(PageAction.GoTo(page))
-
-        jobBag.replace("page", coroutineScope.launch {
-            val media = fetchMediaUseCase.getMediaInBucket(action.folder.bucketId)
-            dispatch(PageAction.UpdatePage(page.state.copy(content = Lce.Content(media))))
-        })
-    },
-
-    sideEffect(PageAction.GoTo::class) { action, _ ->
-        if (getSharedState().state1.isDifferentPage(action.page)) {
-            jobBag.cancel("page")
-        }
     }
 )
