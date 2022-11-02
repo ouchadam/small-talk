@@ -1,4 +1,4 @@
-package app.dapk.st.messenger.gallery
+package app.dapk.st.core.page
 
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.state.Action

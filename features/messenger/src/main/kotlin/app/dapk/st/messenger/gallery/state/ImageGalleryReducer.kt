@@ -2,6 +2,9 @@ package app.dapk.st.messenger.gallery.state
 
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.Lce
+import app.dapk.st.core.page.PageAction
+import app.dapk.st.core.page.PageContainer
+import app.dapk.st.core.page.isDifferentPage
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.messenger.gallery.*
 import app.dapk.state.*
@@ -19,7 +22,7 @@ fun imageGalleryReducer(
     )
 }
 
-private fun createPageReducer(roomName: String): ReducerFactory<PageContainer<ImageGalleryPage>> = createPageReducer(
+private fun createPageReducer(roomName: String): ReducerFactory<PageContainer<ImageGalleryPage>> = app.dapk.st.core.page.createPageReducer(
     initialPage = SpiderPage(
         route = ImageGalleryPage.Routes.folders,
         label = "Send to $roomName",

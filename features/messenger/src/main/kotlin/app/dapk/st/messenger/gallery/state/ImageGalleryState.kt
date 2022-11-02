@@ -5,7 +5,7 @@ import app.dapk.st.core.State
 import app.dapk.st.design.components.Route
 import app.dapk.st.messenger.gallery.Folder
 import app.dapk.st.messenger.gallery.Media
-import app.dapk.st.messenger.gallery.PageContainer
+import app.dapk.st.core.page.PageContainer
 import app.dapk.state.Combined2
 
 typealias ImageGalleryState = State<Combined2<PageContainer<ImageGalleryPage>, Unit>, Unit>

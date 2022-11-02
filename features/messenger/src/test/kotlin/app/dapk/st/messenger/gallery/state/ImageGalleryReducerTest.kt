@@ -4,7 +4,7 @@ import app.dapk.st.core.Lce
 import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.messenger.gallery.FetchMediaFoldersUseCase
 import app.dapk.st.messenger.gallery.FetchMediaUseCase
-import app.dapk.st.messenger.gallery.PageContainer
+import app.dapk.st.core.page.PageContainer
 import app.dapk.state.Combined2
 import fake.FakeJobBag
 import io.mockk.mockk
