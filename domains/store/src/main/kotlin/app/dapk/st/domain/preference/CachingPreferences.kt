@@ -10,17 +10,6 @@ class CachingPreferences(private val cache: PropertyCache, private val preferenc
         preferences.store(key, value)
     }
 
-    override suspend fun store(key: String, value: Set<String>) {
-        cache.setValue(key, value)
-        preferences.store(key, value)
-    }
-
-    override suspend fun readStrings(key: String): Set<String>? {
-        return cache.getValue(key) ?: preferences.readStrings(key)?.also {
-            cache.setValue(key, it)
-        }
-    }
-
     override suspend fun readString(key: String): String? {
         return cache.getValue(key) ?: preferences.readString(key)?.also {
             cache.setValue(key, it)
