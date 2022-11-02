@@ -16,6 +16,7 @@ interface RoomStore : MuteableStore {
     suspend fun markRead(roomId: RoomId)
     fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>>
     fun observeUnreadCountById(): Flow<Map<RoomId, Int>>
+    fun observeNotMutedUnread(): Flow<Map<RoomOverview, List<RoomEvent>>>
     fun observeEvent(eventId: EventId): Flow<EventId>
     suspend fun findEvent(eventId: EventId): RoomEvent?
 

@@ -16,7 +16,7 @@ internal typealias ObserveUnreadNotificationsUseCase = () -> Flow<UnreadNotifica
 class ObserveUnreadNotificationsUseCaseImpl(private val roomStore: RoomStore) : ObserveUnreadNotificationsUseCase {
 
     override fun invoke(): Flow<UnreadNotifications> {
-        return roomStore.observeUnread()
+        return roomStore.observeNotMutedUnread()
             .mapWithDiff()
             .avoidShowingPreviousNotificationsOnLaunch()
             .onlyRenderableChanges()
