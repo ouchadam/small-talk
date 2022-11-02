@@ -34,7 +34,7 @@ class StoreModule(
     private val coroutineDispatchers: CoroutineDispatchers,
 ) {
 
-    private val muteableStore by unsafeLazy { MutedStorePersistence(preferences) }
+    private val muteableStore by unsafeLazy { MutedStorePersistence(database, coroutineDispatchers) }
 
     fun overviewStore(): OverviewStore = OverviewPersistence(database, coroutineDispatchers)
     fun roomStore(): RoomStore {

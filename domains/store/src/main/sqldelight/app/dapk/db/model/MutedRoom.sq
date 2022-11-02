@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS dbMutedRoom (
+    room_id TEXT NOT NULL,
+    PRIMARY KEY (room_id)
+);
+
+insertMuted:
+INSERT OR REPLACE INTO dbMutedRoom(room_id)
+VALUES (?);
+
+removeMuted:
+DELETE FROM dbMutedRoom
+WHERE room_id = ?;
+
+select:
+SELECT room_id
+FROM dbMutedRoom;
