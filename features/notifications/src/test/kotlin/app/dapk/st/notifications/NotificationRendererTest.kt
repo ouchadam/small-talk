@@ -15,7 +15,6 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.Test
 import test.delegateReturn
-import test.expect
 import test.runExpectTest
 
 private const val SUMMARY_ID = 101
@@ -45,12 +44,13 @@ class NotificationRendererTest {
     @Test
     fun `given removed rooms when rendering then cancels notifications with cancelled room ids`() = runExpectTest {
         val removedRooms = setOf(aRoomId("id-1"), aRoomId("id-2"))
-        fakeNotificationFactory.instance.expect { it.mapToNotifications(NotificationState(emptyMap(), removedRooms, emptySet(), emptySet())) }
-        fakeNotificationManager.instance.expectUnit {
-            removedRooms.forEach { removedRoom -> it.cancel(removedRoom.value, ROOM_MESSAGE_ID) }
-        }
+        val state = aNotificationState(removedRooms = removedRooms)
+        fakeNotificationFactory.givenNotifications(state).returns(aNotifications())
+        fakeNotificationManager.instance.expectUnit { removedRooms.forEach { removedRoom -> it.cancel(removedRoom.value, ROOM_MESSAGE_ID) } }
+        fakeNotificationManager.instance.expectUnit { it.cancel(SUMMARY_ID) }
 
-        notificationRenderer.render(NotificationState(emptyMap(), removedRooms, emptySet(), emptySet()))
+        notificationRenderer.render(state)
+
         verifyExpects()
     }
 

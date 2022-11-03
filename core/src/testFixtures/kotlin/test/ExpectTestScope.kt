@@ -29,7 +29,7 @@ class ExpectTest(override val coroutineContext: CoroutineContext) : ExpectTestSc
     }
 
     override fun <T> T.expect(times: Int, block: suspend MockKMatcherScope.(T) -> Unit) {
-        coJustRun { block(this@expect) }.ignore()
+        coJustRun { block(this@expect) }
         expects.add(times to { block(this@expect) })
     }
 
