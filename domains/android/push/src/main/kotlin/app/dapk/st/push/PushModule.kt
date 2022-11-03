@@ -9,6 +9,7 @@ import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.firebase.messaging.Messaging
 import app.dapk.st.push.messaging.MessagingPushTokenRegistrar
+import app.dapk.st.push.unifiedpush.UnifiedPush
 import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
 
 class PushModule(
@@ -28,7 +29,7 @@ class PushModule(
                 pushHandler,
                 messaging,
             ),
-            UnifiedPushRegistrar(context),
+            UnifiedPushRegistrar(context, object : UnifiedPush {}),
             PushTokenRegistrarPreferences(preferences)
         )
     }
