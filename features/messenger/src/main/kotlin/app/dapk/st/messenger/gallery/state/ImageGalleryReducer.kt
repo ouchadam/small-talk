@@ -57,7 +57,7 @@ fun imageGalleryReducer(
             },
 
             sideEffect(PageStateChange.ChangePage::class) { action, _ ->
-                jobBag.cancel(action.previous::class)
+                jobBag.cancel(action.previous.state::class)
             },
         )
     }

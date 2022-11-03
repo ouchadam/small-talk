@@ -90,6 +90,14 @@ class ImageGalleryReducerTest {
         )
     }
 
+    @Test
+    fun `when ChangePage, then cancels previous page jobs`() = runReducerTest {
+        fakeJobBag.instance.expect { it.cancel(ImageGalleryPage.Folders::class) }
+
+        reduce(PageStateChange.ChangePage(previous = AN_INITIAL_FOLDERS_PAGE, newPage = AN_INITIAL_FILES_PAGE))
+
+        assertOnlyStateChange(pageState(AN_INITIAL_FILES_PAGE))
+    }
 }
 
 private fun <P> pageState(page: SpiderPage<out P>) = Combined2(PageContainer(page), Unit)
