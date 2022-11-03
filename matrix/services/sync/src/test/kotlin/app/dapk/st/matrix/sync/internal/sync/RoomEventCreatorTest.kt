@@ -146,7 +146,7 @@ internal class RoomEventCreatorTest {
 
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = originalMessage.eventId,
-            utcTimestamp = editedMessage.utcTimestamp,
+            utcTimestamp = originalMessage.utcTimestamp,
             content = A_TEXT_EVENT_MESSAGE,
             author = A_SENDER,
             edited = true
@@ -166,7 +166,7 @@ internal class RoomEventCreatorTest {
             replyingTo = originalMessage.replyingTo,
             message = aMatrixRoomMessageEvent(
                 eventId = originalMessage.eventId,
-                utcTimestamp = editedMessage.utcTimestamp,
+                utcTimestamp = originalMessage.utcTimestamp,
                 content = A_TEXT_EVENT_MESSAGE,
                 author = A_SENDER,
                 edited = true
