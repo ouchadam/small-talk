@@ -68,6 +68,8 @@ private fun <P : Any> createPageReducer(
             val state = getState()
             if (state.page.state::class != action.page.state::class) {
                 dispatch(PageStateChange.ChangePage(previous = state.page, newPage = action.page))
+            } else {
+                dispatch(PageStateChange.UpdatePage(action.page.state))
             }
         },
 
