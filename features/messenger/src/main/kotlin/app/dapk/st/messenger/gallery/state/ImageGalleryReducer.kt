@@ -46,7 +46,6 @@ fun imageGalleryReducer(
                     parent = ImageGalleryPage.Routes.folders,
                     state = ImageGalleryPage.Files(Lce.Loading(), action.folder)
                 )
-
                 dispatch(PageAction.GoTo(page))
 
                 jobBag.replace(ImageGalleryPage.Files::class, coroutineScope.launch {
