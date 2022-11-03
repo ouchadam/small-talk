@@ -57,7 +57,11 @@ internal class HomeViewModel(
     private suspend fun initialHomeContent(): SignedIn {
         val me = chatEngine.me(forceRefresh = false)
         val initialInvites = chatEngine.invites().first().size
-        return SignedIn(Page.Directory, me, invites = initialInvites)
+        return when (val current = state) {
+            Loading -> SignedIn(Page.Directory, me, invites = initialInvites)
+            is SignedIn -> current.copy(me = me, invites = initialInvites)
+            SignedOut -> SignedIn(Page.Directory, me, invites = initialInvites)
+        }
     }
 
     fun loggedIn() {
