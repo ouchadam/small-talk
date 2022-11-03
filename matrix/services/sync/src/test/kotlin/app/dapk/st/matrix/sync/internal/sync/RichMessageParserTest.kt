@@ -37,6 +37,12 @@ class RichMessageParserTest {
     )
 
     @Test
+    fun `replaces ampersand entity`() = runParserTest(
+        input = "Hello &amp; world!",
+        expected = RichText(listOf(Normal("Hello & world!")))
+    )
+
+    @Test
     fun `replaces apostrophe entity`() = runParserTest(
         Case(
             input = "Hello world! foo&#39;s bar",
