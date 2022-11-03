@@ -31,29 +31,28 @@ fun <P : Any, S : Any> createPageReducer(
     initialPage: SpiderPage<out P>,
     factory: PageReducerScope<P>.() -> ReducerFactory<S>,
 ): ReducerFactory<Combined2<PageContainer<P>, S>> = shareState {
-    combineReducers(
-        createPageReducer(initialPage),
-        factory(object : PageReducerScope<P> {
-            override fun <PC : Any> withPageContent(page: KClass<PC>, block: PageDispatchScope<PC>.() -> Unit) {
-                val currentPage = getSharedState().state1.page.state
-                if (currentPage::class == page) {
-                    val pageDispatchScope = object : PageDispatchScope<PC> {
-                        override fun ReducerScope<*>.pageDispatch(action: PageAction<PC>) {
-                            val currentPageGuard = getSharedState().state1.page.state
-                            if (currentPageGuard::class == page) {
-                                dispatch(action)
-                            }
-                        }
+    combineReducers(createPageReducer(initialPage), factory(pageReducerScope()))
+}
 
-                        override fun getPageState() = getSharedState().state1.page.state as? PC
+private fun <P : Any, S : Any> SharedStateScope<Combined2<PageContainer<P>, S>>.pageReducerScope() = object : PageReducerScope<P> {
+    override fun <PC : Any> withPageContent(page: KClass<PC>, block: PageDispatchScope<PC>.() -> Unit) {
+        val currentPage = getSharedState().state1.page.state
+        if (currentPage::class == page) {
+            val pageDispatchScope = object : PageDispatchScope<PC> {
+                override fun ReducerScope<*>.pageDispatch(action: PageAction<PC>) {
+                    val currentPageGuard = getSharedState().state1.page.state
+                    if (currentPageGuard::class == page) {
+                        dispatch(action)
                     }
-                    block(pageDispatchScope)
                 }
-            }
 
-            override fun rawPage() = getSharedState().state1.page
-        })
-    )
+                override fun getPageState() = getSharedState().state1.page.state as? PC
+            }
+            block(pageDispatchScope)
+        }
+    }
+
+    override fun rawPage() = getSharedState().state1.page
 }
 
 @Suppress("UNCHECKED_CAST")

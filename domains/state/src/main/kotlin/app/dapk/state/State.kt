@@ -83,17 +83,8 @@ fun <S> shareState(block: SharedStateScope<S>.() -> ReducerFactory<S>): ReducerF
 fun <S1, S2> combineReducers(r1: ReducerFactory<S1>, r2: ReducerFactory<S2>): ReducerFactory<Combined2<S1, S2>> {
     return object : ReducerFactory<Combined2<S1, S2>> {
         override fun create(scope: ReducerScope<Combined2<S1, S2>>): Reducer<Combined2<S1, S2>> {
-            val r1Scope = object : ReducerScope<S1> {
-                override val coroutineScope: CoroutineScope = scope.coroutineScope
-                override fun dispatch(action: Action) = scope.dispatch(action)
-                override fun getState() = scope.getState().state1
-            }
-
-            val r2Scope = object : ReducerScope<S2> {
-                override val coroutineScope: CoroutineScope = scope.coroutineScope
-                override fun dispatch(action: Action) = scope.dispatch(action)
-                override fun getState() = scope.getState().state2
-            }
+            val r1Scope = createReducerScope(scope) { scope.getState().state1 }
+            val r2Scope = createReducerScope(scope) { scope.getState().state2 }
 
             val r1Reducer = r1.create(r1Scope)
             val r2Reducer = r2.create(r2Scope)
@@ -104,6 +95,12 @@ fun <S1, S2> combineReducers(r1: ReducerFactory<S1>, r2: ReducerFactory<S2>): Re
 
         override fun initialState(): Combined2<S1, S2> = Combined2(r1.initialState(), r2.initialState())
     }
+}
+
+private fun <S> createReducerScope(scope: ReducerScope<*>, state: () -> S) = object : ReducerScope<S> {
+    override val coroutineScope: CoroutineScope = scope.coroutineScope
+    override fun dispatch(action: Action) = scope.dispatch(action)
+    override fun getState() = state.invoke()
 }
 
 fun <S> createReducer(
