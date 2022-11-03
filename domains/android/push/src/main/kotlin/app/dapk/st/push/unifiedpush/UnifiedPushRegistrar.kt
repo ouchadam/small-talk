@@ -7,38 +7,41 @@ import app.dapk.st.core.AppLogTag
 import app.dapk.st.core.log
 import app.dapk.st.push.PushTokenRegistrar
 import app.dapk.st.push.Registrar
-import org.unifiedpush.android.connector.UnifiedPush
 
 class UnifiedPushRegistrar(
     private val context: Context,
+    private val unifiedPush: UnifiedPush,
+    private val componentFactory: (Context) -> ComponentName = { ComponentName(it, UnifiedPushMessageReceiver::class.java) }
 ) : PushTokenRegistrar {
+
+    fun getDistributors() = unifiedPush.getDistributors().map { Registrar(it) }
 
     fun registerSelection(registrar: Registrar) {
         log(AppLogTag.PUSH, "UnifiedPush - register: $registrar")
-        UnifiedPush.saveDistributor(context, registrar.id)
+        unifiedPush.saveDistributor(registrar.id)
         registerApp()
     }
 
     override suspend fun registerCurrentToken() {
         log(AppLogTag.PUSH, "UnifiedPush - register current token")
-        if (UnifiedPush.getDistributor(context).isNotEmpty()) {
+        if (unifiedPush.getDistributor().isNotEmpty()) {
             registerApp()
         }
     }
 
     private fun registerApp() {
         context.packageManager.setComponentEnabledSetting(
-            ComponentName(context, UnifiedPushMessageReceiver::class.java),
+            componentFactory(context),
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
             PackageManager.DONT_KILL_APP,
         )
-        UnifiedPush.registerApp(context)
+        unifiedPush.registerApp()
     }
 
     override fun unregister() {
-        UnifiedPush.unregisterApp(context)
+        unifiedPush.unregisterApp()
         context.packageManager.setComponentEnabledSetting(
-            ComponentName(context, UnifiedPushMessageReceiver::class.java),
+            componentFactory(context),
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
             PackageManager.DONT_KILL_APP,
         )

@@ -12,6 +12,7 @@ def excludes = [
         '**/*Activity*',
         '**/*AndroidService*',
         '**/*Application*',
+        '**/*Receiver*',
 
         // Generated
         '**/*serializer*',
