@@ -39,6 +39,8 @@ class ReducerTestScope<S, E>(
     private val expectTestScope: ExpectTestScope
 ) : ExpectTestScope by expectTestScope, Reducer<S> {
 
+    private var invalidateCapturedState: Boolean = false
+    private val actionSideEffects = mutableMapOf<Action, () -> S>()
     private var manualState: S? = null
     private var capturedResult: S? = null
 
@@ -47,6 +49,10 @@ class ReducerTestScope<S, E>(
         override val coroutineScope = CoroutineScope(UnconfinedTestDispatcher())
         override fun dispatch(action: Action) {
             actionCaptures.add(action)
+
+            if (actionSideEffects.containsKey(action)) {
+                setState(actionSideEffects.getValue(action).invoke(), invalidateCapturedState = true)
+            }
         }
 
         override fun getState() = manualState ?: reducerFactory.initialState()
@@ -54,15 +60,20 @@ class ReducerTestScope<S, E>(
     private val reducer: Reducer<S> = reducerFactory.create(reducerScope)
 
     override fun reduce(action: Action) = reducer.reduce(action).also {
-        capturedResult = it
+        capturedResult = if (invalidateCapturedState) manualState else it
     }
 
-    fun setState(state: S) {
+    fun actionSideEffect(action: Action, handler: () -> S) {
+        actionSideEffects[action] = handler
+    }
+
+    fun setState(state: S, invalidateCapturedState: Boolean = false) {
         manualState = state
+        this.invalidateCapturedState = invalidateCapturedState
     }
 
     fun setState(block: (S) -> S) {
-        manualState = block(reducerScope.getState())
+        setState(block(reducerScope.getState()))
     }
 
     fun assertInitialState(expected: S) {
