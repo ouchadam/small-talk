@@ -152,7 +152,6 @@ internal class TimelineEventMapper(
 
     private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
         content = richMessageParser.parse(edit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted"),
-        utcTimestamp = edit.utcTimestamp,
         edited = true,
     )
 
