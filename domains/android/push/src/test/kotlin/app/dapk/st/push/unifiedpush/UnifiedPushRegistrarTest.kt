@@ -10,6 +10,7 @@ import io.mockk.Called
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 import test.delegateReturn
 import test.runExpectTest
@@ -31,7 +32,7 @@ class UnifiedPushRegistrarTest {
 
     @Test
     fun `when unregistering, then updates unified push and disables component`() = runExpectTest {
-        fakeUnifiedPush.expect { it.unregisterApp(fakeContext.instance) }
+        fakeUnifiedPush.expect { it.unregisterApp() }
         fakePackageManager.instance.expect {
             it.setComponentEnabledSetting(A_COMPONENT_NAME.instance, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
         }
@@ -43,8 +44,8 @@ class UnifiedPushRegistrarTest {
 
     @Test
     fun `when registering selection, then updates unified push and enables component`() = runExpectTest {
-        fakeUnifiedPush.expect { it.registerApp(fakeContext.instance) }
-        fakeUnifiedPush.expect { it.saveDistributor(fakeContext.instance, A_REGISTRAR_SELECTION.id) }
+        fakeUnifiedPush.expect { it.registerApp() }
+        fakeUnifiedPush.expect { it.saveDistributor(A_REGISTRAR_SELECTION.id) }
         fakePackageManager.instance.expect {
             it.setComponentEnabledSetting(A_COMPONENT_NAME.instance, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
         }
@@ -56,8 +57,8 @@ class UnifiedPushRegistrarTest {
 
     @Test
     fun `given saved distributor, when registering current token, then updates unified push and enables component`() = runExpectTest {
-        fakeUnifiedPush.givenDistributor(fakeContext.instance).returns(A_SAVED_DISTRIBUTOR)
-        fakeUnifiedPush.expect { it.registerApp(fakeContext.instance) }
+        fakeUnifiedPush.givenDistributor().returns(A_SAVED_DISTRIBUTOR)
+        fakeUnifiedPush.expect { it.registerApp() }
         fakePackageManager.instance.expect {
             it.setComponentEnabledSetting(A_COMPONENT_NAME.instance, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
         }
@@ -69,18 +70,28 @@ class UnifiedPushRegistrarTest {
 
     @Test
     fun `given no distributor, when registering current token, then does nothing`() = runExpectTest {
-        fakeUnifiedPush.givenDistributor(fakeContext.instance).returns("")
+        fakeUnifiedPush.givenDistributor().returns("")
 
         registrar.registerCurrentToken()
 
-        verify(exactly = 0) { fakeUnifiedPush.registerApp(any()) }
+        verify(exactly = 0) { fakeUnifiedPush.registerApp() }
         verify { fakePackageManager.instance wasNot Called }
+    }
+
+    @Test
+    fun `given distributors, then returns them as Registrars`() {
+        fakeUnifiedPush.givenDistributors().returns(listOf("a", "b"))
+
+        val result = registrar.getDistributors()
+
+        result shouldBeEqualTo listOf(Registrar("a"), Registrar("b"))
     }
 }
 
 
 class FakeUnifiedPush : UnifiedPush by mockk() {
-    fun givenDistributor(context: Context) = every { getDistributor(context) }.delegateReturn()
+    fun givenDistributor() = every { getDistributor() }.delegateReturn()
+    fun givenDistributors() = every { getDistributors() }.delegateReturn()
 }
 
 class FakeComponentName {

@@ -14,15 +14,17 @@ class UnifiedPushRegistrar(
     private val componentFactory: (Context) -> ComponentName = { ComponentName(it, UnifiedPushMessageReceiver::class.java) }
 ) : PushTokenRegistrar {
 
+    fun getDistributors() = unifiedPush.getDistributors().map { Registrar(it) }
+
     fun registerSelection(registrar: Registrar) {
         log(AppLogTag.PUSH, "UnifiedPush - register: $registrar")
-        unifiedPush.saveDistributor(context, registrar.id)
+        unifiedPush.saveDistributor(registrar.id)
         registerApp()
     }
 
     override suspend fun registerCurrentToken() {
         log(AppLogTag.PUSH, "UnifiedPush - register current token")
-        if (unifiedPush.getDistributor(context).isNotEmpty()) {
+        if (unifiedPush.getDistributor().isNotEmpty()) {
             registerApp()
         }
     }
@@ -33,11 +35,11 @@ class UnifiedPushRegistrar(
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
             PackageManager.DONT_KILL_APP,
         )
-        unifiedPush.registerApp(context)
+        unifiedPush.registerApp()
     }
 
     override fun unregister() {
-        unifiedPush.unregisterApp(context)
+        unifiedPush.unregisterApp()
         context.packageManager.setComponentEnabledSetting(
             componentFactory(context),
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED,

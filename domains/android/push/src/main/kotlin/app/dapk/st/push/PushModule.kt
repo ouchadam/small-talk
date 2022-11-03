@@ -9,7 +9,7 @@ import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.firebase.messaging.Messaging
 import app.dapk.st.push.messaging.MessagingPushTokenRegistrar
-import app.dapk.st.push.unifiedpush.UnifiedPush
+import app.dapk.st.push.unifiedpush.UnifiedPushImpl
 import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
 
 class PushModule(
@@ -22,9 +22,8 @@ class PushModule(
 ) : ProvidableModule {
 
     private val registrars by unsafeLazy {
-        val unifiedPush = object : UnifiedPush {}
+        val unifiedPush = UnifiedPushImpl(context)
         PushTokenRegistrars(
-            context,
             MessagingPushTokenRegistrar(
                 errorTracker,
                 pushHandler,
@@ -32,7 +31,6 @@ class PushModule(
             ),
             UnifiedPushRegistrar(context, unifiedPush),
             PushTokenRegistrarPreferences(preferences),
-            unifiedPush,
         )
     }
 
