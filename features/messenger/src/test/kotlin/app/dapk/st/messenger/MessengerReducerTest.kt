@@ -272,7 +272,6 @@ class MessengerReducerTest {
         assertNoStateChange()
     }
 
-
     @Test
     fun `given text composer with reply, when SendMessage, then clear composer and sends text message`() = runReducerTest {
         setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = A_REPLY.message), roomState = Lce.Content(A_MESSENGER_PAGE_STATE)) }

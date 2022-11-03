@@ -76,7 +76,6 @@ internal fun settingsReducer(
                 dispatch(RootActions.FetchProviders)
             },
 
-
             async(RootActions.ImportKeysFromFile::class) { action ->
                 withPageContext<Page.ImportRoomKey> {
                     pageDispatch(PageStateChange.UpdatePage(it.copy(importProgress = ImportResult.Update(0))))
@@ -95,7 +94,6 @@ internal fun settingsReducer(
                                     .launchIn(coroutineScope)
                             },
                             onFailure = {
-
                                 withPageContext<Page.ImportRoomKey> {
                                     pageDispatch(PageStateChange.UpdatePage(it.copy(importProgress = ImportResult.Error(ImportResult.Error.Type.UnableToOpenFile))))
                                 }
@@ -115,6 +113,10 @@ internal fun settingsReducer(
                 }
             },
 
+            async(ScreenAction.OpenImportRoom::class) {
+                dispatch(PageAction.GoTo(SpiderPage(Page.Routes.importRoomKeys, "Import room keys", Page.Routes.encryption, Page.ImportRoomKey())))
+            },
+
             multi(ScreenAction.OnClick::class) { action ->
                 val item = action.item
                 when (item.id) {
@@ -131,10 +133,6 @@ internal fun settingsReducer(
                     ClearCache -> sideEffect {
                         cacheCleaner.cleanCache(removeCredentials = false)
                         eventEmitter.invoke(Toast(message = "Cache deleted"))
-                    }
-
-                    EventLog -> sideEffect {
-                        eventEmitter.invoke(OpenEventLog)
                     }
 
                     Encryption -> async {
@@ -164,15 +162,15 @@ internal fun settingsReducer(
                         dispatch(ComponentLifecycle.Visible)
                     }
 
+                    EventLog -> sideEffect {
+                        eventEmitter.invoke(OpenEventLog)
+                    }
+
                     ToggleSendReadReceipts -> async {
                         messageOptionsStore.setReadReceiptsDisabled(!messageOptionsStore.isReadReceiptsDisabled())
                         dispatch(ComponentLifecycle.Visible)
                     }
                 }
-            },
-
-            async(ScreenAction.OpenImportRoom::class) {
-                dispatch(PageAction.GoTo(SpiderPage(Page.Routes.importRoomKeys, "Import room keys", Page.Routes.encryption, Page.ImportRoomKey())))
             },
         )
     }
