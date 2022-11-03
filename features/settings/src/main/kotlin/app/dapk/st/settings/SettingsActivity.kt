@@ -4,20 +4,17 @@ import android.os.Bundle
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import app.dapk.st.core.DapkActivity
-import app.dapk.st.core.module
-import app.dapk.st.core.resetModules
-import app.dapk.st.core.viewModel
+import app.dapk.st.core.*
 
 class SettingsActivity : DapkActivity() {
 
-    private val settingsViewModel by viewModel { module<SettingsModule>().settingsViewModel() }
+    private val settingsState by state { module<SettingsModule>().settingsState() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Surface(Modifier.fillMaxSize()) {
-                SettingsScreen(settingsViewModel, onSignOut = {
+                SettingsScreen(settingsState, onSignOut = {
                     resetModules()
                     navigator.navigate.toHome()
                     finish()

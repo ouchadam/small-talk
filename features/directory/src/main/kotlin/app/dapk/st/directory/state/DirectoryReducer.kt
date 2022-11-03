@@ -30,7 +30,7 @@ internal fun directoryReducer(
                     }.launchIn(coroutineScope))
                 }
 
-                ComponentLifecycle.OnGone -> sideEffect { _, _ -> jobBag.cancel(KEY_SYNCING_JOB) }
+                ComponentLifecycle.OnGone -> sideEffect { jobBag.cancel(KEY_SYNCING_JOB) }
             }
         },
 

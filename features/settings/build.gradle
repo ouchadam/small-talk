@@ -15,6 +15,7 @@ dependencies {
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":domains:store"))
+    androidImportFixturesWorkaround(project, project(":domains:state"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
     androidImportFixturesWorkaround(project, project(":chat-engine"))

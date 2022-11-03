@@ -40,7 +40,7 @@ fun interface Reducer<S> {
 
 private fun <S> createScope(coroutineScope: CoroutineScope, store: Store<S>) = object : ReducerScope<S> {
     override val coroutineScope = coroutineScope
-    override suspend fun dispatch(action: Action) = store.dispatch(action)
+    override fun dispatch(action: Action) = store.dispatch(action)
     override fun getState(): S = store.getState()
 }
 
@@ -52,7 +52,7 @@ interface Store<S> {
 
 interface ReducerScope<S> {
     val coroutineScope: CoroutineScope
-    suspend fun dispatch(action: Action)
+    fun dispatch(action: Action)
     fun getState(): S
 }
 
@@ -62,6 +62,45 @@ sealed interface ActionHandler<S> {
     class Async<S>(override val key: KClass<Action>, val handler: suspend ReducerScope<S>.(Action) -> Unit) : ActionHandler<S>
     class Sync<S>(override val key: KClass<Action>, val handler: (Action, S) -> S) : ActionHandler<S>
     class Delegate<S>(override val key: KClass<Action>, val handler: ReducerScope<S>.(Action) -> ActionHandler<S>) : ActionHandler<S>
+}
+
+data class Combined2<S1, S2>(val state1: S1, val state2: S2)
+
+fun interface SharedStateScope<C> {
+    fun getSharedState(): C
+}
+
+fun <S> shareState(block: SharedStateScope<S>.() -> ReducerFactory<S>): ReducerFactory<S> {
+    var internalScope: ReducerScope<S>? = null
+    val scope = SharedStateScope { internalScope!!.getState() }
+    val combinedFactory = block(scope)
+    return object : ReducerFactory<S> {
+        override fun create(scope: ReducerScope<S>) = combinedFactory.create(scope).also { internalScope = scope }
+        override fun initialState() = combinedFactory.initialState()
+    }
+}
+
+fun <S1, S2> combineReducers(r1: ReducerFactory<S1>, r2: ReducerFactory<S2>): ReducerFactory<Combined2<S1, S2>> {
+    return object : ReducerFactory<Combined2<S1, S2>> {
+        override fun create(scope: ReducerScope<Combined2<S1, S2>>): Reducer<Combined2<S1, S2>> {
+            val r1Scope = createReducerScope(scope) { scope.getState().state1 }
+            val r2Scope = createReducerScope(scope) { scope.getState().state2 }
+
+            val r1Reducer = r1.create(r1Scope)
+            val r2Reducer = r2.create(r2Scope)
+            return Reducer {
+                Combined2(r1Reducer.reduce(it), r2Reducer.reduce(it))
+            }
+        }
+
+        override fun initialState(): Combined2<S1, S2> = Combined2(r1.initialState(), r2.initialState())
+    }
+}
+
+private fun <S> createReducerScope(scope: ReducerScope<*>, state: () -> S) = object : ReducerScope<S> {
+    override val coroutineScope: CoroutineScope = scope.coroutineScope
+    override fun dispatch(action: Action) = scope.dispatch(action)
+    override fun getState() = state.invoke()
 }
 
 fun <S> createReducer(
@@ -132,9 +171,10 @@ fun <A : Action, S> async(klass: KClass<A>, block: suspend ReducerScope<S>.(A) -
 
 fun <A : Action, S> multi(klass: KClass<A>, block: Multi<A, S>.(A) -> (ReducerScope<S>) -> ActionHandler<S>): (ReducerScope<S>) -> ActionHandler<S> {
     val multiScope = object : Multi<A, S> {
-        override fun sideEffect(block: (A, S) -> Unit): (ReducerScope<S>) -> ActionHandler<S> = sideEffect(klass, block)
+        override fun sideEffect(block: suspend (S) -> Unit): (ReducerScope<S>) -> ActionHandler<S> = sideEffect(klass) { _, state -> block(state) }
         override fun change(block: (A, S) -> S): (ReducerScope<S>) -> ActionHandler<S> = change(klass, block)
         override fun async(block: suspend ReducerScope<S>.(A) -> Unit): (ReducerScope<S>) -> ActionHandler<S> = async(klass, block)
+        override fun nothing() = sideEffect { }
     }
 
     return {
@@ -145,7 +185,8 @@ fun <A : Action, S> multi(klass: KClass<A>, block: Multi<A, S>.(A) -> (ReducerSc
 }
 
 interface Multi<A : Action, S> {
-    fun sideEffect(block: (A, S) -> Unit): (ReducerScope<S>) -> ActionHandler<S>
+    fun sideEffect(block: suspend (S) -> Unit): (ReducerScope<S>) -> ActionHandler<S>
+    fun nothing(): (ReducerScope<S>) -> ActionHandler<S>
     fun change(block: (A, S) -> S): (ReducerScope<S>) -> ActionHandler<S>
     fun async(block: suspend ReducerScope<S>.(A) -> Unit): (ReducerScope<S>) -> ActionHandler<S>
 }

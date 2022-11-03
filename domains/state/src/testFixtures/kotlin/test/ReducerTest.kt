@@ -45,7 +45,7 @@ class ReducerTestScope<S, E>(
     private val actionCaptures = mutableListOf<Action>()
     private val reducerScope = object : ReducerScope<S> {
         override val coroutineScope = CoroutineScope(UnconfinedTestDispatcher())
-        override suspend fun dispatch(action: Action) {
+        override fun dispatch(action: Action) {
             actionCaptures.add(action)
         }
 
@@ -123,4 +123,20 @@ class ReducerTestScope<S, E>(
         assertNoEvents()
         assertNoDispatches()
     }
+}
+
+fun <S, E> ReducerTestScope<S, E>.assertOnlyDispatches(vararg action: Action) {
+    this.assertOnlyDispatches(action.toList())
+}
+
+fun <S, E> ReducerTestScope<S, E>.assertDispatches(vararg action: Action) {
+    this.assertDispatches(action.toList())
+}
+
+fun <S, E> ReducerTestScope<S, E>.assertEvents(vararg event: E) {
+    this.assertEvents(event.toList())
+}
+
+fun <S, E> ReducerTestScope<S, E>.assertOnlyEvents(vararg event: E) {
+    this.assertOnlyEvents(event.toList())
 }

@@ -61,4 +61,4 @@ data class SpiderPage<T>(
 )
 
 @JvmInline
-value class Route<S>(val value: String)
+value class Route<out S>(val value: String)

@@ -8,6 +8,8 @@ import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.push.PushModule
 import app.dapk.st.settings.eventlogger.EventLoggerViewModel
+import app.dapk.st.settings.state.SettingsState
+import app.dapk.st.settings.state.settingsReducer
 
 class SettingsModule(
     private val chatEngine: ChatEngine,
@@ -22,19 +24,24 @@ class SettingsModule(
     private val messageOptionsStore: MessageOptionsStore,
 ) : ProvidableModule {
 
-    internal fun settingsViewModel(): SettingsViewModel {
-        return SettingsViewModel(
-            chatEngine,
-            storeModule.cacheCleaner(),
-            contentResolver,
-            UriFilenameResolver(contentResolver, coroutineDispatchers),
-            SettingsItemFactory(buildMeta, deviceMeta, pushModule.pushTokenRegistrars(), themeStore, loggingStore, messageOptionsStore),
-            pushModule.pushTokenRegistrars(),
-            themeStore,
-            loggingStore,
-            messageOptionsStore,
-        )
+    internal fun settingsState(): SettingsState {
+        return createStateViewModel {
+            settingsReducer(
+                chatEngine,
+                storeModule.cacheCleaner(),
+                contentResolver,
+                UriFilenameResolver(contentResolver, coroutineDispatchers),
+                SettingsItemFactory(buildMeta, deviceMeta, pushModule.pushTokenRegistrars(), themeStore, loggingStore, messageOptionsStore),
+                pushModule.pushTokenRegistrars(),
+                themeStore,
+                loggingStore,
+                messageOptionsStore,
+                it,
+                JobBag(),
+            )
+        }
     }
+
 
     internal fun eventLogViewModel(): EventLoggerViewModel {
         return EventLoggerViewModel(storeModule.eventLogStore())

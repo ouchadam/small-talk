@@ -1,18 +1,22 @@
 package app.dapk.st.messenger.gallery
 
 import android.content.ContentResolver
-import app.dapk.st.core.CoroutineDispatchers
-import app.dapk.st.core.ProvidableModule
+import app.dapk.st.core.*
+import app.dapk.st.messenger.gallery.state.ImageGalleryState
+import app.dapk.st.messenger.gallery.state.imageGalleryReducer
 
 class ImageGalleryModule(
     private val contentResolver: ContentResolver,
     private val dispatchers: CoroutineDispatchers,
 ) : ProvidableModule {
 
-    fun imageGalleryViewModel(roomName: String) = ImageGalleryViewModel(
-        FetchMediaFoldersUseCase(contentResolver, dispatchers),
-        FetchMediaUseCase(contentResolver, dispatchers),
-        roomName = roomName,
-    )
+    fun imageGalleryState(roomName: String): ImageGalleryState = createStateViewModel {
+        imageGalleryReducer(
+            roomName = roomName,
+            FetchMediaFoldersUseCase(contentResolver, dispatchers),
+            FetchMediaUseCase(contentResolver, dispatchers),
+            JobBag(),
+        )
+    }
 
 }

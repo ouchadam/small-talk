@@ -11,3 +11,12 @@ internal fun aImportRoomKeysPage(
     parent = Page.Routes.encryption,
     state = state
 )
+
+internal fun aPushProvidersPage(
+    state: Page.PushProviders = Page.PushProviders()
+) = SpiderPage(
+    route = Page.Routes.pushProviders,
+    label = "Push providers",
+    parent = Page.Routes.root,
+    state = state
+)
