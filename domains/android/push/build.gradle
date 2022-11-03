@@ -10,4 +10,8 @@ dependencies {
 
     implementation Dependencies.mavenCentral.kotlinSerializationJson
     implementation Dependencies.jitPack.unifiedPush
+
+    kotlinTest(it)
+    androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":domains:android:stub"))
 }

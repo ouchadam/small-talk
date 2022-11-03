@@ -22,7 +22,10 @@ private val json = Json { ignoreUnknownKeys = true }
 
 class UnifiedPushMessageDelegate(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
-    private val pushModuleProvider: (Context) -> PushModule = { it.module() }
+    private val pushModuleProvider: (Context) -> PushModule = { it.module() },
+    private val endpointReader: suspend (URL) -> String = {
+        runCatching { it.openStream().use { String(it.readBytes()) } }.getOrNull() ?: ""
+    }
 ) {
 
     fun onMessage(context: Context, message: ByteArray) {
@@ -44,7 +47,7 @@ class UnifiedPushMessageDelegate(
         scope.launch {
             withContext(module.dispatcher().io) {
                 val matrixEndpoint = URL(endpoint).let { URL("${it.protocol}://${it.host}/_matrix/push/v1/notify") }
-                val content = runCatching { matrixEndpoint.openStream().use { String(it.readBytes()) } }.getOrNull() ?: ""
+                val content = endpointReader(matrixEndpoint)
                 val gatewayUrl = when {
                     content.contains("\"gateway\":\"matrix\"") -> matrixEndpoint.toString()
                     else -> FALLBACK_UNIFIED_PUSH_GATEWAY
