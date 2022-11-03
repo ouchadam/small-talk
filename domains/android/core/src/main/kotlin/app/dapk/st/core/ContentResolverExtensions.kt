@@ -13,11 +13,18 @@ data class ContentResolverQuery(
 )
 
 inline fun <T> ContentResolver.reduce(query: ContentResolverQuery, operation: (Cursor) -> T): List<T> {
-    val result = mutableListOf<T>()
+    return this.reduce(query, mutableListOf<T>()) { acc, cursor ->
+        acc.add(operation(cursor))
+        acc
+    }
+}
+
+inline fun <T> ContentResolver.reduce(query: ContentResolverQuery, initial: T, operation: (T, Cursor) -> T): T {
+    var accumulator: T = initial
     this.query(query.uri, query.projection.toTypedArray(), query.selection, query.selectionArgs.toTypedArray(), query.sortBy).use { cursor ->
         while (cursor != null && cursor.moveToNext()) {
-            result.add(operation(cursor))
+            accumulator = operation(accumulator, cursor)
         }
     }
-    return result
+    return accumulator
 }

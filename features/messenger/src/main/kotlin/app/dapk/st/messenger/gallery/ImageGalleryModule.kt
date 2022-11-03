@@ -7,7 +7,6 @@ import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.core.createStateViewModel
-import app.dapk.st.messenger.gallery.FetchMediaUseCase.UriAvoidance
 import app.dapk.st.messenger.gallery.state.ImageGalleryState
 import app.dapk.st.messenger.gallery.state.imageGalleryReducer
 
@@ -17,17 +16,14 @@ class ImageGalleryModule(
 ) : ProvidableModule {
 
     fun imageGalleryState(roomName: String): ImageGalleryState = createStateViewModel {
+        val uriAvoidance = MediaUriAvoidance(
+            uriAppender = { uri, rowId -> ContentUris.withAppendedId(uri, rowId) },
+            externalContentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        )
         imageGalleryReducer(
             roomName = roomName,
-            FetchMediaFoldersUseCase(contentResolver, dispatchers),
-            FetchMediaUseCase(
-                contentResolver,
-                UriAvoidance(
-                    uriAppender = { uri, rowId -> ContentUris.withAppendedId(uri, rowId) },
-                    externalContentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                ),
-                dispatchers,
-            ),
+            FetchMediaFoldersUseCase(contentResolver, uriAvoidance, dispatchers),
+            FetchMediaUseCase(contentResolver, uriAvoidance, dispatchers),
             JobBag(),
         )
     }

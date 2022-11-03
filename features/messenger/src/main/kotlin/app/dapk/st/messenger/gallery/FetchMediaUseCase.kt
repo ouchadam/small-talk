@@ -10,7 +10,7 @@ import app.dapk.st.core.withIoContext
 
 class FetchMediaUseCase(
     private val contentResolver: ContentResolver,
-    private val uriAvoidance: UriAvoidance,
+    private val uriAvoidance: MediaUriAvoidance,
     private val dispatchers: CoroutineDispatchers
 ) {
 
@@ -54,11 +54,6 @@ class FetchMediaUseCase(
 
     private fun getHeightColumn(orientation: Int) =
         if (orientation == 0 || orientation == 180) MediaStore.Images.Media.HEIGHT else MediaStore.Images.Media.WIDTH
-
-    class UriAvoidance(
-        val uriAppender: (Uri, Long) -> Uri,
-        val externalContentUri: Uri,
-    )
 }
 
 data class Media(

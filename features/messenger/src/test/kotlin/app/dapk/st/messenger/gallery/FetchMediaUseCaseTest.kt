@@ -10,6 +10,7 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 
 private val A_EXTERNAL_CONTENT_URI = FakeUri()
+private val ROW_URI = FakeUri()
 private const val A_BUCKET_ID = "a-bucket-id"
 private const val A_ROW_ID = 20L
 private const val A_MIME_TYPE = "image/png"
@@ -23,9 +24,8 @@ private const val A_HEIGHT = 750
 class FetchMediaUseCaseTest {
 
     private val fakeContentResolver = FakeContentResolver()
-    private val appendedUri = FakeUri()
-    private val uriAvoidance = FetchMediaUseCase.UriAvoidance(
-        uriAppender = { _, _ -> appendedUri.instance },
+    private val uriAvoidance = MediaUriAvoidance(
+        uriAppender = { _, _ -> ROW_URI.instance },
         externalContentUri = A_EXTERNAL_CONTENT_URI.instance,
     )
 
@@ -50,7 +50,7 @@ class FetchMediaUseCaseTest {
         result shouldBeEqualTo listOf(
             Media(
                 id = A_ROW_ID,
-                uri = appendedUri.instance,
+                uri = ROW_URI.instance,
                 mimeType = A_MIME_TYPE,
                 width = A_WIDTH,
                 height = A_HEIGHT,
@@ -79,7 +79,7 @@ class FetchMediaUseCaseTest {
         result shouldBeEqualTo listOf(
             Media(
                 id = A_ROW_ID,
-                uri = appendedUri.instance,
+                uri = ROW_URI.instance,
                 mimeType = A_MIME_TYPE,
                 width = A_HEIGHT,
                 height = A_WIDTH,
