@@ -2,7 +2,6 @@ package app.dapk.st.push.unifiedpush
 
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.push.PushHandler
 import app.dapk.st.push.PushModule
 import app.dapk.st.push.PushTokenPayload
 import fake.FakeContext
@@ -88,8 +87,6 @@ class FakePushModule {
 
     fun givenPushHandler() = every { instance.pushHandler() }.delegateReturn()
 }
-
-class FakePushHandler : PushHandler by mockk()
 
 class FakeEndpointReader : suspend (URL) -> String by mockk() {
 

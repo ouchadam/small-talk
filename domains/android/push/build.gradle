@@ -13,5 +13,6 @@ dependencies {
 
     kotlinTest(it)
     androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
 }
