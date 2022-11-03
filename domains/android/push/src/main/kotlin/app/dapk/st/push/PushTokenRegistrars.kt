@@ -3,8 +3,8 @@ package app.dapk.st.push
 import android.content.Context
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.push.messaging.MessagingPushTokenRegistrar
+import app.dapk.st.push.unifiedpush.UnifiedPush
 import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
-import org.unifiedpush.android.connector.UnifiedPush
 
 private val FIREBASE_OPTION = Registrar("Google - Firebase (FCM)")
 private val NONE = Registrar("None")
@@ -14,6 +14,7 @@ class PushTokenRegistrars(
     private val messagingPushTokenRegistrar: MessagingPushTokenRegistrar,
     private val unifiedPushRegistrar: UnifiedPushRegistrar,
     private val pushTokenStore: PushTokenRegistrarPreferences,
+    private val unifiedPush: UnifiedPush,
 ) : PushTokenRegistrar {
 
     private var selection: Registrar? = null
@@ -23,7 +24,7 @@ class PushTokenRegistrars(
             true -> FIREBASE_OPTION
             else -> null
         }
-        return listOfNotNull(NONE, messagingOption) + UnifiedPush.getDistributors(context).map { Registrar(it) }
+        return listOfNotNull(NONE, messagingOption) + unifiedPush.getDistributors(context).map { Registrar(it) }
     }
 
     suspend fun currentSelection() = selection ?: (pushTokenStore.currentSelection()?.let { Registrar(it) } ?: defaultSelection()).also { selection = it }

@@ -22,6 +22,7 @@ class PushModule(
 ) : ProvidableModule {
 
     private val registrars by unsafeLazy {
+        val unifiedPush = object : UnifiedPush {}
         PushTokenRegistrars(
             context,
             MessagingPushTokenRegistrar(
@@ -29,8 +30,9 @@ class PushModule(
                 pushHandler,
                 messaging,
             ),
-            UnifiedPushRegistrar(context, object : UnifiedPush {}),
-            PushTokenRegistrarPreferences(preferences)
+            UnifiedPushRegistrar(context, unifiedPush),
+            PushTokenRegistrarPreferences(preferences),
+            unifiedPush,
         )
     }
 
