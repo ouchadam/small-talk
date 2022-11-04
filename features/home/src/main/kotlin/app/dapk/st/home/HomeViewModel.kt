@@ -1,6 +1,7 @@
 package app.dapk.st.home
 
 import androidx.lifecycle.viewModelScope
+import app.dapk.st.directory.state.ComponentLifecycle
 import app.dapk.st.directory.state.DirectorySideEffect
 import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.domain.StoreCleaner
@@ -122,7 +123,10 @@ internal class HomeViewModel(
                 // do nothing
             }
 
-            Page.Profile -> profileViewModel.reset()
+            Page.Profile -> {
+                directoryState.dispatch(ComponentLifecycle.OnGone)
+                profileViewModel.reset()
+            }
         }
     }
 
