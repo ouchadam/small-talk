@@ -124,6 +124,15 @@ sealed class RoomEvent {
 
     }
 
+    data class Redacted(
+        override val eventId: EventId,
+        override val utcTimestamp: Long,
+        override val author: RoomMember,
+    ) : RoomEvent() {
+        override val edited: Boolean = false
+        override val meta: MessageMeta = MessageMeta.FromServer
+    }
+
     data class Message(
         override val eventId: EventId,
         override val utcTimestamp: Long,
@@ -131,7 +140,6 @@ sealed class RoomEvent {
         override val author: RoomMember,
         override val meta: MessageMeta,
         override val edited: Boolean = false,
-        val redacted: Boolean = false,
     ) : RoomEvent()
 
     data class Reply(

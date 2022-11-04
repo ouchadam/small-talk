@@ -83,6 +83,7 @@ internal class TimelineEventMapper(
                         is RoomEvent.Reply -> relationEvent.message
                         is RoomEvent.Image -> relationEvent
                         is RoomEvent.Encrypted -> relationEvent
+                        is RoomEvent.Redacted -> relationEvent
                     }
                 )
             }
@@ -115,6 +116,7 @@ internal class TimelineEventMapper(
                         is RoomEvent.Message -> original.message.edited(incomingEdit)
                         is RoomEvent.Reply -> original.message
                         is RoomEvent.Encrypted -> original.message
+                        is RoomEvent.Redacted -> original.message
                     }
                 )
 
@@ -125,6 +127,11 @@ internal class TimelineEventMapper(
 
                 is RoomEvent.Encrypted -> {
                     // can't edit encrypted messages
+                    null
+                }
+
+                is RoomEvent.Redacted -> {
+                    // can't edit redacted
                     null
                 }
             }

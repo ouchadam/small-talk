@@ -176,6 +176,7 @@ private fun RoomEvent.toSendMessageReply() = SendMessage.TextMessage.Reply(
     originalMessage = when (this) {
         is RoomEvent.Image -> TODO()
         is RoomEvent.Reply -> TODO()
+        is RoomEvent.Redacted -> TODO()
         is RoomEvent.Message -> this.content.asString()
         is RoomEvent.Encrypted -> error("Should never happen")
     },
@@ -190,6 +191,7 @@ private fun initialComposerState(initialAttachments: List<MessageAttachment>?) =
 
 private fun BubbleModel.findCopyableContent(): CopyableResult = when (this) {
     is BubbleModel.Encrypted -> CopyableResult.NothingToCopy
+    is BubbleModel.Redacted -> CopyableResult.NothingToCopy
     is BubbleModel.Image -> CopyableResult.NothingToCopy
     is BubbleModel.Reply -> this.reply.findCopyableContent()
     is BubbleModel.Text -> CopyableResult.Content(CopyToClipboard.Copyable.Text(this.content.asString()))

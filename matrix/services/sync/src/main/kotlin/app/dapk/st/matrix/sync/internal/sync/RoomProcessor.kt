@@ -79,4 +79,5 @@ private fun RoomEvent.toTextContent(): String = when (this) {
     is RoomEvent.Message -> this.content.asString()
     is RoomEvent.Reply -> this.message.toTextContent()
     is RoomEvent.Encrypted -> "Encrypted message"
+    is RoomEvent.Redacted -> "Message deleted"
 }

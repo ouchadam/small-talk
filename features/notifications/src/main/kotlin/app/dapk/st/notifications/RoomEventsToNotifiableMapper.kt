@@ -15,6 +15,7 @@ class RoomEventsToNotifiableMapper {
         is RoomEvent.Message -> this.content.asString()
         is RoomEvent.Reply -> this.message.toNotifiableContent()
         is RoomEvent.Encrypted -> "Encrypted message"
+        is RoomEvent.Redacted -> "Deleted message"
     }
 
 }

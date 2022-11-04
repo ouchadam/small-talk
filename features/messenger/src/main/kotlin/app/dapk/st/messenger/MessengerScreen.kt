@@ -316,6 +316,7 @@ private fun RoomEvent.toModel(): BubbleModel {
     return when (this) {
         is RoomEvent.Message -> BubbleModel.Text(this.content.toApp(), event)
         is RoomEvent.Encrypted -> BubbleModel.Encrypted(event)
+        is RoomEvent.Redacted -> BubbleModel.Redacted(event)
         is RoomEvent.Image -> {
             val imageRequest = LocalImageRequestFactory.current
                 .memoryCacheKey(this.imageMeta.url)
