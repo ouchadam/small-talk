@@ -34,8 +34,7 @@ fun anEncryptedRoomMessageEvent(
     meta: MessageMeta = MessageMeta.FromServer,
     encryptedContent: RoomEvent.Encrypted.MegOlmV1 = aMegolmV1(),
     edited: Boolean = false,
-    redacted: Boolean = false,
-) = RoomEvent.Encrypted(eventId, utcTimestamp, author, meta, edited, redacted, encryptedContent)
+) = RoomEvent.Encrypted(eventId, utcTimestamp, author, meta, edited, encryptedContent)
 
 fun aMegolmV1(
     cipherText: CipherText = CipherText("a-cipher"),

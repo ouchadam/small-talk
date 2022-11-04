@@ -47,6 +47,7 @@ internal class UnreadEventsProcessor(
                         is RoomEvent.Reply -> it.message.author.id == selfId
                         is RoomEvent.Image -> it.author.id == selfId
                         is RoomEvent.Encrypted -> it.author.id == selfId
+                        is RoomEvent.Redacted -> it.author.id == selfId
                     }
                 }.map { it.eventId }
                 roomStore.insertUnread(overview.roomId, eventsFromOthers)

@@ -29,6 +29,7 @@ internal class RoomEventsDecrypter(
         )
 
         is RoomEvent.Image -> event
+        is RoomEvent.Redacted -> event
     }
 
     private suspend fun RoomEvent.Encrypted.decrypt(userCredentials: UserCredentials) = when (val result = this.decryptContent()) {
@@ -51,7 +52,6 @@ internal class RoomEventsDecrypter(
         author = this.author,
         meta = this.meta,
         edited = this.edited,
-        redacted = this.redacted,
         content = richMessageParser.parse(content.body ?: "")
     )
 
@@ -61,7 +61,6 @@ internal class RoomEventsDecrypter(
         author = this.author,
         meta = this.meta,
         edited = this.edited,
-        redacted = this.redacted,
         imageMeta = RoomEvent.Image.ImageMeta(
             width = content.info?.width,
             height = content.info?.height,

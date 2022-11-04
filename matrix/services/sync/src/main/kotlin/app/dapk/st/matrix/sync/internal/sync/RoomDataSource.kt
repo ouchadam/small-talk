@@ -33,8 +33,8 @@ class RoomDataSource(
         roomStore.remove(roomsLeft)
     }
 
-    suspend fun redact(roomId: RoomId, event: EventId) {
-        val eventToRedactFromCache = roomCache[roomId]?.events?.find { it.eventId == event }
+    suspend fun redact(roomId: RoomId, eventId: EventId) {
+        val eventToRedactFromCache = roomCache[roomId]?.events?.find { it.eventId == eventId }
         val redactedEvent = when {
             eventToRedactFromCache != null -> {
                 eventToRedactFromCache.redact().also { redacted ->
@@ -44,14 +44,14 @@ class RoomDataSource(
                 }
             }
 
-            else -> roomStore.findEvent(event)?.redact()
+            else -> roomStore.findEvent(eventId)?.redact()
         }
 
         redactedEvent?.let { roomStore.persist(roomId, listOf(it)) }
     }
 }
 
-private fun RoomEvent.redact() = RoomEvent.Message(this.eventId, this.utcTimestamp, RichText.of("Redacted"), this.author, this.meta, redacted = true)
+private fun RoomEvent.redact() = RoomEvent.Redacted(this.eventId, this.utcTimestamp, this.author)
 
 private fun RoomState.replaceEvent(old: RoomEvent, new: RoomEvent): RoomState {
     val updatedEvents = this.events.toMutableList().apply {
