@@ -37,15 +37,20 @@ internal class PartBuilder {
 
     fun build(): List<RichText.Part> {
         flushNormalBuffer()
-        val last = parts.last()
-        if (last is RichText.Part.Normal) {
-            parts.removeLast()
-            val newContent = last.content.trimEnd()
-            if (newContent.isNotEmpty()) {
-                parts.add(last.copy(content = newContent))
+        return when(parts.isEmpty()) {
+            true -> parts
+            else -> {
+                val last = parts.last()
+                if (last is RichText.Part.Normal) {
+                    parts.removeLast()
+                    val newContent = last.content.trimEnd()
+                    if (newContent.isNotEmpty()) {
+                        parts.add(last.copy(content = newContent))
+                    }
+                }
+                parts
             }
         }
-        return parts
     }
 
     private fun flushNormalBuffer() {
