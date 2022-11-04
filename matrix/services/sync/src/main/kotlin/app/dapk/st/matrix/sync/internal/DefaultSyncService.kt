@@ -107,7 +107,7 @@ internal class DefaultSyncService(
     }
 
     override fun startSyncing(): Flow<Unit> {
-        return flow { emit(syncStore.read(SyncStore.SyncKey.Overview) != null) }.flatMapMerge { hasSynced ->
+        return flow { emit(syncStore.read(SyncStore.SyncKey.Overview) != null) }.flatMapConcat { hasSynced ->
             when (hasSynced) {
                 true -> syncFlow.filter { false }.onStart { emit(Unit) }
                 false -> {
