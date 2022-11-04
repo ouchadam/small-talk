@@ -28,8 +28,7 @@ fun anEncryptedRoomMessageEvent(
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
     edited: Boolean = false,
-    redacted: Boolean = false,
-) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited, redacted)
+) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited)
 
 fun aRoomImageMessageEvent(
     eventId: EventId = anEventId(),

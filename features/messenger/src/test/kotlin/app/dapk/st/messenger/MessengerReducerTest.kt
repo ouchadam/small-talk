@@ -28,7 +28,6 @@ private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
 private const val A_MESSAGE_CONTENT = "message content"
 private val AN_EVENT_ID = anEventId("state event")
-private const val ROOM_IS_MUTED = true
 private val A_SELF_ID = aUserId("self")
 private val A_MESSENGER_PAGE_STATE = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
 private val A_MESSAGE_ATTACHMENT = MessageAttachment(AndroidUri("a-uri"), MimeType.Image)
@@ -314,6 +313,7 @@ class MessengerReducerTest {
         originalMessage = when (this) {
             is RoomEvent.Image -> TODO()
             is RoomEvent.Reply -> TODO()
+            is RoomEvent.Redacted -> TODO()
             is RoomEvent.Message -> this.content.asString()
             is RoomEvent.Encrypted -> error("Should never happen")
         },
