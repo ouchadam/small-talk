@@ -1,12 +1,16 @@
 package app.dapk.st.engine
 
+import app.dapk.st.core.extensions.combine
 import app.dapk.st.matrix.common.*
 import app.dapk.st.matrix.message.MessageService
 import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.matrix.sync.SyncService.SyncEvent.Typing
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 internal class DirectoryUseCase(
     private val syncService: SyncService,
@@ -17,14 +21,15 @@ internal class DirectoryUseCase(
 ) {
 
     fun state(): Flow<DirectoryState> {
-        return flow { emit(credentialsStore.credentials()!!.userId) }.flatMapMerge { userId ->
+        return flow { emit(credentialsStore.credentials()!!.userId) }.flatMapConcat { userId ->
             combine(
-                overviewDatasource(),
+                syncService.startSyncing(),
+                syncService.overview().map { it.map { it.engine() } },
                 messageService.localEchos(),
                 roomStore.observeUnreadCountById(),
                 syncService.events(),
                 roomStore.observeMuted(),
-            ) { overviewState, localEchos, unread, events, muted ->
+            ) { _, overviewState, localEchos, unread, events, muted ->
                 overviewState.mergeWithLocalEchos(localEchos, userId).map { roomOverview ->
                     DirectoryItem(
                         overview = roomOverview,
@@ -36,11 +41,6 @@ internal class DirectoryUseCase(
             }
         }
     }
-
-    private fun overviewDatasource() = combine(
-        syncService.startSyncing(),
-        syncService.overview().map { it.map { it.engine() } }
-    ) { _, overview -> overview }.filterNotNull()
 
     private suspend fun OverviewState.mergeWithLocalEchos(localEchos: Map<RoomId, List<MessageService.LocalEcho>>, userId: UserId): OverviewState {
         return when {
@@ -80,6 +80,3 @@ internal class DirectoryUseCase(
     }
 
 }
-
-
-
