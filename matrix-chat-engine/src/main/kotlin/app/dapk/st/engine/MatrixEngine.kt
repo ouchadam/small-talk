@@ -173,14 +173,14 @@ class MatrixEngine internal constructor(
                 DirectoryUseCase(
                     matrix.syncService(),
                     matrix.messageService(),
-                    matrix.roomService(),
                     credentialsStore,
-                    roomStore
+                    roomStore,
+                    DirectoryMergeWithLocalEchosUseCaseImpl(matrix.roomService()),
                 )
             }
             val timelineUseCase = unsafeLazy {
                 val matrix = lazyMatrix.value
-                val mergeWithLocalEchosUseCase = MergeWithLocalEchosUseCaseImpl(LocalEchoMapper(MetaMapper()))
+                val mergeWithLocalEchosUseCase = TimelineMergeWithLocalEchosUseCaseImpl(LocalEchoMapper(MetaMapper()))
                 val timeline = TimelineUseCaseImpl(matrix.syncService(), matrix.messageService(), matrix.roomService(), mergeWithLocalEchosUseCase)
                 ReadMarkingTimeline(roomStore, credentialsStore, timeline, matrix.roomService())
             }

@@ -113,7 +113,7 @@ suspend fun <T> Flow<T>.test(scope: CoroutineScope) = FlowTestObserver(scope, th
     this.collect()
 }
 
-class FakeMergeWithLocalEchosUseCase : MergeWithLocalEchosUseCase by mockk() {
+class FakeMergeWithLocalEchosUseCase : TimelineMergeWithLocalEchosUseCase by mockk() {
     fun givenMerging(roomState: RoomState, roomMember: RoomMember, echos: List<MessageService.LocalEcho>) = every {
         this@FakeMergeWithLocalEchosUseCase.invoke(roomState.engine(), roomMember, echos)
     }.delegateReturn()
