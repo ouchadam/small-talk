@@ -64,3 +64,9 @@ fun aRoomState(
     roomOverview: RoomOverview = aRoomOverview(),
     events: List<RoomEvent> = listOf(aRoomMessageEvent()),
 ) = RoomState(roomOverview, events)
+
+fun aRoomInvite(
+    from: RoomMember = aRoomMember(),
+    roomId: RoomId = aRoomId(),
+    inviteMeta: RoomInvite.InviteMeta = RoomInvite.InviteMeta.DirectMessage,
+) = RoomInvite(from, roomId, inviteMeta)

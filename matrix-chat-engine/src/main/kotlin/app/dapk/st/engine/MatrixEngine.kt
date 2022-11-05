@@ -3,6 +3,7 @@ package app.dapk.st.engine
 import app.dapk.st.core.Base64
 import app.dapk.st.core.BuildMeta
 import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.JobBag
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.matrix.MatrixClient
 import app.dapk.st.matrix.MatrixTaskRunner
@@ -190,7 +191,16 @@ class MatrixEngine internal constructor(
             }
 
             val mediaDecrypter = unsafeLazy { MatrixMediaDecrypter(base64) }
-            val pushHandler = unsafeLazy { MatrixPushHandler(backgroundScheduler, credentialsStore, lazyMatrix.value.syncService(), roomStore) }
+            val pushHandler = unsafeLazy {
+                MatrixPushHandler(
+                    backgroundScheduler,
+                    credentialsStore,
+                    lazyMatrix.value.syncService(),
+                    roomStore,
+                    coroutineDispatchers,
+                    JobBag(),
+                )
+            }
 
             val invitesUseCase = unsafeLazy { InviteUseCase(lazyMatrix.value.syncService()) }
 
