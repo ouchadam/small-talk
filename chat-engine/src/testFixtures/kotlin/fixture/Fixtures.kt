@@ -70,3 +70,8 @@ fun aRoomInvite(
     roomId: RoomId = aRoomId(),
     inviteMeta: RoomInvite.InviteMeta = RoomInvite.InviteMeta.DirectMessage,
 ) = RoomInvite(from, roomId, inviteMeta)
+
+fun aTypingEvent(
+    roomId: RoomId = aRoomId(),
+    members: List<RoomMember> = listOf(aRoomMember())
+) = Typing(roomId, members)

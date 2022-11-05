@@ -3,7 +3,6 @@ package app.dapk.st.engine
 import app.dapk.st.core.extensions.combine
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.message.MessageService
-import app.dapk.st.matrix.room.RoomService
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
 import app.dapk.st.matrix.sync.SyncService.SyncEvent.Typing
@@ -17,7 +16,7 @@ internal class DirectoryUseCase(
     private val messageService: MessageService,
     private val credentialsStore: CredentialsStore,
     private val roomStore: RoomStore,
-    private val mergeLocalEchosUseCase: DirectoryMergeWithLocalEchosUseCaseImpl
+    private val mergeLocalEchosUseCase: DirectoryMergeWithLocalEchosUseCase,
 ) {
 
     fun state(): Flow<DirectoryState> {

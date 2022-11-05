@@ -125,9 +125,8 @@ fun aTypingSyncEvent(
 ) = SyncService.SyncEvent.Typing(roomId, members)
 
 class FakeMessageService : MessageService by mockk() {
-
     fun givenEchos(roomId: RoomId) = every { localEchos(roomId) }.delegateReturn()
-
+    fun givenEchos() = every { localEchos() }.delegateReturn()
 }
 
 class FakeRoomService : RoomService by mockk() {
