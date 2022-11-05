@@ -1,18 +1,14 @@
-package app.dapk.st.matrix.sync.internal.sync.message
+package app.dapk.st.matrix.sync.internal.sync.message.url
 
+import app.dapk.st.matrix.sync.internal.sync.message.ContentAccumulator
+
+private const val END_SEARCH = -1
 private const val INVALID_TRAILING_CHARS = ",.:;?<>"
 
 internal class UrlParser {
 
-    private fun String.hasLookAhead(current: Int, value: String): Boolean {
-        return length > current + value.length && this.substring(current, current + value.length) == value
-    }
-
-    fun parseUrl(input: String, linkStartIndex: Int, builder: PartBuilder): Int {
-        val urlIndex = input.indexOf("http", startIndex = linkStartIndex)
+    fun parseUrl(input: String, urlIndex: Int, accumulator: ContentAccumulator): Int {
         return if (urlIndex == END_SEARCH) END_SEARCH else {
-            builder.appendTextBeforeTag(linkStartIndex, urlIndex, input)
-
             val originalUrl = input.substring(urlIndex)
             var index = 0
             val maybeUrl = originalUrl.takeWhile {
@@ -25,29 +21,27 @@ internal class UrlParser {
             when {
                 urlContinuesUntilEnd -> {
                     val cleanedUrl = originalUrl.bestGuessStripTrailingUrlChar()
-                    builder.appendLink(url = cleanedUrl, label = null)
+                    accumulator.appendLink(url = cleanedUrl, label = null)
                     if (cleanedUrl != originalUrl) {
-                        builder.appendText(originalUrl.last().toString())
+                        accumulator.appendText(originalUrl.last().toString())
                     }
-                    input.length.next()
+                    input.length + 1
                 }
 
                 else -> {
                     val originalUrl = input.substring(urlIndex, urlEndIndex)
                     val cleanedUrl = originalUrl.bestGuessStripTrailingUrlChar()
-                    builder.appendLink(url = cleanedUrl, label = null)
+                    accumulator.appendLink(url = cleanedUrl, label = null)
                     if (originalUrl == cleanedUrl) urlEndIndex else urlEndIndex - 1
                 }
             }
         }
     }
-
-    fun test(startingFrom: Int, input: String): Int {
-        return input.indexOf("http", startingFrom)
-    }
-
 }
 
+private fun String.hasLookAhead(current: Int, value: String): Boolean {
+    return length > current + value.length && this.substring(current, current + value.length) == value
+}
 
 private fun String.bestGuessStripTrailingUrlChar(): String {
     val last = this.last()
