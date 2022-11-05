@@ -5,10 +5,9 @@ import app.dapk.st.matrix.common.RichText.Part.*
 import app.dapk.st.matrix.sync.internal.sync.message.RichMessageParser
 import fixture.aUserId
 import org.amshove.kluent.shouldBeEqualTo
-import org.junit.Ignore
 import org.junit.Test
 
-class RichMessageParserTest {
+class RichTextMessageParserTest {
 
     private val parser = RichMessageParser()
 
@@ -16,6 +15,34 @@ class RichMessageParserTest {
     fun `parses plain text`() = runParserTest(
         input = "Hello world!",
         expected = RichText(listOf(Normal("Hello world!")))
+    )
+
+    @Test
+    fun `parses strong tags`() = runParserTest(
+        Case(
+            input = """hello <strong>wor</strong>ld""",
+            expected = RichText(
+                listOf(
+                    Normal("hello "),
+                    Bold("wor"),
+                    Normal("ld"),
+                )
+            )
+        ),
+    )
+
+    @Test
+    fun `parses em tags`() = runParserTest(
+        Case(
+            input = """hello <em>wor</em>ld""",
+            expected = RichText(
+                listOf(
+                    Normal("hello "),
+                    Italic("wor"),
+                    Normal("ld"),
+                )
+            )
+        ),
     )
 
     @Test
@@ -63,7 +90,7 @@ class RichMessageParserTest {
     @Test
     fun `replaces matrixdotto with person`() = runParserTest(
         input = """Hello <a href="https://matrix.to/#/@a-name:foo.bar">a-name</a>: world""",
-        expected = RichText(listOf(Normal("Hello "), Person(aUserId("@a-name:foo.bar"), "@a-name"), Normal(" world")))
+        expected = RichText(listOf(Normal("Hello "), Person(aUserId("@a-name:foo.bar"), "@a-name"), Normal(": world")))
     )
 
     @Test
@@ -122,6 +149,21 @@ class RichMessageParserTest {
         ),
     )
 
+
+    @Test
+    fun `parses nested lists`() = runParserTest(
+        input = """
+            <ul>
+            <li>first item
+                <ul>
+                    <li>nested item</li>
+                </ul>
+            </li>
+            </ul>
+        """.trimIndent().lines().joinToString("") { it.trim() },
+        expected = RichText(listOf(Normal("- first item\n- nested item")))
+    )
+
     @Test
     fun `parses urls`() = runParserTest(
         Case(
@@ -176,58 +218,6 @@ class RichMessageParserTest {
     fun `parses invalid tags text`() = runParserTest(
         input = ">><foo> ><>> << more content",
         expected = RichText(listOf(Normal(">><foo> ><>> << more content")))
-    )
-
-    @Test
-    fun `parses strong tags`() = runParserTest(
-        Case(
-            input = """hello <strong>wor</strong>ld""",
-            expected = RichText(
-                listOf(
-                    Normal("hello "),
-                    Bold("wor"),
-                    Normal("ld"),
-                )
-            )
-        ),
-    )
-
-    @Test
-    fun `parses em tags`() = runParserTest(
-        Case(
-            input = """hello <em>wor</em>ld""",
-            expected = RichText(
-                listOf(
-                    Normal("hello "),
-                    Italic("wor"),
-                    Normal("ld"),
-                )
-            )
-        ),
-    )
-
-    @Ignore // TODO
-    @Test
-    fun `parses nested tags`() = runParserTest(
-        Case(
-            input = """hello <b><i>wor<i/><b/>ld""",
-            expected = RichText(
-                listOf(
-                    Normal("hello "),
-                    BoldItalic("wor"),
-                    Normal("ld"),
-                )
-            )
-        ),
-        Case(
-            input = """<a href="www.google.com"><a href="www.google.com">www.google.com<a/><a/>""",
-            expected = RichText(
-                listOf(
-                    Link(url = "www.google.com", label = "www.google.com"),
-                    Link(url = "www.bing.com", label = "www.bing.com"),
-                )
-            )
-        )
     )
 
     @Test
