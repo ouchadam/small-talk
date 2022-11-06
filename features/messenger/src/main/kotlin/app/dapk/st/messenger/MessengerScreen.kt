@@ -444,7 +444,7 @@ private fun TextComposer(
                             )
 
                             Text(
-                                text = it.content.toApp().toAnnotatedText(),
+                                text = it.content.toApp().toAnnotatedText(isSelf = false),
                                 color = SmallTalkTheme.extendedColors.onOthersBubble,
                                 fontSize = 14.sp,
                                 maxLines = 2,

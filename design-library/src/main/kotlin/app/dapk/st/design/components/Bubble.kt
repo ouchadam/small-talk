@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Recycling
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -133,7 +131,7 @@ private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @C
             when (val replyingTo = model.replyingTo) {
                 is BubbleModel.Text -> {
                     Text(
-                        text = replyingTo.content.toAnnotatedText(),
+                        text = replyingTo.content.toAnnotatedText(bubble.isSelf),
                         color = bubble.textColor().copy(alpha = 0.8f),
                         fontSize = 14.sp,
                         modifier = Modifier.wrapContentSize(),
@@ -279,7 +277,7 @@ private fun Footer(event: BubbleModel.Event, bubble: BubbleMeta, status: @Compos
 
 @Composable
 private fun TextContent(bubble: BubbleMeta, text: RichText, isAlternative: Boolean = false, fontSize: Int = 15) {
-    val annotatedText = text.toAnnotatedText()
+    val annotatedText = text.toAnnotatedText(bubble.isSelf)
     val uriHandler = LocalUriHandler.current
     ClickableText(
         text = annotatedText,
@@ -297,16 +295,19 @@ private fun TextContent(bubble: BubbleMeta, text: RichText, isAlternative: Boole
     )
 }
 
-val hyperLinkStyle = SpanStyle(
-    color = Color(0xff64B5F6),
+@Composable
+private fun nameStyle(isSelf: Boolean) = SpanStyle(
+    color = if (isSelf) SmallTalkTheme.extendedColors.onSelfBubble else SmallTalkTheme.extendedColors.onOthersBubble,
+)
+
+@Composable
+private fun hyperlinkStyle(isSelf: Boolean) = SpanStyle(
+    color = if (isSelf) SmallTalkTheme.extendedColors.onSelfBubble else SmallTalkTheme.extendedColors.onOthersBubble,
     textDecoration = TextDecoration.Underline
 )
 
-val nameStyle = SpanStyle(
-    color = Color(0xff64B5F6),
-)
-
-fun RichText.toAnnotatedText() = buildAnnotatedString {
+@Composable
+fun RichText.toAnnotatedText(isSelf: Boolean) = buildAnnotatedString {
     parts.forEach {
         when (it) {
             is RichText.Part.Bold -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(it.content) }
@@ -314,12 +315,12 @@ fun RichText.toAnnotatedText() = buildAnnotatedString {
             is RichText.Part.Italic -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(it.content) }
             is RichText.Part.Link -> {
                 pushStringAnnotation("url", annotation = it.url)
-                withStyle(hyperLinkStyle) { append(it.label) }
+                withStyle(hyperlinkStyle(isSelf)) { append(it.label) }
                 pop()
             }
 
             is RichText.Part.Normal -> append(it.content)
-            is RichText.Part.Person -> withStyle(nameStyle) {
+            is RichText.Part.Person -> withStyle(nameStyle(isSelf)) {
                 append("@${it.displayName.substringBefore(':').removePrefix("@")}")
             }
         }
