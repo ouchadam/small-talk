@@ -113,7 +113,7 @@ suspend fun <T> Flow<T>.test(scope: CoroutineScope) = FlowTestObserver(scope, th
     this.collect()
 }
 
-class FakeMergeWithLocalEchosUseCase : MergeWithLocalEchosUseCase by mockk() {
+class FakeMergeWithLocalEchosUseCase : TimelineMergeWithLocalEchosUseCase by mockk() {
     fun givenMerging(roomState: RoomState, roomMember: RoomMember, echos: List<MessageService.LocalEcho>) = every {
         this@FakeMergeWithLocalEchosUseCase.invoke(roomState.engine(), roomMember, echos)
     }.delegateReturn()
@@ -125,9 +125,8 @@ fun aTypingSyncEvent(
 ) = SyncService.SyncEvent.Typing(roomId, members)
 
 class FakeMessageService : MessageService by mockk() {
-
     fun givenEchos(roomId: RoomId) = every { localEchos(roomId) }.delegateReturn()
-
+    fun givenEchos() = every { localEchos() }.delegateReturn()
 }
 
 class FakeRoomService : RoomService by mockk() {
@@ -137,7 +136,7 @@ class FakeRoomService : RoomService by mockk() {
 
 fun aMessengerState(
     self: UserId = aUserId(),
-    roomState: app.dapk.st.engine.RoomState,
+    roomState: app.dapk.st.engine.RoomState = aRoomState(),
     typing: Typing? = null,
     isMuted: Boolean = IS_ROOM_MUTED,
 ) = MessengerPageState(self, roomState, typing, isMuted)

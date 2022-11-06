@@ -1,6 +1,8 @@
 package app.dapk.st.engine
 
 import app.dapk.st.core.AppLogTag
+import app.dapk.st.core.CoroutineDispatchers
+import app.dapk.st.core.JobBag
 import app.dapk.st.core.log
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.EventId
@@ -9,17 +11,20 @@ import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.message.BackgroundScheduler
 import app.dapk.st.matrix.sync.RoomStore
 import app.dapk.st.matrix.sync.SyncService
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
-private var previousJob: Job? = null
-
-@OptIn(DelicateCoroutinesApi::class)
 class MatrixPushHandler(
     private val backgroundScheduler: BackgroundScheduler,
     private val credentialsStore: CredentialsStore,
     private val syncService: SyncService,
     private val roomStore: RoomStore,
+    private val dispatchers: CoroutineDispatchers,
+    private val jobBag: JobBag,
 ) : PushHandler {
 
     override fun onNewToken(payload: JsonString) {
@@ -35,13 +40,12 @@ class MatrixPushHandler(
 
     override fun onMessageReceived(eventId: EventId?, roomId: RoomId?) {
         log(AppLogTag.PUSH, "push received")
-        previousJob?.cancel()
-        previousJob = GlobalScope.launch {
+        jobBag.replace(MatrixPushHandler::class, dispatchers.global.launch {
             when (credentialsStore.credentials()) {
                 null -> log(AppLogTag.PUSH, "push ignored due to missing api credentials")
                 else -> doSync(roomId, eventId)
             }
-        }
+        })
     }
 
     private suspend fun doSync(roomId: RoomId?, eventId: EventId?) {

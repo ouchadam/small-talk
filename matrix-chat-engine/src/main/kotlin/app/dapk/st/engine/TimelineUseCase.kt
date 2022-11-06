@@ -16,7 +16,7 @@ internal class TimelineUseCaseImpl(
     private val syncService: SyncService,
     private val messageService: MessageService,
     private val roomService: RoomService,
-    private val mergeWithLocalEchosUseCase: MergeWithLocalEchosUseCase
+    private val timelineMergeWithLocalEchosUseCase: TimelineMergeWithLocalEchosUseCase,
 ) : ObserveTimelineUseCase {
 
     override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerPageState> {
@@ -30,7 +30,7 @@ internal class TimelineUseCaseImpl(
                 roomState = when {
                     localEchos.isEmpty() -> roomState
                     else -> {
-                        mergeWithLocalEchosUseCase.invoke(
+                        timelineMergeWithLocalEchosUseCase.invoke(
                             roomState,
                             roomService.findMember(roomId, userId) ?: userId.toFallbackMember(),
                             localEchos,

@@ -4,11 +4,11 @@ import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomMember
 import app.dapk.st.matrix.message.MessageService
 
-internal typealias MergeWithLocalEchosUseCase = (RoomState, RoomMember, List<MessageService.LocalEcho>) -> RoomState
+internal typealias TimelineMergeWithLocalEchosUseCase = (RoomState, RoomMember, List<MessageService.LocalEcho>) -> RoomState
 
-internal class MergeWithLocalEchosUseCaseImpl(
+internal class TimelineMergeWithLocalEchosUseCaseImpl(
     private val localEventMapper: LocalEchoMapper,
-) : MergeWithLocalEchosUseCase {
+) : TimelineMergeWithLocalEchosUseCase {
 
     override fun invoke(roomState: RoomState, member: RoomMember, echos: List<MessageService.LocalEcho>): RoomState {
         val echosByEventId = echos.associateBy { it.eventId }
