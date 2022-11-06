@@ -83,6 +83,7 @@ internal class TimelineEventMapper(
                         is RoomEvent.Reply -> relationEvent.message
                         is RoomEvent.Image -> relationEvent
                         is RoomEvent.Encrypted -> relationEvent
+                        is RoomEvent.Redacted -> relationEvent
                     }
                 )
             }
@@ -95,7 +96,7 @@ internal class TimelineEventMapper(
         ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
     }
 
-    private suspend fun ApiTimelineEvent.TimelineMessage.toFallbackTextMessage() = this.toTextMessage(content = this.asTextContent().body ?: "redacted")
+    private suspend fun ApiTimelineEvent.TimelineMessage.toFallbackTextMessage() = this.toTextMessage(content = this.asTextContent().body ?: "")
 
     private suspend fun ApiTimelineEvent.TimelineMessage.handleEdit(editedEventId: EventId, lookup: Lookup): RoomEvent? {
         return lookup(editedEventId).fold(
@@ -115,6 +116,7 @@ internal class TimelineEventMapper(
                         is RoomEvent.Message -> original.message.edited(incomingEdit)
                         is RoomEvent.Reply -> original.message
                         is RoomEvent.Encrypted -> original.message
+                        is RoomEvent.Redacted -> original.message
                     }
                 )
 
@@ -125,6 +127,11 @@ internal class TimelineEventMapper(
 
                 is RoomEvent.Encrypted -> {
                     // can't edit encrypted messages
+                    null
+                }
+
+                is RoomEvent.Redacted -> {
+                    // can't edit redacted
                     null
                 }
             }
@@ -141,7 +148,7 @@ internal class TimelineEventMapper(
 
                 is ApiTimelineEvent.TimelineMessage.Content.Text -> original.toTextMessage(
                     utcTimestamp = incomingEdit.utcTimestamp,
-                    content = incomingEdit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted",
+                    content = incomingEdit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "",
                     edited = true,
                 )
 
@@ -151,8 +158,7 @@ internal class TimelineEventMapper(
     }
 
     private fun RoomEvent.Message.edited(edit: ApiTimelineEvent.TimelineMessage) = this.copy(
-        content = richMessageParser.parse(edit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: "redacted"),
-        utcTimestamp = edit.utcTimestamp,
+        content = richMessageParser.parse(edit.asTextContent().let { it.formattedBody ?: it.body }?.removePrefix(" * ") ?: ""),
         edited = true,
     )
 
@@ -161,7 +167,7 @@ internal class TimelineEventMapper(
             is ApiTimelineEvent.TimelineMessage.Content.Image -> source.toImageMessage(userCredentials, roomId)
             is ApiTimelineEvent.TimelineMessage.Content.Text -> source.toTextMessage(
                 roomId,
-                content = source.asTextContent().formattedBody ?: source.content.body ?: "redacted"
+                content = source.asTextContent().formattedBody ?: source.content.body ?: ""
             )
 
             ApiTimelineEvent.TimelineMessage.Content.Ignored -> throw IllegalStateException()
@@ -169,7 +175,7 @@ internal class TimelineEventMapper(
     }
 
     private suspend fun ApiTimelineEvent.TimelineMessage.toTextMessage(
-        content: String = this.asTextContent().formattedBody ?: this.asTextContent().body ?: "redacted",
+        content: String = this.asTextContent().formattedBody ?: this.asTextContent().body ?: "",
         edited: Boolean = false,
         utcTimestamp: Long = this.utcTimestamp,
     ) = with(roomEventFactory) { toTextMessage(roomId, content, edited, utcTimestamp) }

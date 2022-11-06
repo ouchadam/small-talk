@@ -10,26 +10,27 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerState>
+internal typealias ObserveTimelineUseCase = (RoomId, UserId) -> Flow<MessengerPageState>
 
 internal class TimelineUseCaseImpl(
     private val syncService: SyncService,
     private val messageService: MessageService,
     private val roomService: RoomService,
-    private val mergeWithLocalEchosUseCase: MergeWithLocalEchosUseCase
+    private val timelineMergeWithLocalEchosUseCase: TimelineMergeWithLocalEchosUseCase,
 ) : ObserveTimelineUseCase {
 
-    override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerState> {
+    override fun invoke(roomId: RoomId, userId: UserId): Flow<MessengerPageState> {
         return combine(
             roomDatasource(roomId),
             messageService.localEchos(roomId),
-            syncService.events(roomId)
-        ) { roomState, localEchos, events ->
-            MessengerState(
+            syncService.events(roomId),
+            roomService.observeIsMuted(roomId),
+        ) { roomState, localEchos, events, isMuted ->
+            MessengerPageState(
                 roomState = when {
                     localEchos.isEmpty() -> roomState
                     else -> {
-                        mergeWithLocalEchosUseCase.invoke(
+                        timelineMergeWithLocalEchosUseCase.invoke(
                             roomState,
                             roomService.findMember(roomId, userId) ?: userId.toFallbackMember(),
                             localEchos,
@@ -38,6 +39,7 @@ internal class TimelineUseCaseImpl(
                 },
                 typing = events.filterIsInstance<SyncService.SyncEvent.Typing>().firstOrNull { it.roomId == roomId }?.engine(),
                 self = userId,
+                isMuted = isMuted,
             )
         }
     }

@@ -22,6 +22,7 @@ import org.junit.Test
 import test.FlowTestObserver
 import test.delegateReturn
 
+private const val IS_ROOM_MUTED = false
 private val A_ROOM_ID = aRoomId()
 private val AN_USER_ID = aUserId()
 private val A_ROOM_STATE = aMatrixRoomState()
@@ -63,6 +64,7 @@ class TimelineUseCaseTest {
 
         fakeMergeWithLocalEchosUseCase.givenMerging(A_ROOM_STATE, A_ROOM_MEMBER, A_LOCAL_ECHOS_LIST).returns(A_MERGED_ROOM_STATE.engine())
 
+
         timelineUseCase.invoke(A_ROOM_ID, AN_USER_ID)
             .test(this)
             .assertValues(
@@ -103,6 +105,7 @@ class TimelineUseCaseTest {
         fakeSyncService.givenRoom(A_ROOM_ID).returns(flowOf(roomState))
         fakeMessageService.givenEchos(A_ROOM_ID).returns(flowOf(echos))
         fakeSyncService.givenEvents(A_ROOM_ID).returns(flowOf(events))
+        fakeRoomService.givenMuted(A_ROOM_ID).returns(flowOf(IS_ROOM_MUTED))
     }
 }
 
@@ -110,7 +113,7 @@ suspend fun <T> Flow<T>.test(scope: CoroutineScope) = FlowTestObserver(scope, th
     this.collect()
 }
 
-class FakeMergeWithLocalEchosUseCase : MergeWithLocalEchosUseCase by mockk() {
+class FakeMergeWithLocalEchosUseCase : TimelineMergeWithLocalEchosUseCase by mockk() {
     fun givenMerging(roomState: RoomState, roomMember: RoomMember, echos: List<MessageService.LocalEcho>) = every {
         this@FakeMergeWithLocalEchosUseCase.invoke(roomState.engine(), roomMember, echos)
     }.delegateReturn()
@@ -122,17 +125,18 @@ fun aTypingSyncEvent(
 ) = SyncService.SyncEvent.Typing(roomId, members)
 
 class FakeMessageService : MessageService by mockk() {
-
     fun givenEchos(roomId: RoomId) = every { localEchos(roomId) }.delegateReturn()
-
+    fun givenEchos() = every { localEchos() }.delegateReturn()
 }
 
 class FakeRoomService : RoomService by mockk() {
     fun givenFindMember(roomId: RoomId, userId: UserId) = coEvery { findMember(roomId, userId) }.delegateReturn()
+    fun givenMuted(roomId: RoomId) = every { observeIsMuted(roomId) }.delegateReturn()
 }
 
 fun aMessengerState(
     self: UserId = aUserId(),
-    roomState: app.dapk.st.engine.RoomState,
-    typing: Typing? = null
-) = MessengerState(self, roomState, typing)
+    roomState: app.dapk.st.engine.RoomState = aRoomState(),
+    typing: Typing? = null,
+    isMuted: Boolean = IS_ROOM_MUTED,
+) = MessengerPageState(self, roomState, typing, isMuted)

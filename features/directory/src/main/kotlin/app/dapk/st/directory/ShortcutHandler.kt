@@ -9,7 +9,7 @@ import app.dapk.st.engine.RoomOverview
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.messenger.MessengerActivity
 
-class ShortcutHandler(private val context: Context) {
+internal class ShortcutHandler(private val context: Context) {
 
     private val cachedRoomIds = mutableListOf<RoomId>()
 

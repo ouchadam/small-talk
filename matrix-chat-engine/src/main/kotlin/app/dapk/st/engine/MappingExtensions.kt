@@ -88,9 +88,10 @@ fun MatrixRoomState.engine() = RoomState(
 
 fun MatrixRoomEvent.engine(): RoomEvent = when (this) {
     is MatrixRoomEvent.Image -> RoomEvent.Image(this.eventId, this.utcTimestamp, this.imageMeta.engine(), this.author, this.meta.engine(), this.edited)
-    is MatrixRoomEvent.Message -> RoomEvent.Message(this.eventId, this.utcTimestamp, this.content, this.author, this.meta.engine(), this.edited, this.redacted)
+    is MatrixRoomEvent.Message -> RoomEvent.Message(this.eventId, this.utcTimestamp, this.content, this.author, this.meta.engine(), this.edited)
     is MatrixRoomEvent.Reply -> RoomEvent.Reply(this.message.engine(), this.replyingTo.engine())
     is MatrixRoomEvent.Encrypted -> RoomEvent.Encrypted(this.eventId, this.utcTimestamp, this.author, this.meta.engine())
+    is MatrixRoomEvent.Redacted -> RoomEvent.Redacted(this.eventId, this.utcTimestamp, this.author)
 }
 
 fun MatrixRoomEvent.Image.ImageMeta.engine() = RoomEvent.Image.ImageMeta(

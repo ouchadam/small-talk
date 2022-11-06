@@ -18,7 +18,7 @@ import app.dapk.st.profile.ProfileScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel) {
+internal fun HomeScreen(homeViewModel: HomeViewModel) {
     LifecycleEffect(
         onStart = { homeViewModel.start() },
         onStop = { homeViewModel.stop() }

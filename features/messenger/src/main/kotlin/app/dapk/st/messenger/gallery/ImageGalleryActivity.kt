@@ -23,9 +23,9 @@ import kotlinx.parcelize.Parcelize
 class ImageGalleryActivity : DapkActivity() {
 
     private val module by unsafeLazy { module<ImageGalleryModule>() }
-    private val viewModel by viewModel {
+    private val imageGalleryState by state {
         val payload = intent.getParcelableExtra("key") as? ImageGalleryActivityPayload
-        module.imageGalleryViewModel(payload!!.roomName)
+        module.imageGalleryState(payload!!.roomName)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +42,7 @@ class ImageGalleryActivity : DapkActivity() {
         setContent {
             Surface {
                 PermissionGuard(permissionState) {
-                    ImageGalleryScreen(viewModel, onTopLevelBack = { finish() }) { media ->
+                    ImageGalleryScreen(imageGalleryState, onTopLevelBack = { finish() }) { media ->
                         setResult(RESULT_OK, Intent().setData(media.uri))
                         finish()
                     }

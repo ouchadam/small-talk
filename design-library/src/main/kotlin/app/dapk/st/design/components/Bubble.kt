@@ -8,6 +8,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,12 +34,14 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 
 private val ENCRYPTED_MESSAGE = RichText(listOf(RichText.Part.Normal("Encrypted message")))
+private val DELETED_MESSAGE = RichText(listOf(RichText.Part.Italic("Message deleted")))
 
 sealed interface BubbleModel {
     val event: Event
 
     data class Text(val content: RichText, override val event: Event) : BubbleModel
     data class Encrypted(override val event: Event) : BubbleModel
+    data class Redacted(override val event: Event) : BubbleModel
     data class Image(val imageContent: ImageContent, val imageRequest: ImageRequest, override val event: Event) : BubbleModel {
         data class ImageContent(val width: Int?, val height: Int?, val url: String)
     }
@@ -64,6 +69,7 @@ fun MessageBubble(bubble: BubbleMeta, model: BubbleModel, status: @Composable ()
         is BubbleModel.Encrypted -> EncryptedBubble(bubble, model, status, itemisedLongClick)
         is BubbleModel.Image -> ImageBubble(bubble, model, status, onItemClick = { actions.onImageClick(model) }, itemisedLongClick)
         is BubbleModel.Reply -> ReplyBubble(bubble, model, status, itemisedLongClick)
+        is BubbleModel.Redacted -> RedactedBubble(bubble, model, status)
     }
 }
 
@@ -125,7 +131,7 @@ private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @C
             when (val replyingTo = model.replyingTo) {
                 is BubbleModel.Text -> {
                     Text(
-                        text = replyingTo.content.toAnnotatedText(),
+                        text = replyingTo.content.toAnnotatedText(bubble.isSelf),
                         color = bubble.textColor().copy(alpha = 0.8f),
                         fontSize = 14.sp,
                         modifier = Modifier.wrapContentSize(),
@@ -156,6 +162,8 @@ private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @C
                 is BubbleModel.Reply -> {
                     // TODO - a reply to a reply
                 }
+
+                is BubbleModel.Redacted -> RedactedContent(bubble)
             }
         }
 
@@ -180,6 +188,8 @@ private fun ReplyBubble(bubble: BubbleMeta, model: BubbleModel.Reply, status: @C
             is BubbleModel.Reply -> {
                 // TODO - a reply to a reply
             }
+
+            is BubbleModel.Redacted -> RedactedContent(bubble)
         }
 
         Footer(model.event, bubble, status)
@@ -206,10 +216,29 @@ private fun Int.scalerFor(max: Float): Float {
     return max / this
 }
 
+@Composable
+private fun RedactedBubble(bubble: BubbleMeta, model: BubbleModel.Redacted, status: @Composable () -> Unit) {
+    Bubble(bubble) {
+        if (bubble.isNotSelf()) {
+            AuthorName(model.event, bubble)
+        }
+        RedactedContent(bubble)
+        Footer(model.event, bubble, status)
+    }
+}
+
+@Composable
+private fun RedactedContent(bubble: BubbleMeta) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, end = 4.dp)) {
+        Icon(modifier = Modifier.height(20.dp), imageVector = Icons.Outlined.DeleteOutline, contentDescription = null)
+        Spacer(Modifier.width(4.dp))
+        TextContent(bubble, text = DELETED_MESSAGE, fontSize = 13)
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Bubble(bubble: BubbleMeta, onItemClick: () -> Unit, onLongClick: () -> Unit, content: @Composable () -> Unit) {
+private fun Bubble(bubble: BubbleMeta, onItemClick: (() -> Unit)? = null, onLongClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     Box(modifier = Modifier.padding(start = 6.dp)) {
         Box(
             Modifier
@@ -217,7 +246,7 @@ private fun Bubble(bubble: BubbleMeta, onItemClick: () -> Unit, onLongClick: () 
                 .clip(bubble.shape)
                 .background(bubble.background)
                 .height(IntrinsicSize.Max)
-                .combinedClickable(onLongClick = onLongClick, onClick = onItemClick),
+                .combinedClickable(onLongClick = onLongClick, onClick = onItemClick ?: {}),
         ) {
             Column(
                 Modifier
@@ -247,12 +276,16 @@ private fun Footer(event: BubbleModel.Event, bubble: BubbleMeta, status: @Compos
 }
 
 @Composable
-private fun TextContent(bubble: BubbleMeta, text: RichText) {
-    val annotatedText = text.toAnnotatedText()
+private fun TextContent(bubble: BubbleMeta, text: RichText, isAlternative: Boolean = false, fontSize: Int = 15) {
+    val annotatedText = text.toAnnotatedText(bubble.isSelf)
     val uriHandler = LocalUriHandler.current
     ClickableText(
         text = annotatedText,
-        style = TextStyle(color = bubble.textColor(), fontSize = 15.sp, textAlign = TextAlign.Start),
+        style = TextStyle(
+            color = if (isAlternative) bubble.textColor().copy(alpha = 0.8f) else bubble.textColor(),
+            fontSize = fontSize.sp,
+            textAlign = TextAlign.Start
+        ),
         modifier = Modifier.wrapContentSize(),
         onClick = {
             annotatedText.getStringAnnotations("url", it, it).firstOrNull()?.let {
@@ -262,16 +295,19 @@ private fun TextContent(bubble: BubbleMeta, text: RichText) {
     )
 }
 
-val hyperLinkStyle = SpanStyle(
-    color = Color(0xff64B5F6),
+@Composable
+private fun nameStyle(isSelf: Boolean) = SpanStyle(
+    color = if (isSelf) SmallTalkTheme.extendedColors.onSelfBubble else SmallTalkTheme.extendedColors.onOthersBubble,
+)
+
+@Composable
+private fun hyperlinkStyle(isSelf: Boolean) = SpanStyle(
+    color = if (isSelf) SmallTalkTheme.extendedColors.onSelfBubble else SmallTalkTheme.extendedColors.onOthersBubble,
     textDecoration = TextDecoration.Underline
 )
 
-val nameStyle = SpanStyle(
-    color = Color(0xff64B5F6),
-)
-
-fun RichText.toAnnotatedText() = buildAnnotatedString {
+@Composable
+fun RichText.toAnnotatedText(isSelf: Boolean) = buildAnnotatedString {
     parts.forEach {
         when (it) {
             is RichText.Part.Bold -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(it.content) }
@@ -279,12 +315,12 @@ fun RichText.toAnnotatedText() = buildAnnotatedString {
             is RichText.Part.Italic -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(it.content) }
             is RichText.Part.Link -> {
                 pushStringAnnotation("url", annotation = it.url)
-                withStyle(hyperLinkStyle) { append(it.label) }
+                withStyle(hyperlinkStyle(isSelf)) { append(it.label) }
                 pop()
             }
 
             is RichText.Part.Normal -> append(it.content)
-            is RichText.Part.Person -> withStyle(nameStyle) {
+            is RichText.Part.Person -> withStyle(nameStyle(isSelf)) {
                 append("@${it.displayName.substringBefore(':').removePrefix("@")}")
             }
         }

@@ -16,7 +16,6 @@ sealed class RoomEvent {
     abstract val utcTimestamp: Long
     abstract val author: RoomMember
     abstract val meta: MessageMeta
-    abstract val redacted: Boolean
 
     @Serializable
     @SerialName("encrypted")
@@ -26,7 +25,6 @@ sealed class RoomEvent {
         @SerialName("author") override val author: RoomMember,
         @SerialName("meta") override val meta: MessageMeta,
         @SerialName("edited") val edited: Boolean = false,
-        @SerialName("redacted") override val redacted: Boolean = false,
         @SerialName("encrypted_content") val encryptedContent: MegOlmV1,
     ) : RoomEvent() {
 
@@ -41,6 +39,16 @@ sealed class RoomEvent {
     }
 
     @Serializable
+    @SerialName("redacted")
+    data class Redacted(
+        @SerialName("event_id") override val eventId: EventId,
+        @SerialName("timestamp") override val utcTimestamp: Long,
+        @SerialName("author") override val author: RoomMember,
+    ) : RoomEvent() {
+        override val meta: MessageMeta = MessageMeta.FromServer
+    }
+
+    @Serializable
     @SerialName("message")
     data class Message(
         @SerialName("event_id") override val eventId: EventId,
@@ -49,7 +57,6 @@ sealed class RoomEvent {
         @SerialName("author") override val author: RoomMember,
         @SerialName("meta") override val meta: MessageMeta,
         @SerialName("edited") val edited: Boolean = false,
-        @SerialName("redacted") override val redacted: Boolean = false,
     ) : RoomEvent()
 
     @Serializable
@@ -63,7 +70,6 @@ sealed class RoomEvent {
         override val utcTimestamp: Long = message.utcTimestamp
         override val author: RoomMember = message.author
         override val meta: MessageMeta = message.meta
-        override val redacted: Boolean = message.redacted
 
     }
 
@@ -76,7 +82,6 @@ sealed class RoomEvent {
         @SerialName("author") override val author: RoomMember,
         @SerialName("meta") override val meta: MessageMeta,
         @SerialName("edited") val edited: Boolean = false,
-        @SerialName("redacted") override val redacted: Boolean = false,
     ) : RoomEvent() {
 
         @Serializable

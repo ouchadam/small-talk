@@ -46,7 +46,7 @@ internal class SyncEventDecrypter(
                         },
                         event.utcTimestamp,
                     ).also { logger.matrixLog("decrypted to timeline text: $it") }
-                    DecryptedContent.Ignored -> event
+                    DecryptedContent.Ignored -> ApiTimelineEvent.Ignored
                 }
             }
         }

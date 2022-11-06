@@ -104,7 +104,23 @@ class ProfileViewModel(
     }
 
     fun reset() {
-        updateState { ProfileScreenState(SpiderPage(Page.Routes.profile, "Profile", null, Page.Profile(Lce.Loading()), hasToolbar = false)) }
+        when (state.page.state) {
+            is Page.Invitations -> updateState {
+                ProfileScreenState(
+                    SpiderPage(
+                        Page.Routes.profile,
+                        "Profile",
+                        null,
+                        Page.Profile(Lce.Loading()),
+                        hasToolbar = false
+                    )
+                )
+            }
+
+            is Page.Profile -> {
+                // do nothing
+            }
+        }
     }
 
     fun stop() {

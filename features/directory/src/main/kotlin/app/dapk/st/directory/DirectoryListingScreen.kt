@@ -2,6 +2,7 @@ package app.dapk.st.directory
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,13 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Speaker
+import androidx.compose.material.icons.filled.VolumeMute
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.SpeakerNotesOff
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -35,9 +43,13 @@ import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.design.components.GenericEmpty
 import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Toolbar
-import app.dapk.st.directory.DirectoryEvent.OpenDownloadUrl
-import app.dapk.st.directory.DirectoryScreenState.Content
-import app.dapk.st.directory.DirectoryScreenState.EmptyLoading
+import app.dapk.st.directory.state.ComponentLifecycle
+import app.dapk.st.directory.state.DirectoryEvent
+import app.dapk.st.directory.state.DirectoryEvent.OpenDownloadUrl
+import app.dapk.st.directory.state.DirectoryScreenState
+import app.dapk.st.directory.state.DirectoryScreenState.Content
+import app.dapk.st.directory.state.DirectoryScreenState.EmptyLoading
+import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.engine.DirectoryItem
 import app.dapk.st.engine.RoomOverview
 import app.dapk.st.engine.Typing
@@ -53,8 +65,8 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 @Composable
-fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
-    val state = directoryViewModel.state
+fun DirectoryScreen(directoryViewModel: DirectoryState) {
+    val state = directoryViewModel.current
 
     val listState: LazyListState = rememberLazyListState(
         initialFirstVisibleItemIndex = 0,
@@ -68,8 +80,8 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
     directoryViewModel.ObserveEvents(listState, toolbarOffsetHeightPx)
 
     LifecycleEffect(
-        onStart = { directoryViewModel.start() },
-        onStop = { directoryViewModel.stop() }
+        onStart = { directoryViewModel.dispatch(ComponentLifecycle.OnVisible) },
+        onStop = { directoryViewModel.dispatch(ComponentLifecycle.OnGone) }
     )
 
     val nestedScrollConnection = remember {
@@ -101,7 +113,7 @@ fun DirectoryScreen(directoryViewModel: DirectoryViewModel) {
 }
 
 @Composable
-private fun DirectoryViewModel.ObserveEvents(listState: LazyListState, toolbarPosition: MutableState<Float>) {
+private fun DirectoryState.ObserveEvents(listState: LazyListState, toolbarPosition: MutableState<Float>) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
@@ -194,35 +206,23 @@ private fun DirectoryItem(room: DirectoryItem, onClick: (RoomId) -> Unit, clock:
                     )
                 }
 
-                if (hasUnread) {
+                if (hasUnread || room.isMuted) {
                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                         Box(modifier = Modifier.weight(1f)) {
                             body(overview, secondaryText, room.typing)
                         }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(Modifier.align(Alignment.CenterVertically)) {
-                            Box(
-                                Modifier
-                                    .align(Alignment.Center)
-                                    .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
-                                    .size(22.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val unreadTextSize = when (room.unreadCount.value > 99) {
-                                    true -> 9.sp
-                                    false -> 10.sp
-                                }
-                                val unreadLabelContent = when {
-                                    room.unreadCount.value > 99 -> "99+"
-                                    else -> room.unreadCount.value.toString()
-                                }
-                                Text(
-                                    fontSize = unreadTextSize,
-                                    fontWeight = FontWeight.Medium,
-                                    text = unreadLabelContent,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
+                        if (hasUnread) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(Modifier.align(Alignment.CenterVertically)) {
+                                UnreadCircle(room)
                             }
+                        }
+                        if (room.isMuted) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Filled.VolumeOff,
+                                contentDescription = "",
+                            )
                         }
                     }
                 } else {
@@ -230,6 +230,32 @@ private fun DirectoryItem(room: DirectoryItem, onClick: (RoomId) -> Unit, clock:
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BoxScope.UnreadCircle(room: DirectoryItem) {
+    Box(
+        Modifier.Companion
+            .align(Alignment.Center)
+            .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+            .size(22.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val unreadTextSize = when (room.unreadCount.value > 99) {
+            true -> 9.sp
+            false -> 10.sp
+        }
+        val unreadLabelContent = when {
+            room.unreadCount.value > 99 -> "99+"
+            else -> room.unreadCount.value.toString()
+        }
+        Text(
+            fontSize = unreadTextSize,
+            fontWeight = FontWeight.Medium,
+            text = unreadLabelContent,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }
 

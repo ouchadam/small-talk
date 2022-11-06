@@ -26,15 +26,18 @@ internal class UnreadEventsProcessor(
             isInitialSync -> {
                 // let's assume everything is read
             }
+
             previousState?.readMarker != overview.readMarker -> {
                 // assume the user has viewed the room
                 logger.matrixLog(MatrixLogTag.SYNC, "marking room read due to new read marker")
                 roomStore.markRead(overview.roomId)
             }
+
             areWeViewingRoom -> {
                 logger.matrixLog(MatrixLogTag.SYNC, "marking room read")
                 roomStore.markRead(overview.roomId)
             }
+
             newEvents.isNotEmpty() -> {
                 logger.matrixLog(MatrixLogTag.SYNC, "insert new unread events")
 
@@ -44,6 +47,7 @@ internal class UnreadEventsProcessor(
                         is RoomEvent.Reply -> it.message.author.id == selfId
                         is RoomEvent.Image -> it.author.id == selfId
                         is RoomEvent.Encrypted -> it.author.id == selfId
+                        is RoomEvent.Redacted -> it.author.id == selfId
                     }
                 }.map { it.eventId }
                 roomStore.insertUnread(overview.roomId, eventsFromOthers)

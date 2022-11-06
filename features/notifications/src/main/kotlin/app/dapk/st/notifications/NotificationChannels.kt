@@ -1,5 +1,6 @@
 package app.dapk.st.notifications
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationChannelGroup
 import android.app.NotificationManager
@@ -20,55 +21,29 @@ class NotificationChannels(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.createNotificationChannelGroup(NotificationChannelGroup(CHATS_NOTIFICATION_GROUP_ID, "Chats"))
 
-            if (notificationManager.getNotificationChannel(DIRECT_CHANNEL_ID) == null) {
-                notificationManager.createNotificationChannel(
-                    NotificationChannel(
-                        DIRECT_CHANNEL_ID,
-                        "Direct notifications",
-                        NotificationManager.IMPORTANCE_HIGH,
-                    ).also {
-                        it.enableVibration(true)
-                        it.enableLights(true)
-                        it.group = CHATS_NOTIFICATION_GROUP_ID
-                    }
-                )
+            notificationManager.createIfMissing(DIRECT_CHANNEL_ID) {
+                createChannel(it, "Direct notifications", NotificationManager.IMPORTANCE_HIGH, CHATS_NOTIFICATION_GROUP_ID)
             }
+            notificationManager.createIfMissing(GROUP_CHANNEL_ID) {
+                createChannel(it, "Group notifications", NotificationManager.IMPORTANCE_HIGH, CHATS_NOTIFICATION_GROUP_ID)
+            }
+            notificationManager.createIfMissing(INVITE_CHANNEL_ID) {
+                createChannel(it, "Invite notifications", NotificationManager.IMPORTANCE_DEFAULT, CHATS_NOTIFICATION_GROUP_ID)
+            }
+            notificationManager.createIfMissing(SUMMARY_CHANNEL_ID) {
+                createChannel(it, "Other notifications", NotificationManager.IMPORTANCE_DEFAULT, CHATS_NOTIFICATION_GROUP_ID)
+            }
+        }
+    }
 
-            if (notificationManager.getNotificationChannel(GROUP_CHANNEL_ID) == null) {
-                notificationManager.createNotificationChannel(
-                    NotificationChannel(
-                        GROUP_CHANNEL_ID,
-                        "Group notifications",
-                        NotificationManager.IMPORTANCE_HIGH,
-                    ).also {
-                        it.group = CHATS_NOTIFICATION_GROUP_ID
-                    }
-                )
-            }
+    @SuppressLint("NewApi")
+    private fun createChannel(id: String, name: String, importance: Int, groupId: String) = NotificationChannel(id, name, importance)
+        .also { it.group = groupId }
 
-            if (notificationManager.getNotificationChannel(INVITE_CHANNEL_ID) == null) {
-                notificationManager.createNotificationChannel(
-                    NotificationChannel(
-                        INVITE_CHANNEL_ID,
-                        "Invite notifications",
-                        NotificationManager.IMPORTANCE_DEFAULT,
-                    ).also {
-                        it.group = CHATS_NOTIFICATION_GROUP_ID
-                    }
-                )
-            }
-
-            if (notificationManager.getNotificationChannel(SUMMARY_CHANNEL_ID) == null) {
-                notificationManager.createNotificationChannel(
-                    NotificationChannel(
-                        SUMMARY_CHANNEL_ID,
-                        "Other notifications",
-                        NotificationManager.IMPORTANCE_DEFAULT,
-                    ).also {
-                        it.group = CHATS_NOTIFICATION_GROUP_ID
-                    }
-                )
-            }
+    @SuppressLint("NewApi")
+    private fun NotificationManager.createIfMissing(id: String, creator: (String) -> NotificationChannel) {
+        if (this.getNotificationChannel(SUMMARY_CHANNEL_ID) == null) {
+            this.createNotificationChannel(creator.invoke(id))
         }
     }
 

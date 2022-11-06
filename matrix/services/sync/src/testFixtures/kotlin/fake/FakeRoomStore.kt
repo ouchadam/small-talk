@@ -10,6 +10,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
+import test.delegateReturn
 
 class FakeRoomStore : RoomStore by mockk() {
 
@@ -33,5 +34,14 @@ class FakeRoomStore : RoomStore by mockk() {
     fun givenUnreadEvents(unreadEvents: Flow<Map<RoomOverview, List<RoomEvent>>>) {
         every { observeUnread() } returns unreadEvents
     }
+
+    fun givenUnreadEvents() = every { observeUnread() }.delegateReturn()
+    fun givenUnreadByCount() = every { observeUnreadCountById() }.delegateReturn()
+
+    fun givenNotMutedUnreadEvents(unreadEvents: Flow<Map<RoomOverview, List<RoomEvent>>>) {
+        every { observeNotMutedUnread() } returns unreadEvents
+    }
+
+    fun givenMuted() = every { observeMuted() }.delegateReturn()
 
 }

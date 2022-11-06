@@ -12,6 +12,7 @@ def excludes = [
         '**/*Activity*',
         '**/*AndroidService*',
         '**/*Application*',
+        '**/*Receiver*',
 
         // Generated
         '**/*serializer*',
@@ -24,6 +25,10 @@ def excludes = [
         // Tmp until serializationx can ignore generated
         '**/Api*',
         '**/RoomEvent*',
+
+        // Engine creation
+        '**/engine/MatrixEngine*',
+        '**/engine/MatrixFactory*',
 ]
 
 def initializeReport(report, projects, classExcludes) {

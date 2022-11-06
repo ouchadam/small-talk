@@ -18,3 +18,4 @@ suspend fun CachedPreferences.readBoolean(key: String, defaultValue: Boolean) = 
 
 suspend fun Preferences.readBoolean(key: String) = this.readString(key)?.toBooleanStrict()
 suspend fun Preferences.store(key: String, value: Boolean) = this.store(key, value.toString())
+

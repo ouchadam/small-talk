@@ -6,8 +6,9 @@ import app.dapk.st.matrix.common.*
 fun aMessengerState(
     self: UserId = aUserId(),
     roomState: RoomState,
-    typing: Typing? = null
-) = MessengerState(self, roomState, typing)
+    typing: Typing? = null,
+    isMuted: Boolean = false,
+) = MessengerPageState(self, roomState, typing, isMuted)
 
 fun aRoomOverview(
     roomId: RoomId = aRoomId(),
@@ -27,8 +28,7 @@ fun anEncryptedRoomMessageEvent(
     author: RoomMember = aRoomMember(),
     meta: MessageMeta = MessageMeta.FromServer,
     edited: Boolean = false,
-    redacted: Boolean = false,
-) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited, redacted)
+) = RoomEvent.Message(eventId, utcTimestamp, content, author, meta, edited)
 
 fun aRoomImageMessageEvent(
     eventId: EventId = anEventId(),
@@ -64,3 +64,14 @@ fun aRoomState(
     roomOverview: RoomOverview = aRoomOverview(),
     events: List<RoomEvent> = listOf(aRoomMessageEvent()),
 ) = RoomState(roomOverview, events)
+
+fun aRoomInvite(
+    from: RoomMember = aRoomMember(),
+    roomId: RoomId = aRoomId(),
+    inviteMeta: RoomInvite.InviteMeta = RoomInvite.InviteMeta.DirectMessage,
+) = RoomInvite(from, roomId, inviteMeta)
+
+fun aTypingEvent(
+    roomId: RoomId = aRoomId(),
+    members: List<RoomMember> = listOf(aRoomMember())
+) = Typing(roomId, members)

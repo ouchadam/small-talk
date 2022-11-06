@@ -4,12 +4,11 @@ import app.dapk.db.DapkDb
 import app.dapk.db.model.RoomEventQueries
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.withIoContext
+import app.dapk.st.domain.room.MutedStorePersistence
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.sync.RoomEvent
-import app.dapk.st.matrix.sync.RoomOverview
-import app.dapk.st.matrix.sync.RoomState
-import app.dapk.st.matrix.sync.RoomStore
+import app.dapk.st.matrix.sync.*
+import com.squareup.sqldelight.Query
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import com.squareup.sqldelight.runtime.coroutines.mapToOneNotNull
@@ -25,7 +24,8 @@ internal class RoomPersistence(
     private val database: DapkDb,
     private val overviewPersistence: OverviewPersistence,
     private val coroutineDispatchers: CoroutineDispatchers,
-) : RoomStore {
+    private val muteableStore: MutedStorePersistence,
+) : RoomStore, MuteableStore by muteableStore {
 
     override suspend fun persist(roomId: RoomId, events: List<RoomEvent>) {
         coroutineDispatchers.withIoContext {
@@ -57,10 +57,8 @@ internal class RoomPersistence(
         }.distinctUntilChanged()
 
         return database.roomEventQueries.selectRoom(roomId.value)
-            .asFlow()
-            .mapToList()
+            .distinctFlowList()
             .map { it.map { json.decodeFromString(RoomEvent.serializer(), it) } }
-            .distinctUntilChanged()
             .combine(overviewFlow) { events, overview ->
                 RoomState(overview, events)
             }
@@ -92,9 +90,7 @@ internal class RoomPersistence(
 
     override fun observeUnread(): Flow<Map<RoomOverview, List<RoomEvent>>> {
         return database.roomEventQueries.selectAllUnread()
-            .asFlow()
-            .mapToList()
-            .distinctUntilChanged()
+            .distinctFlowList()
             .map {
                 it.groupBy { RoomId(it.room_id) }
                     .mapKeys { overviewPersistence.retrieve(it.key)!! }
@@ -115,6 +111,22 @@ internal class RoomPersistence(
                     .mapValues { it.value.size }
             }
     }
+
+    override fun observeNotMutedUnread(): Flow<Map<RoomOverview, List<RoomEvent>>> {
+        return database.roomEventQueries.selectNotMutedUnread()
+            .distinctFlowList()
+            .map {
+                it.groupBy { RoomId(it.room_id) }
+                    .mapKeys { overviewPersistence.retrieve(it.key)!! }
+                    .mapValues {
+                        it.value.map {
+                            json.decodeFromString(RoomEvent.serializer(), it.blob)
+                        }
+                    }
+            }
+    }
+
+    private fun <T : Any> Query<T>.distinctFlowList() = this.asFlow().mapToList().distinctUntilChanged()
 
     override suspend fun markRead(roomId: RoomId) {
         coroutineDispatchers.withIoContext {

@@ -41,35 +41,44 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
 import app.dapk.st.core.extensions.takeAs
 import app.dapk.st.core.getActivity
+import app.dapk.st.core.page.PageAction
 import app.dapk.st.design.components.*
 import app.dapk.st.engine.ImportResult
 import app.dapk.st.navigator.Navigator
 import app.dapk.st.settings.SettingsEvent.*
 import app.dapk.st.settings.eventlogger.EventLogActivity
+import app.dapk.st.settings.state.ComponentLifecycle
+import app.dapk.st.settings.state.RootActions
+import app.dapk.st.settings.state.ScreenAction
+import app.dapk.st.settings.state.SettingsState
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
-internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit, navigator: Navigator) {
-    viewModel.ObserveEvents(onSignOut)
+internal fun SettingsScreen(settingsState: SettingsState, onSignOut: () -> Unit, navigator: Navigator) {
+    settingsState.ObserveEvents(onSignOut)
     LaunchedEffect(true) {
-        viewModel.start()
+        settingsState.dispatch(ComponentLifecycle.Visible)
     }
 
     val onNavigate: (SpiderPage<out Page>?) -> Unit = {
         when (it) {
             null -> navigator.navigate.upToHome()
-            else -> viewModel.goTo(it)
+            else -> settingsState.dispatch(PageAction.GoTo(it))
         }
     }
-    Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
+    Spider(currentPage = settingsState.current.state1.page, onNavigate = onNavigate) {
         item(Page.Routes.root) {
-            RootSettings(it, onClick = { viewModel.onClick(it) }, onRetry = { viewModel.start() })
+            RootSettings(
+                it,
+                onClick = { settingsState.dispatch(ScreenAction.OnClick(it)) },
+                onRetry = { settingsState.dispatch(ComponentLifecycle.Visible) }
+            )
         }
         item(Page.Routes.encryption) {
-            Encryption(viewModel, it)
+            Encryption(settingsState, it)
         }
         item(Page.Routes.pushProviders) {
-            PushProviders(viewModel, it)
+            PushProviders(settingsState, it)
         }
         item(Page.Routes.importRoomKeys) {
             when (val result = it.importProgress) {
@@ -83,7 +92,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                         ) {
                             val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
                                 it?.let {
-                                    viewModel.fileSelected(it)
+                                    settingsState.dispatch(RootActions.SelectKeysFile(it))
                                 }
                             }
                             val keyboardController = LocalSoftwareKeyboardController.current
@@ -100,7 +109,7 @@ internal fun SettingsScreen(viewModel: SettingsViewModel, onSignOut: () -> Unit,
                                 var passwordVisibility by rememberSaveable { mutableStateOf(false) }
                                 val startImportAction = {
                                     keyboardController?.hide()
-                                    viewModel.importFromFileKeys(it.selectedFile.uri, passphrase)
+                                    settingsState.dispatch(RootActions.ImportKeysFromFile(it.selectedFile.uri, passphrase))
                                 }
 
                                 TextField(
@@ -235,40 +244,40 @@ private fun RootSettings(page: Page.Root, onClick: (SettingItem) -> Unit, onRetr
 }
 
 @Composable
-private fun Encryption(viewModel: SettingsViewModel, page: Page.Security) {
+private fun Encryption(state: SettingsState, page: Page.Security) {
     Column {
-        TextRow("Import room keys", includeDivider = false, onClick = { viewModel.goToImportRoom() })
+        TextRow("Import room keys", includeDivider = false, onClick = { state.dispatch(ScreenAction.OpenImportRoom) })
     }
 }
 
 
 @Composable
-private fun PushProviders(viewModel: SettingsViewModel, state: Page.PushProviders) {
+private fun PushProviders(state: SettingsState, page: Page.PushProviders) {
     LaunchedEffect(true) {
-        viewModel.fetchPushProviders()
+        state.dispatch(RootActions.FetchProviders)
     }
 
-    when (val lce = state.options) {
+    when (val lce = page.options) {
         null -> {}
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
             LazyColumn {
                 items(lce.value) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = it == state.selection, onClick = { viewModel.selectPushProvider(it) })
+                        RadioButton(selected = it == page.selection, onClick = { state.dispatch(RootActions.SelectPushProvider(it)) })
                         Text(it.id)
                     }
                 }
             }
         }
 
-        is Lce.Error -> GenericError(cause = lce.cause) { viewModel.fetchPushProviders() }
+        is Lce.Error -> GenericError(cause = lce.cause) { state.dispatch(RootActions.FetchProviders) }
     }
 }
 
 
 @Composable
-private fun SettingsViewModel.ObserveEvents(onSignOut: () -> Unit) {
+private fun SettingsState.ObserveEvents(onSignOut: () -> Unit) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {

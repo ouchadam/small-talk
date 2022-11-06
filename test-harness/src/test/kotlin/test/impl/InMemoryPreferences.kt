@@ -1,7 +1,6 @@
 package test.impl
 
 import app.dapk.st.core.Preferences
-import test.unit
 
 class InMemoryPreferences : Preferences {
 
@@ -12,7 +11,13 @@ class InMemoryPreferences : Preferences {
     }
 
     override suspend fun readString(key: String): String? = prefs[key]
-    override suspend fun remove(key: String) = prefs.remove(key).unit()
-    override suspend fun clear() = prefs.clear()
+
+    override suspend fun remove(key: String) {
+        prefs.remove(key)
+    }
+
+    override suspend fun clear() {
+        prefs.clear()
+    }
 
 }

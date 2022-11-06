@@ -95,5 +95,4 @@ private fun RoomEvent.Encrypted.toText(text: String) = RoomEvent.Message(
     this.author,
     this.meta,
     this.edited,
-    this.redacted,
 )

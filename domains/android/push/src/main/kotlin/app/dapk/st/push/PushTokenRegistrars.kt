@@ -1,32 +1,30 @@
 package app.dapk.st.push
 
-import android.content.Context
 import app.dapk.st.domain.push.PushTokenRegistrarPreferences
 import app.dapk.st.push.messaging.MessagingPushTokenRegistrar
 import app.dapk.st.push.unifiedpush.UnifiedPushRegistrar
-import org.unifiedpush.android.connector.UnifiedPush
 
 private val FIREBASE_OPTION = Registrar("Google - Firebase (FCM)")
 private val NONE = Registrar("None")
 
 class PushTokenRegistrars(
-    private val context: Context,
     private val messagingPushTokenRegistrar: MessagingPushTokenRegistrar,
     private val unifiedPushRegistrar: UnifiedPushRegistrar,
     private val pushTokenStore: PushTokenRegistrarPreferences,
+    private val state: SelectionState = SelectionState(selection = null),
 ) : PushTokenRegistrar {
-
-    private var selection: Registrar? = null
 
     fun options(): List<Registrar> {
         val messagingOption = when (messagingPushTokenRegistrar.isAvailable()) {
             true -> FIREBASE_OPTION
             else -> null
         }
-        return listOfNotNull(NONE, messagingOption) + UnifiedPush.getDistributors(context).map { Registrar(it) }
+        return listOfNotNull(NONE, messagingOption) + unifiedPushRegistrar.getDistributors()
     }
 
-    suspend fun currentSelection() = selection ?: (pushTokenStore.currentSelection()?.let { Registrar(it) } ?: defaultSelection()).also { selection = it }
+    suspend fun currentSelection() = state.selection ?: (readStoredSelection() ?: defaultSelection()).also { state.selection = it }
+
+    private suspend fun readStoredSelection() = pushTokenStore.currentSelection()?.let { Registrar(it) }?.takeIf { options().contains(it) }
 
     private fun defaultSelection() = when (messagingPushTokenRegistrar.isAvailable()) {
         true -> FIREBASE_OPTION
@@ -34,7 +32,7 @@ class PushTokenRegistrars(
     }
 
     suspend fun makeSelection(option: Registrar) {
-        selection = option
+        state.selection = option
         pushTokenStore.store(option.id)
         when (option) {
             NONE -> {
@@ -66,7 +64,7 @@ class PushTokenRegistrars(
     }
 
     override fun unregister() {
-        when (selection) {
+        when (state.selection) {
             FIREBASE_OPTION -> messagingPushTokenRegistrar.unregister()
             NONE -> {
                 runCatching {
@@ -87,3 +85,5 @@ class PushTokenRegistrars(
 
 @JvmInline
 value class Registrar(val id: String)
+
+data class SelectionState(var selection: Registrar?)

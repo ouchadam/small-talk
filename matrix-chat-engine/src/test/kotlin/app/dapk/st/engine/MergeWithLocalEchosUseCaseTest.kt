@@ -17,7 +17,7 @@ private val ANOTHER_ROOM_MESSAGE_EVENT = A_ROOM_MESSAGE_EVENT.copy(eventId = anE
 class MergeWithLocalEchosUseCaseTest {
 
     private val fakeLocalEchoMapper = fake.FakeLocalEventMapper()
-    private val mergeWithLocalEchosUseCase = MergeWithLocalEchosUseCaseImpl(fakeLocalEchoMapper.instance)
+    private val mergeWithLocalEchosUseCase = TimelineMergeWithLocalEchosUseCaseImpl(fakeLocalEchoMapper.instance)
 
     @Test
     fun `given no local echos, when merging text message, then returns original state`() {

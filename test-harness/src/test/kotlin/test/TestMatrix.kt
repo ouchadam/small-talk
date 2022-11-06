@@ -23,6 +23,7 @@ import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.matrix.push.installPushService
 import app.dapk.st.matrix.room.RoomMessenger
 import app.dapk.st.matrix.room.installRoomService
+import app.dapk.st.matrix.room.internal.SingleRoomStore
 import app.dapk.st.matrix.room.roomService
 import app.dapk.st.matrix.sync.*
 import app.dapk.st.matrix.sync.internal.request.ApiToDeviceEvent
@@ -31,6 +32,9 @@ import app.dapk.st.olm.DeviceKeyFactory
 import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.olm.OlmWrapper
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import org.amshove.kluent.fail
 import test.impl.InMemoryDatabase
@@ -178,7 +182,8 @@ class TestMatrix(
                         }
                     }
                 },
-                roomInviteRemover = { storeModule.overviewStore().removeInvites(listOf(it)) }
+                roomInviteRemover = { storeModule.overviewStore().removeInvites(listOf(it)) },
+                singleRoomStore = singleRoomStoreAdapter(storeModule.roomStore())
             )
 
             installSyncService(
@@ -376,6 +381,12 @@ class ProxyDeviceService(private val deviceService: DeviceService) : DeviceServi
         }
     }
 
+}
+
+private fun singleRoomStoreAdapter(roomStore: RoomStore) = object : SingleRoomStore {
+    override suspend fun mute(roomId: RoomId) = roomStore.mute(roomId)
+    override suspend fun unmute(roomId: RoomId) = roomStore.unmute(roomId)
+    override fun isMuted(roomId: RoomId): Flow<Boolean> = roomStore.observeMuted().map { it.contains(roomId) }.distinctUntilChanged()
 }
 
 fun MatrixClient.proxyDeviceService() = this.deviceService() as ProxyDeviceService

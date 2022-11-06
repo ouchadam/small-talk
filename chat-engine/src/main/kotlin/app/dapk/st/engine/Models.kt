@@ -13,7 +13,8 @@ typealias InviteState = List<RoomInvite>
 data class DirectoryItem(
     val overview: RoomOverview,
     val unreadCount: UnreadCount,
-    val typing: Typing?
+    val typing: Typing?,
+    val isMuted: Boolean,
 )
 
 data class RoomOverview(
@@ -84,10 +85,11 @@ sealed interface ImportResult {
     data class Update(val importedKeysCount: Long) : ImportResult
 }
 
-data class MessengerState(
+data class MessengerPageState(
     val self: UserId,
     val roomState: RoomState,
-    val typing: Typing?
+    val typing: Typing?,
+    val isMuted: Boolean,
 )
 
 data class RoomState(
@@ -122,6 +124,15 @@ sealed class RoomEvent {
 
     }
 
+    data class Redacted(
+        override val eventId: EventId,
+        override val utcTimestamp: Long,
+        override val author: RoomMember,
+    ) : RoomEvent() {
+        override val edited: Boolean = false
+        override val meta: MessageMeta = MessageMeta.FromServer
+    }
+
     data class Message(
         override val eventId: EventId,
         override val utcTimestamp: Long,
@@ -129,7 +140,6 @@ sealed class RoomEvent {
         override val author: RoomMember,
         override val meta: MessageMeta,
         override val edited: Boolean = false,
-        val redacted: Boolean = false,
     ) : RoomEvent()
 
     data class Reply(

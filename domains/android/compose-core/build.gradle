@@ -5,4 +5,5 @@ dependencies {
     implementation project(":features:navigator")
     implementation project(":design-library")
     api project(":domains:android:core")
+    api project(":domains:state")
 }

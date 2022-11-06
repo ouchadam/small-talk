@@ -78,5 +78,6 @@ class FakePushRegistrars {
     val instance = mockk<PushTokenRegistrars>()
 
     fun givenCurrentSelection() = coEvery { instance.currentSelection() }.delegateReturn()
+    fun givenOptions() = coEvery { instance.options() }.delegateReturn()
 
 }

@@ -88,7 +88,7 @@ internal class RoomEventCreatorTest {
     }
 
     @Test
-    fun `given text event without body then maps to redacted room message`() = runTest {
+    fun `given text event without body then maps to empty room message`() = runTest {
         fakeRoomMembersService.givenMember(A_ROOM_ID, A_SENDER.id, A_SENDER)
 
         val result = with(roomEventCreator) { A_TEXT_EVENT_WITHOUT_CONTENT.toRoomEvent(A_USER_CREDENTIALS, A_ROOM_ID, EMPTY_LOOKUP) }
@@ -96,7 +96,7 @@ internal class RoomEventCreatorTest {
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = A_TEXT_EVENT_WITHOUT_CONTENT.id,
             utcTimestamp = A_TEXT_EVENT_WITHOUT_CONTENT.utcTimestamp,
-            content = RichText.of("redacted"),
+            content = RichText(emptyList()),
             author = A_SENDER,
         )
     }
@@ -146,7 +146,7 @@ internal class RoomEventCreatorTest {
 
         result shouldBeEqualTo aMatrixRoomMessageEvent(
             eventId = originalMessage.eventId,
-            utcTimestamp = editedMessage.utcTimestamp,
+            utcTimestamp = originalMessage.utcTimestamp,
             content = A_TEXT_EVENT_MESSAGE,
             author = A_SENDER,
             edited = true
@@ -166,7 +166,7 @@ internal class RoomEventCreatorTest {
             replyingTo = originalMessage.replyingTo,
             message = aMatrixRoomMessageEvent(
                 eventId = originalMessage.eventId,
-                utcTimestamp = editedMessage.utcTimestamp,
+                utcTimestamp = originalMessage.utcTimestamp,
                 content = A_TEXT_EVENT_MESSAGE,
                 author = A_SENDER,
                 edited = true

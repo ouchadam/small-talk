@@ -6,7 +6,11 @@ import kotlinx.coroutines.test.runTest
 import kotlin.coroutines.CoroutineContext
 
 fun runExpectTest(testBody: suspend ExpectTestScope.() -> Unit) {
-    runTest { testBody(ExpectTest(coroutineContext)) }
+    runTest {
+        val expectTest = ExpectTest(coroutineContext)
+        testBody(expectTest)
+    }
+
 }
 
 class ExpectTest(override val coroutineContext: CoroutineContext) : ExpectTestScope {
@@ -24,6 +28,11 @@ class ExpectTest(override val coroutineContext: CoroutineContext) : ExpectTestSc
         expects.add(times to { block(this@expectUnit) })
     }
 
+    override fun <T> T.expect(times: Int, block: suspend MockKMatcherScope.(T) -> Unit) {
+        coJustRun { block(this@expect) }
+        expects.add(times to { block(this@expect) })
+    }
+
     override fun <T> T.captureExpects(block: suspend MockKMatcherScope.(T) -> Unit) {
         groups.add { block(this@captureExpects) }
     }
@@ -34,5 +43,6 @@ private fun Any.ignore() = Unit
 interface ExpectTestScope : CoroutineScope {
     fun verifyExpects()
     fun <T> T.expectUnit(times: Int = 1, block: suspend MockKMatcherScope.(T) -> Unit)
+    fun <T> T.expect(times: Int = 1, block: suspend MockKMatcherScope.(T) -> Unit)
     fun <T> T.captureExpects(block: suspend MockKMatcherScope.(T) -> Unit)
 }

@@ -4,6 +4,7 @@ dependencies {
     implementation project(":chat-engine")
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
+    implementation project(":domains:state")
     implementation project(":features:messenger")
     implementation project(":core")
     implementation project(":design-library")
@@ -13,6 +14,7 @@ dependencies {
 
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":domains:state"))
     androidImportFixturesWorkaround(project, project(":domains:store"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
