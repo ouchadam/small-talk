@@ -25,8 +25,6 @@ class BetaVersionUpgradeUseCase(
         return when (previousVersion) {
             null -> false
             else -> currentVersion > previousVersion
-        }.also {
-            applicationPreferences.setVersion(ApplicationVersion(currentVersion))
         }
     }
 
@@ -38,7 +36,8 @@ class BetaVersionUpgradeUseCase(
         }
     }
 
-    fun notifyUpgraded() {
+    suspend fun notifyUpgraded() {
+        applicationPreferences.setVersion(ApplicationVersion(buildMeta.versionCode))
         _continuation?.resume(Unit)
         _continuation = null
     }
