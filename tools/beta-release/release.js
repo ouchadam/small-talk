@@ -215,7 +215,7 @@ const sendReleaseMessage = async (release, config) => {
     const content = {
         "body": `New release`,
         "format": "org.matrix.custom.html",
-        "formatted_body": `New release rolling out <a href="${release.url}">${release.tag_name}</a>`,
+        "formatted_body": `New release rolling out <a href="${release.html_url}">${release.tag_name}</a>`,
         "msgtype": "m.text"
     }
     await client.sendEvent(config.matrixRoomId, "m.room.message", content, "")
