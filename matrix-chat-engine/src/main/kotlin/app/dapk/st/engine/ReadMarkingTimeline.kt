@@ -5,9 +5,7 @@ import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.matrix.room.RoomService
-import app.dapk.st.matrix.sync.RoomEvent
 import app.dapk.st.matrix.sync.RoomStore
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
@@ -24,7 +22,7 @@ class ReadMarkingTimeline(
             val credentials = credentialsStore.credentials()!!
             roomStore.markRead(roomId)
             emit(credentials)
-        }.flatMapMerge { credentials ->
+        }.flatMapConcat { credentials ->
             var lastKnownReadEvent: EventId? = null
             observeTimelineUseCase.invoke(roomId, credentials.userId).distinctUntilChanged().onEach { state ->
                 state.latestMessageEventFromOthers(self = credentials.userId)?.let {
@@ -37,8 +35,9 @@ class ReadMarkingTimeline(
         }
     }
 
-    private suspend fun updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerPageState, isReadReceiptsDisabled: Boolean): Deferred<*> {
-        return coroutineScope {
+    @Suppress("DeferredResultUnused")
+    private suspend fun updateRoomReadStateAsync(latestReadEvent: EventId, state: MessengerPageState, isReadReceiptsDisabled: Boolean) {
+        coroutineScope {
             async {
                 runCatching {
                     roomService.markFullyRead(state.roomState.roomOverview.roomId, latestReadEvent, isPrivate = isReadReceiptsDisabled)
@@ -48,10 +47,9 @@ class ReadMarkingTimeline(
         }
     }
 
+    private fun MessengerPageState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
+        .filterIsInstance<RoomEvent.Message>()
+        .filterNot { it.author.id == self }
+        .firstOrNull()
+        ?.eventId
 }
-
-private fun MessengerPageState.latestMessageEventFromOthers(self: UserId) = this.roomState.events
-    .filterIsInstance<RoomEvent.Message>()
-    .filterNot { it.author.id == self }
-    .firstOrNull()
-    ?.eventId

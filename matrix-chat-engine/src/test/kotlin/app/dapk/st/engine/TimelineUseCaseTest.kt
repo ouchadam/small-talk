@@ -136,7 +136,7 @@ class FakeRoomService : RoomService by mockk() {
 
 fun aMessengerState(
     self: UserId = aUserId(),
-    roomState: app.dapk.st.engine.RoomState,
+    roomState: app.dapk.st.engine.RoomState = aRoomState(),
     typing: Typing? = null,
     isMuted: Boolean = IS_ROOM_MUTED,
 ) = MessengerPageState(self, roomState, typing, isMuted)
