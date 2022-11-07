@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS dbMutedRoom (
+    room_id TEXT NOT NULL,
+    PRIMARY KEY (room_id)
+);
