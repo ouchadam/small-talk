@@ -17,4 +17,5 @@ class FakeChatEngine : ChatEngine by mockk() {
     fun givenNotificationsInvites() = every { notificationsInvites() }.delegateEmit()
     fun givenNotificationsMessages() = every { notificationsMessages() }.delegateEmit()
     fun givenInvites() = every { invites() }.delegateEmit()
+    fun givenMe(forceRefresh: Boolean) = coEvery { me(forceRefresh) }.delegateReturn()
 }
