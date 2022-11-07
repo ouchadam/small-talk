@@ -25,7 +25,7 @@ class MainActivity : DapkActivity() {
 
     private val directoryViewModel by state { module<DirectoryModule>().directoryState() }
     private val loginViewModel by viewModel { module<LoginModule>().loginViewModel() }
-    private val profileViewModel by viewModel { module<ProfileModule>().profileViewModel() }
+    private val profileViewModel by state { module<ProfileModule>().profileState() }
     private val homeViewModel by viewModel { module<HomeModule>().homeViewModel(directoryViewModel, loginViewModel, profileViewModel) }
 
     override fun onCreate(savedInstanceState: Bundle?) {

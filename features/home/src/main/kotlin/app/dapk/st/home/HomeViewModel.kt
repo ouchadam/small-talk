@@ -10,7 +10,8 @@ import app.dapk.st.home.HomeScreenState.*
 import app.dapk.st.login.LoginViewModel
 import app.dapk.st.matrix.common.CredentialsStore
 import app.dapk.st.matrix.common.isSignedIn
-import app.dapk.st.profile.ProfileViewModel
+import app.dapk.st.profile.state.ProfileAction
+import app.dapk.st.profile.state.ProfileState
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -24,7 +25,7 @@ internal class HomeViewModel(
     private val credentialsProvider: CredentialsStore,
     private val directoryState: DirectoryState,
     private val loginViewModel: LoginViewModel,
-    private val profileViewModel: ProfileViewModel,
+    private val profileState: ProfileState,
     private val cacheCleaner: StoreCleaner,
     private val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
 ) : DapkViewModel<HomeScreenState, HomeEvent>(
@@ -35,7 +36,7 @@ internal class HomeViewModel(
 
     fun directory() = directoryState
     fun login() = loginViewModel
-    fun profile() = profileViewModel
+    fun profile() = profileState
 
     fun start() {
         viewModelScope.launch {
@@ -125,7 +126,7 @@ internal class HomeViewModel(
 
             Page.Profile -> {
                 directoryState.dispatch(ComponentLifecycle.OnGone)
-                profileViewModel.reset()
+                profileState.dispatch(ProfileAction.Reset)
             }
         }
     }
