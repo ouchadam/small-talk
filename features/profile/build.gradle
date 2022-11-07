@@ -4,8 +4,17 @@ dependencies {
     implementation project(":chat-engine")
     implementation project(":features:settings")
     implementation project(':domains:store')
+    implementation project(':domains:state')
     implementation project(":domains:android:compose-core")
-    implementation project(":domains:android:viewmodel")
     implementation project(":design-library")
     implementation project(":core")
+
+    kotlinTest(it)
+
+    androidImportFixturesWorkaround(project, project(":matrix:common"))
+    androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":domains:state"))
+    androidImportFixturesWorkaround(project, project(":domains:store"))
+    androidImportFixturesWorkaround(project, project(":domains:android:stub"))
+    androidImportFixturesWorkaround(project, project(":chat-engine"))
 }

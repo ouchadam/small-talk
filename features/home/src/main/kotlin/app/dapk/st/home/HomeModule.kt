@@ -5,7 +5,7 @@ import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.login.LoginViewModel
-import app.dapk.st.profile.ProfileViewModel
+import app.dapk.st.profile.state.ProfileState
 
 class HomeModule(
     private val chatEngine: ChatEngine,
@@ -13,13 +13,13 @@ class HomeModule(
     val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
 ) : ProvidableModule {
 
-    internal fun homeViewModel(directory: DirectoryState, login: LoginViewModel, profileViewModel: ProfileViewModel): HomeViewModel {
+    internal fun homeViewModel(directory: DirectoryState, login: LoginViewModel, profile: ProfileState): HomeViewModel {
         return HomeViewModel(
             chatEngine,
             storeModule.credentialsStore(),
             directory,
             login,
-            profileViewModel,
+            profile,
             storeModule.cacheCleaner(),
             betaVersionUpgradeUseCase,
         )

@@ -1,14 +1,14 @@
-package app.dapk.st.profile
+package app.dapk.st.profile.state
 
 import app.dapk.st.core.Lce
+import app.dapk.st.core.State
+import app.dapk.st.core.page.PageContainer
 import app.dapk.st.design.components.Route
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.engine.Me
 import app.dapk.st.engine.RoomInvite
+import app.dapk.state.Combined2
 
-data class ProfileScreenState(
-    val page: SpiderPage<out Page>,
-)
+typealias ProfileState = State<Combined2<PageContainer<Page>, Unit>, Unit>
 
 sealed interface Page {
     data class Profile(val content: Lce<Content>) : Page {
@@ -25,8 +25,3 @@ sealed interface Page {
         val invitation = Route<Invitations>("Invitations")
     }
 }
-
-sealed interface ProfileEvent {
-
-}
-

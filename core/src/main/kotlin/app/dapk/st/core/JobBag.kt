@@ -25,4 +25,8 @@ class JobBag {
         jobs.remove(key.java.canonicalName)?.cancel()
     }
 
+    fun cancelAll() {
+        jobs.values.forEach { it.cancel() }
+    }
+
 }
