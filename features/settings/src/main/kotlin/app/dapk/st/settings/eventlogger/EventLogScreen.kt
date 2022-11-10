@@ -107,10 +107,10 @@ private fun Events(selectedPageContent: SelectedState, onExit: () -> Unit, onSel
                             null -> "${it.time}: ${it.tag}: ${it.content}"
                             else -> "${it.time}: ${it.content}"
                         }
-
                         Text(
                             text = text,
-                            modifier = Modifier.padding(horizontal = 4.dp),
+                            lineHeight = 14.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp).fillMaxWidth(),
                             fontSize = 10.sp,
                         )
                     }
