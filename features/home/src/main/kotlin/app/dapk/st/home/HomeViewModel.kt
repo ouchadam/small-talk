@@ -15,7 +15,6 @@ import app.dapk.st.profile.state.ProfileState
 import app.dapk.st.viewmodel.DapkViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -58,11 +57,10 @@ internal class HomeViewModel(
 
     private suspend fun initialHomeContent(): SignedIn {
         val me = chatEngine.me(forceRefresh = false)
-        val initialInvites = chatEngine.invites().first().size
         return when (val current = state) {
-            Loading -> SignedIn(Page.Directory, me, invites = initialInvites)
-            is SignedIn -> current.copy(me = me, invites = initialInvites)
-            SignedOut -> SignedIn(Page.Directory, me, invites = initialInvites)
+            Loading -> SignedIn(Page.Directory, me, invites = 0)
+            is SignedIn -> current.copy(me = me, invites = current.invites)
+            SignedOut -> SignedIn(Page.Directory, me, invites = 0)
         }
     }
 

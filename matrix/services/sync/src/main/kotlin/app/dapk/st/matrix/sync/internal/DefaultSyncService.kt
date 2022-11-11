@@ -76,7 +76,7 @@ internal class DefaultSyncService(
         )
         SyncUseCase(
             overviewStore,
-            SideEffectFlowIterator(logger),
+            SideEffectFlowIterator(logger, errorTracker),
             SyncSideEffects(keySharer, verificationHandler, deviceNotifier, messageDecrypter, json, oneTimeKeyProducer, logger),
             httpClient,
             syncStore,
