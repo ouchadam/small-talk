@@ -132,7 +132,7 @@ ext.Dependencies.with {
         sqldelightAndroid = "com.squareup.sqldelight:android-driver:${sqldelightVer}"
         sqldelightInMemory = "com.squareup.sqldelight:sqlite-driver:${sqldelightVer}"
 
-        leakCanary = 'com.squareup.leakcanary:leakcanary-android:2.9.1'
+        leakCanary = 'com.squareup.leakcanary:leakcanary-android:2.10'
 
         ktorAndroid = "io.ktor:ktor-client-android:${ktorVer}"
         ktorCore = "io.ktor:ktor-client-core:${ktorVer}"
