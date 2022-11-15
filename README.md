@@ -28,16 +28,16 @@
 - Importing of E2E room keys from Element clients
 - [UnifiedPush](https://unifiedpush.org/)
 - FOSS variant
+- Minimal HTML formatting
+- Invitations
+- Image attachments
 
 ### Planned
 
 - Device verification (technically supported but has no UI)
-- Invitations (technically supported but has no UI)
 - Room history
-- Message media
 - Cross signing
 - Google drive backups
-- Markdown subset (bold, italic, blocks)
 - Changing user name/avatar
 - Room settings and information
 - Exporting E2E room keys
