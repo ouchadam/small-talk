@@ -151,12 +151,6 @@ ext.androidImportFixturesWorkaround = { project, fixtures ->
     project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}.jar")
 }
 
-ext.androidImportCompositeFixturesWorkaround = { project, fixtures ->
-    project.dependencies.testImplementation(project.dependencies.testFixtures(fixtures))
-    project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}-test-fixtures.jar")
-    project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}.jar")
-}
-
 ext.isFoss = {
     return rootProject.hasProperty("foss")
 }

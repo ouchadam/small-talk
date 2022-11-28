@@ -7,7 +7,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "SmallTalk"
 
-includeBuild '../screen-state'
+includeBuild 'screen-state'
 
 include ':app'
 
