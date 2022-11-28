@@ -10,15 +10,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import app.dapk.st.core.*
+import app.dapk.st.core.AndroidUri
+import app.dapk.st.core.DapkActivity
+import app.dapk.st.core.MimeType
 import app.dapk.st.core.extensions.unsafeLazy
+import app.dapk.st.core.module
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.messenger.gallery.GetImageFromGallery
 import app.dapk.st.messenger.state.ComposerStateChange
-import app.dapk.st.messenger.state.MessengerEvent
-import app.dapk.st.messenger.state.MessengerScreenState
 import app.dapk.st.messenger.state.MessengerState
 import app.dapk.st.navigator.MessageAttachment
+import app.dapk.st.state.state
 import coil.request.ImageRequest
 import kotlinx.parcelize.Parcelize
 
@@ -27,7 +29,7 @@ val LocalImageRequestFactory = staticCompositionLocalOf<ImageRequest.Builder> { 
 class MessengerActivity : DapkActivity() {
 
     private val module by unsafeLazy { module<MessengerModule>() }
-    private val state by state { module.messengerState(readPayload()) }
+    private val state: MessengerState by state { module.messengerState(readPayload()) }
 
     companion object {
 

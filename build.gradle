@@ -151,6 +151,12 @@ ext.androidImportFixturesWorkaround = { project, fixtures ->
     project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}.jar")
 }
 
+ext.androidImportCompositeFixturesWorkaround = { project, fixtures ->
+    project.dependencies.testImplementation(project.dependencies.testFixtures(fixtures))
+    project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}-test-fixtures.jar")
+    project.dependencies.testImplementation fixtures.files("build/libs/${fixtures.name}.jar")
+}
+
 ext.isFoss = {
     return rootProject.hasProperty("foss")
 }
@@ -162,7 +168,6 @@ ext.firebase = { dependencies, name ->
         dependencies.implementation(project(":domains:firebase:$name"))
     }
 }
-
 
 if (launchTask.contains("codeCoverageReport".toLowerCase())) {
     apply from: 'tools/coverage.gradle'

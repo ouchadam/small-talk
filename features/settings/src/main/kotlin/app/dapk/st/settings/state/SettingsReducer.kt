@@ -3,10 +3,8 @@ package app.dapk.st.settings.state
 import android.content.ContentResolver
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.Lce
-import app.dapk.st.core.State
+import app.dapk.st.state.State
 import app.dapk.st.core.ThemeStore
-import app.dapk.st.core.page.*
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.domain.application.eventlog.LoggingStore
 import app.dapk.st.domain.application.message.MessageOptionsStore
@@ -16,10 +14,8 @@ import app.dapk.st.push.PushTokenRegistrars
 import app.dapk.st.settings.*
 import app.dapk.st.settings.SettingItem.Id.*
 import app.dapk.st.settings.SettingsEvent.*
-import app.dapk.state.Combined2
-import app.dapk.state.async
-import app.dapk.state.createReducer
-import app.dapk.state.multi
+import app.dapk.state.*
+import app.dapk.state.page.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch

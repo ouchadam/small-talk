@@ -1,7 +1,7 @@
 package app.dapk.st.messenger.state
 
 import app.dapk.st.core.Lce
-import app.dapk.st.core.State
+import app.dapk.st.state.State
 import app.dapk.st.design.components.BubbleModel
 import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent

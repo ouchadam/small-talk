@@ -6,7 +6,7 @@ import android.provider.MediaStore
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.ProvidableModule
-import app.dapk.st.core.createStateViewModel
+import app.dapk.st.state.createStateViewModel
 import app.dapk.st.messenger.gallery.state.ImageGalleryState
 import app.dapk.st.messenger.gallery.state.imageGalleryReducer
 

@@ -6,7 +6,7 @@ dependencies {
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
     implementation project(":domains:store")
-    implementation project(":domains:state")
+    implementation 'screen-state:screen-android'
     implementation project(":core")
     implementation project(":features:navigator")
     implementation project(":design-library")
@@ -14,10 +14,10 @@ dependencies {
 
     kotlinTest(it)
 
+    testImplementation 'screen-state:state-test'
     androidImportFixturesWorkaround(project, project(":matrix:common"))
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":domains:store"))
-    androidImportFixturesWorkaround(project, project(":domains:state"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
     androidImportFixturesWorkaround(project, project(":chat-engine"))

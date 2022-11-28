@@ -1,13 +1,13 @@
 package app.dapk.st.profile.state
 
 import app.dapk.st.core.Lce
-import app.dapk.st.core.page.PageAction
-import app.dapk.st.core.page.PageContainer
-import app.dapk.st.core.page.PageStateChange
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.engine.Me
 import app.dapk.st.matrix.common.HomeServerUrl
 import app.dapk.state.Combined2
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
+import app.dapk.state.page.PageContainer
+import app.dapk.state.page.PageStateChange
 import fake.FakeChatEngine
 import fake.FakeErrorTracker
 import fake.FakeJobBag

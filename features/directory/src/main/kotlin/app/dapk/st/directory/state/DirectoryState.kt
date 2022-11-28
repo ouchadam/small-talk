@@ -1,6 +1,6 @@
 package app.dapk.st.directory.state
 
-import app.dapk.st.core.State
+import app.dapk.st.state.State
 import app.dapk.st.engine.DirectoryState
 
 typealias DirectoryState = State<DirectoryScreenState, DirectoryEvent>

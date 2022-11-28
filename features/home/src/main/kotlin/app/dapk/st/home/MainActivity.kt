@@ -13,11 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.DapkActivity
 import app.dapk.st.core.module
-import app.dapk.st.core.state
 import app.dapk.st.core.viewModel
 import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.login.LoginModule
 import app.dapk.st.profile.ProfileModule
+import app.dapk.st.state.state
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
