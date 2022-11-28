@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.components.CenteredLoading
-import app.dapk.st.core.page.PageAction
 import app.dapk.st.design.components.*
 import app.dapk.st.engine.RoomInvite
 import app.dapk.st.engine.RoomInvite.InviteMeta
@@ -28,6 +27,8 @@ import app.dapk.st.profile.state.Page
 import app.dapk.st.profile.state.ProfileAction
 import app.dapk.st.profile.state.ProfileState
 import app.dapk.st.settings.SettingsActivity
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
 
 @Composable
 fun ProfileScreen(viewModel: ProfileState, onTopLevelBack: () -> Unit) {
@@ -47,7 +48,7 @@ fun ProfileScreen(viewModel: ProfileState, onTopLevelBack: () -> Unit) {
         }
     }
 
-    Spider(currentPage = viewModel.current.state1.page, onNavigate = onNavigate) {
+    Spider(currentPage = viewModel.current.state1.page, onNavigate = onNavigate, toolbar = { navigate, title -> Toolbar(navigate, title) }) {
         item(Page.Routes.profile) {
             ProfilePage(context, viewModel, it)
         }

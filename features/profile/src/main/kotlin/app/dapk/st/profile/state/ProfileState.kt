@@ -1,12 +1,12 @@
 package app.dapk.st.profile.state
 
 import app.dapk.st.core.Lce
-import app.dapk.st.core.State
-import app.dapk.st.core.page.PageContainer
-import app.dapk.st.design.components.Route
+import app.dapk.st.state.State
 import app.dapk.st.engine.Me
 import app.dapk.st.engine.RoomInvite
 import app.dapk.state.Combined2
+import app.dapk.state.Route
+import app.dapk.state.page.PageContainer
 
 typealias ProfileState = State<Combined2<PageContainer<Page>, Unit>, Unit>
 

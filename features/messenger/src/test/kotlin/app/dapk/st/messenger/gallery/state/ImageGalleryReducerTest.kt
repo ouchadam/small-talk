@@ -2,15 +2,15 @@ package app.dapk.st.messenger.gallery.state
 
 import android.net.Uri
 import app.dapk.st.core.Lce
-import app.dapk.st.core.page.PageAction
-import app.dapk.st.core.page.PageContainer
-import app.dapk.st.core.page.PageStateChange
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.messenger.gallery.FetchMediaFoldersUseCase
 import app.dapk.st.messenger.gallery.FetchMediaUseCase
 import app.dapk.st.messenger.gallery.Folder
 import app.dapk.st.messenger.gallery.Media
 import app.dapk.state.Combined2
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
+import app.dapk.state.page.PageContainer
+import app.dapk.state.page.PageStateChange
 import fake.FakeJobBag
 import fake.FakeUri
 import io.mockk.coEvery
@@ -18,7 +18,6 @@ import io.mockk.mockk
 import org.junit.Test
 import test.assertOnlyDispatches
 import test.delegateReturn
-import test.expect
 import test.testReducer
 
 private const val A_ROOM_NAME = "a room name"

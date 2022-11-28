@@ -2,10 +2,10 @@ package app.dapk.st.settings
 
 import android.net.Uri
 import app.dapk.st.core.Lce
-import app.dapk.st.design.components.Route
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.engine.ImportResult
 import app.dapk.st.push.Registrar
+import app.dapk.state.Route
+import app.dapk.state.SpiderPage
 
 internal data class SettingsScreenState(
     val page: SpiderPage<out Page>,
@@ -26,9 +26,9 @@ internal sealed interface Page {
 
     object Routes {
         val root = Route<Root>("Settings")
-        val encryption = Route<Page.Security>("Encryption")
-        val pushProviders = Route<Page.PushProviders>("PushProviders")
-        val importRoomKeys = Route<Page.ImportRoomKey>("ImportRoomKey")
+        val encryption = Route<Security>("Encryption")
+        val pushProviders = Route<PushProviders>("PushProviders")
+        val importRoomKeys = Route<ImportRoomKey>("ImportRoomKey")
     }
 }
 

@@ -6,6 +6,9 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "SmallTalk"
+
+includeBuild 'screen-state'
+
 include ':app'
 
 include ':design-library'

@@ -163,7 +163,6 @@ ext.firebase = { dependencies, name ->
     }
 }
 
-
 if (launchTask.contains("codeCoverageReport".toLowerCase())) {
     apply from: 'tools/coverage.gradle'
 }

@@ -15,16 +15,17 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.*
-import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.design.components.GenericError
+import app.dapk.st.messenger.gallery.state.ImageGalleryState
+import app.dapk.st.state.state
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 class ImageGalleryActivity : DapkActivity() {
 
-    private val module by unsafeLazy { module<ImageGalleryModule>() }
-    private val imageGalleryState by state {
+    private val imageGalleryState: ImageGalleryState by state {
         val payload = intent.getParcelableExtra("key") as? ImageGalleryActivityPayload
+        val module = module<ImageGalleryModule>()
         module.imageGalleryState(payload!!.roomName)
     }
 

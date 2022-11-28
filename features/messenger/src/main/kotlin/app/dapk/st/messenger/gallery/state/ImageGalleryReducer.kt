@@ -2,15 +2,15 @@ package app.dapk.st.messenger.gallery.state
 
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.Lce
-import app.dapk.st.core.page.PageAction
-import app.dapk.st.core.page.PageStateChange
-import app.dapk.st.core.page.createPageReducer
-import app.dapk.st.core.page.withPageContext
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.messenger.gallery.FetchMediaFoldersUseCase
 import app.dapk.st.messenger.gallery.FetchMediaUseCase
+import app.dapk.state.SpiderPage
 import app.dapk.state.async
 import app.dapk.state.createReducer
+import app.dapk.state.page.PageAction
+import app.dapk.state.page.PageStateChange
+import app.dapk.state.page.createPageReducer
+import app.dapk.state.page.withPageContext
 import app.dapk.state.sideEffect
 import kotlinx.coroutines.launch
 

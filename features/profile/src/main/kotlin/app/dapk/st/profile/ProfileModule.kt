@@ -2,7 +2,7 @@ package app.dapk.st.profile
 
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.ProvidableModule
-import app.dapk.st.core.createStateViewModel
+import app.dapk.st.state.createStateViewModel
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.profile.state.ProfileState
