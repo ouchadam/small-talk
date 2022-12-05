@@ -15,9 +15,7 @@ dependencies {
     implementation Dependencies.mavenCentral.kotlinSerializationJson
 
     kotlinTest(it)
-
+    testImplementation 'chat-engine:chat-engine-test'
     androidImportFixturesWorkaround(project, project(":core"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
-//    androidImportFixturesWorkaround(project, project(":matrix:common"))
-//    androidImportFixturesWorkaround(project, project(":chat-engine"))
 }
