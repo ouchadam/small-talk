@@ -1,8 +1,8 @@
 applyAndroidLibraryModule(project)
 
 dependencies {
-    implementation project(":chat-engine")
-    implementation project(':domains:store')
+    implementation "chat-engine:chat-engine"
+//    implementation project(':domains:store')
     implementation project(":domains:android:work")
     implementation project(':domains:android:push')
     implementation project(":domains:android:core")
@@ -17,7 +17,7 @@ dependencies {
     kotlinTest(it)
 
     androidImportFixturesWorkaround(project, project(":core"))
-    androidImportFixturesWorkaround(project, project(":matrix:common"))
-    androidImportFixturesWorkaround(project, project(":chat-engine"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
+//    androidImportFixturesWorkaround(project, project(":matrix:common"))
+//    androidImportFixturesWorkaround(project, project(":chat-engine"))
 }

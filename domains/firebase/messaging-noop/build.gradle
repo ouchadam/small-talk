@@ -2,5 +2,5 @@ applyAndroidLibraryModule(project)
 
 dependencies {
     implementation project(':core')
-    implementation project(':matrix:common')
+    implementation "chat-engine:chat-engine"
 }

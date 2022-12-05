@@ -2,42 +2,38 @@ package app.dapk.st.graph
 
 import android.app.Application
 import android.app.PendingIntent
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.media.ExifInterface
-import android.net.Uri
 import android.os.Build
-import android.provider.OpenableColumns
 import app.dapk.db.DapkDb
+import app.dapk.db.app.StDb
+import app.dapk.engine.core.Base64
 import app.dapk.st.BuildConfig
-import app.dapk.st.SharedPreferencesDelegate
 import app.dapk.st.core.*
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.directory.DirectoryModule
+import app.dapk.st.domain.MatrixStoreModule
 import app.dapk.st.domain.StoreModule
+import app.dapk.st.engine.ImageContentReader
 import app.dapk.st.engine.MatrixEngine
 import app.dapk.st.firebase.messaging.MessagingModule
 import app.dapk.st.home.BetaVersionUpgradeUseCase
 import app.dapk.st.home.HomeModule
 import app.dapk.st.home.MainActivity
 import app.dapk.st.imageloader.ImageLoaderModule
+import app.dapk.st.impl.*
 import app.dapk.st.login.LoginModule
-import app.dapk.st.matrix.auth.DeviceDisplayNameGenerator
 import app.dapk.st.matrix.common.EventId
 import app.dapk.st.matrix.common.JsonString
 import app.dapk.st.matrix.common.MatrixLogger
 import app.dapk.st.matrix.common.RoomId
-import app.dapk.st.matrix.message.internal.ImageContentReader
 import app.dapk.st.messenger.MessengerActivity
 import app.dapk.st.messenger.MessengerModule
 import app.dapk.st.messenger.gallery.ImageGalleryModule
 import app.dapk.st.navigator.IntentFactory
 import app.dapk.st.navigator.MessageAttachment
 import app.dapk.st.notifications.NotificationsModule
-import app.dapk.st.olm.OlmPersistenceWrapper
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.push.PushHandler
 import app.dapk.st.push.PushModule
@@ -51,7 +47,6 @@ import app.dapk.st.work.WorkModule
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
-import java.io.InputStream
 
 internal class AppModule(context: Application, logger: MatrixLogger) {
 
@@ -64,26 +59,48 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     }
 
     private val driver = AndroidSqliteDriver(DapkDb.Schema, context, "dapk.db")
-    private val database = DapkDb(driver)
+    private val stDriver = AndroidSqliteDriver(DapkDb.Schema, context, "stdb.db")
+    private val engineDatabase = DapkDb(driver)
+    private val stDatabase = StDb(stDriver)
     val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
     private val base64 = AndroidBase64()
 
     val storeModule = unsafeLazy {
         StoreModule(
-            database = database,
+            database = stDatabase,
             preferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-user-preferences", coroutineDispatchers),
-            errorTracker = trackingModule.errorTracker,
             credentialPreferences = SharedPreferencesDelegate(context.applicationContext, fileName = "dapk-credentials-preferences", coroutineDispatchers),
             databaseDropper = DefaultDatabaseDropper(coroutineDispatchers, driver),
             coroutineDispatchers = coroutineDispatchers
         )
     }
+
+
     private val workModule = WorkModule(context)
     private val imageLoaderModule = ImageLoaderModule(context)
 
     private val imageContentReader by unsafeLazy { AndroidImageContentReader(context.contentResolver) }
-    private val chatEngineModule =
-        ChatEngineModule(storeModule, trackingModule, workModule, logger, coroutineDispatchers, imageContentReader, base64, buildMeta)
+    private val chatEngineModule = ChatEngineModule(
+        unsafeLazy { matrixStoreModule() },
+        trackingModule,
+        workModule,
+        logger,
+        coroutineDispatchers,
+        imageContentReader,
+        base64,
+        buildMeta
+    )
+
+    private fun matrixStoreModule(): MatrixStoreModule {
+        val value = storeModule.value
+        return MatrixStoreModule(
+            engineDatabase,
+            value.preferences.engine(),
+            value.credentialPreferences.engine(),
+            trackingModule.errorTracker.engine(),
+            coroutineDispatchers.engine(),
+        )
+    }
 
     val domainModules = DomainModules(chatEngineModule, trackingModule.errorTracker, context, coroutineDispatchers)
 
@@ -133,7 +150,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
 
 internal class FeatureModules internal constructor(
     private val storeModule: Lazy<StoreModule>,
-    private val chatEngineModule: ChatEngineModule,
+    val chatEngineModule: ChatEngineModule,
     private val domainModules: DomainModules,
     private val trackingModule: TrackingModule,
     private val coreAndroidModule: CoreAndroidModule,
@@ -220,7 +237,7 @@ internal class FeatureModules internal constructor(
 }
 
 internal class ChatEngineModule(
-    private val storeModule: Lazy<StoreModule>,
+    private val matrixStoreModule: Lazy<MatrixStoreModule>,
     private val trackingModule: TrackingModule,
     private val workModule: WorkModule,
     private val logger: MatrixLogger,
@@ -231,26 +248,22 @@ internal class ChatEngineModule(
 ) {
 
     val engine by unsafeLazy {
-        val store = storeModule.value
+        val matrixCoroutineDispatchers = app.dapk.engine.core.CoroutineDispatchers(
+            coroutineDispatchers.io,
+            coroutineDispatchers.main,
+            coroutineDispatchers.global
+        )
+        val matrixStore = matrixStoreModule.value
         MatrixEngine.Factory().create(
             base64,
-            buildMeta,
             logger,
             SmallTalkDeviceNameGenerator(),
-            coroutineDispatchers,
-            trackingModule.errorTracker,
+            matrixCoroutineDispatchers,
+            trackingModule.errorTracker.engine(),
             imageContentReader,
             BackgroundWorkAdapter(workModule.workScheduler()),
-            store.memberStore(),
-            store.roomStore(),
-            store.profileStore(),
-            store.syncStore(),
-            store.overviewStore(),
-            store.filterStore(),
-            store.localEchoStore,
-            store.credentialsStore(),
-            store.knownDevicesStore(),
-            OlmPersistenceWrapper(store.olmStore(), base64),
+            matrixStore,
+            includeLogging = buildMeta.isDebug,
         )
     }
 
@@ -289,43 +302,23 @@ internal class DomainModules(
     val taskRunnerModule by unsafeLazy {
         TaskRunnerModule(TaskRunnerAdapter(chatEngineModule.engine, AppTaskRunner(chatEngineModule.engine)))
     }
-
 }
 
-internal class AndroidImageContentReader(private val contentResolver: ContentResolver) : ImageContentReader {
-    override fun meta(uri: String): ImageContentReader.ImageContent {
-        val androidUri = Uri.parse(uri)
-        val fileStream = contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")
+private fun CoroutineDispatchers.engine() = app.dapk.engine.core.CoroutineDispatchers(this.io, this.main, this.global)
 
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeStream(fileStream, null, options)
-
-        val fileSize = contentResolver.query(androidUri, null, null, null, null)?.use { cursor ->
-            cursor.moveToFirst()
-            val columnIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-            cursor.getLong(columnIndex)
-        } ?: throw IllegalArgumentException("Could not process $uri")
-
-        val shouldSwapSizes = ExifInterface(contentResolver.openInputStream(androidUri) ?: throw IllegalArgumentException("Could not process $uri")).let {
-            val orientation = it.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
-            orientation == ExifInterface.ORIENTATION_ROTATE_90 || orientation == ExifInterface.ORIENTATION_ROTATE_270
-        }
-
-        return ImageContentReader.ImageContent(
-            height = if (shouldSwapSizes) options.outWidth else options.outHeight,
-            width = if (shouldSwapSizes) options.outHeight else options.outWidth,
-            size = fileSize,
-            mimeType = options.outMimeType,
-            fileName = androidUri.lastPathSegment ?: "file",
-        )
+private fun ErrorTracker.engine(): app.dapk.engine.core.extensions.ErrorTracker {
+    val tracker = this
+    return object : app.dapk.engine.core.extensions.ErrorTracker {
+        override fun track(throwable: Throwable, extra: String) = tracker.track(throwable, extra)
     }
-
-    override fun inputStream(uri: String): InputStream = contentResolver.openInputStream(Uri.parse(uri))!!
 }
 
-internal class SmallTalkDeviceNameGenerator : DeviceDisplayNameGenerator {
-    override fun generate(): String {
-        val randomIdentifier = (('A'..'Z') + ('a'..'z') + ('0'..'9')).shuffled().take(4).joinToString("")
-        return "SmallTalk Android ($randomIdentifier)"
+private fun Preferences.engine(): app.dapk.engine.core.Preferences {
+    val prefs = this
+    return object : app.dapk.engine.core.Preferences {
+        override suspend fun store(key: String, value: String) = prefs.store(key, value)
+        override suspend fun readString(key: String) = prefs.readString(key)
+        override suspend fun clear() = prefs.clear()
+        override suspend fun remove(key: String) = prefs.remove(key)
     }
 }

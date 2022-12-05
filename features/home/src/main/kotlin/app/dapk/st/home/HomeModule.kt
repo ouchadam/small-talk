@@ -16,7 +16,6 @@ class HomeModule(
     internal fun homeViewModel(directory: DirectoryState, login: LoginViewModel, profile: ProfileState): HomeViewModel {
         return HomeViewModel(
             chatEngine,
-            storeModule.credentialsStore(),
             directory,
             login,
             profile,

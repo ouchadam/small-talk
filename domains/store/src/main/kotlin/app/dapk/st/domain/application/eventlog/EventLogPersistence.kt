@@ -1,6 +1,6 @@
 package app.dapk.st.domain.application.eventlog
 
-import app.dapk.db.DapkDb
+import app.dapk.db.app.StDb
 import app.dapk.st.core.CoroutineDispatchers
 import app.dapk.st.core.withIoContext
 import com.squareup.sqldelight.runtime.coroutines.asFlow
@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class EventLogPersistence(
-    private val database: DapkDb,
+    private val database: StDb,
     private val coroutineDispatchers: CoroutineDispatchers,
 ) {
 
