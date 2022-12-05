@@ -8,7 +8,7 @@ dependencyResolutionManagement {
 rootProject.name = "SmallTalk"
 
 includeBuild 'screen-state'
-includeBuild '../chat-engine'
+includeBuild 'chat-engine'
 
 include ':app'
 
