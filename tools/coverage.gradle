@@ -77,7 +77,6 @@ task allCodeCoverageReport(type: JacocoReport) {
     rootProject.apply plugin: 'jacoco'
     def projects = collectProjects { !it.name.contains("stub") && !it.name.contains("-noop") }
     dependsOn { ["app:assembleDebug"] + projects*.test }
-    dependsOn gradle.includedBuild("chat-engine").task(":allCodeCoverageReport")
     initializeReport(it, projects, excludes)
 }
 
