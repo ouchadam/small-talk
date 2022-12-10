@@ -135,17 +135,11 @@ ext.Dependencies.with {
         leakCanary = 'com.squareup.leakcanary:leakcanary-android:2.10'
 
         ktorAndroid = "io.ktor:ktor-client-android:${ktorVer}"
-        ktorCore = "io.ktor:ktor-client-core:${ktorVer}"
-        ktorSerialization = "io.ktor:ktor-client-serialization:${ktorVer}"
-        ktorJson = "io.ktor:ktor-serialization-kotlinx-json:${ktorVer}"
-        ktorLogging = "io.ktor:ktor-client-logging-jvm:${ktorVer}"
-        ktorJava = "io.ktor:ktor-client-java:${ktorVer}"
-        ktorContentNegotiation = "io.ktor:ktor-client-content-negotiation:${ktorVer}"
 
         coil = "io.coil-kt:coil-compose:2.2.2"
         accompanistSystemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.27.1"
 
-        junit = "junit:junit:4.13.2"
+        junit = "juniFt:junit:4.13.2"
         kluent = "org.amshove.kluent:kluent:1.72"
         mockk = 'io.mockk:mockk:1.13.2'
 
