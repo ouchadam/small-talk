@@ -1,14 +1,14 @@
 package app.dapk.st.verification
 
 import app.dapk.st.core.ProvidableModule
-import app.dapk.st.matrix.crypto.CryptoService
+import app.dapk.st.engine.ChatEngine
 
 class VerificationModule(
-    private val cryptoService: CryptoService
+    private val chatEngine: ChatEngine,
 ) : ProvidableModule {
 
     fun verificationViewModel(): VerificationViewModel {
-        return VerificationViewModel(cryptoService)
+        return VerificationViewModel(chatEngine)
     }
 
 }

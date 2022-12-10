@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 
 internal class HomeViewModel(
     private val chatEngine: ChatEngine,
-    private val credentialsProvider: CredentialsStore,
     private val directoryState: DirectoryState,
     private val loginViewModel: LoginViewModel,
     private val profileState: ProfileState,
@@ -39,7 +38,7 @@ internal class HomeViewModel(
 
     fun start() {
         viewModelScope.launch {
-            state = if (credentialsProvider.isSignedIn()) {
+            state = if (chatEngine.isSignedIn()) {
                 _events.emit(HomeEvent.OnShowContent)
                 initialHomeContent()
             } else {
@@ -48,11 +47,10 @@ internal class HomeViewModel(
         }
 
         viewModelScope.launch {
-            if (credentialsProvider.isSignedIn()) {
+            if (chatEngine.isSignedIn()) {
                 listenForInviteChanges()
             }
         }
-
     }
 
     private suspend fun initialHomeContent(): SignedIn {

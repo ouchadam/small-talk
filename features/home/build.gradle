@@ -1,7 +1,7 @@
 applyAndroidComposeLibraryModule(project)
 
 dependencies {
-    implementation project(":chat-engine")
+    implementation "chat-engine:chat-engine"
     implementation project(":features:directory")
     implementation project(":features:login")
     implementation project(":features:settings")

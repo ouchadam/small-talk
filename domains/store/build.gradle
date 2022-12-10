@@ -6,20 +6,15 @@ plugins {
 }
 
 sqldelight {
-    DapkDb {
-        packageName = "app.dapk.db"
+    StDb {
+        packageName = "app.dapk.db.app"
     }
     linkSqlite = true
 }
 
 dependencies {
-    api project(":matrix:common")
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:message")
-    implementation project(":matrix:services:profile")
-    implementation project(":matrix:services:device")
-    implementation project(":matrix:services:room")
     implementation project(":core")
+    implementation "chat-engine:chat-engine"
     implementation Dependencies.mavenCentral.kotlinSerializationJson
     implementation Dependencies.mavenCentral.kotlinCoroutinesCore
     implementation "com.squareup.sqldelight:coroutines-extensions:1.5.4"

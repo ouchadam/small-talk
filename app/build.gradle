@@ -82,32 +82,21 @@ dependencies {
     implementation project(":features:navigator")
     implementation project(":features:share-entry")
 
-    implementation project(':domains:store')
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:core")
     implementation project(":domains:android:tracking")
     implementation project(":domains:android:push")
     implementation project(":domains:android:work")
     implementation project(":domains:android:imageloader")
-    implementation project(":domains:olm")
+    implementation project(":domains:store")
 
     firebase(it, "messaging")
 
-    implementation project(":matrix:matrix")
-    implementation project(":matrix:matrix-http-ktor")
-    implementation project(":matrix:services:auth")
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:room")
-    implementation project(":matrix:services:push")
-    implementation project(":matrix:services:message")
-    implementation project(":matrix:services:device")
-    implementation project(":matrix:services:crypto")
-    implementation project(":matrix:services:profile")
-
     implementation project(":core")
 
-    implementation project(":chat-engine")
-    implementation project(":matrix-chat-engine")
+    implementation "chat-engine:chat-engine"
+    implementation "chat-engine:matrix-chat-engine"
+    implementation "chat-engine.matrix:store"
 
     implementation Dependencies.google.androidxComposeUi
     implementation Dependencies.mavenCentral.ktorAndroid

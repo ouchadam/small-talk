@@ -1,3 +1,6 @@
 [submodule "screen-state"]
 	path = screen-state
 	url = git@github.com:ouchadam/screen-state.git
+[submodule "chat-engine"]
+	path = chat-engine
+	url = git@github.com:ouchadam/chat-engine.git

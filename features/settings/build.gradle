@@ -1,7 +1,7 @@
 applyAndroidComposeLibraryModule(project)
 
 dependencies {
-    implementation project(":chat-engine")
+    implementation "chat-engine:chat-engine"
     implementation project(":features:navigator")
     implementation project(':domains:store')
     implementation project(':domains:android:push')
@@ -14,10 +14,9 @@ dependencies {
     kotlinTest(it)
 
     testImplementation 'screen-state:state-test'
-    androidImportFixturesWorkaround(project, project(":matrix:common"))
+    testImplementation 'chat-engine:chat-engine-test'
     androidImportFixturesWorkaround(project, project(":core"))
-    androidImportFixturesWorkaround(project, project(":domains:store"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
-    androidImportFixturesWorkaround(project, project(":chat-engine"))
+    androidImportFixturesWorkaround(project, project(":domains:store"))
 }

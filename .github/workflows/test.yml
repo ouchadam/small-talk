@@ -44,6 +44,7 @@ jobs:
       - name: Run all unit tests
         run: ./gradlew clean allCodeCoverageReport --no-daemon
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         with:
-          files: ./build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml
+          verbose: true
+          files: ./build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml,./chat-engine/build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml
