@@ -1,4 +1,10 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-feature-conventions"
+}
+
+android {
+    namespace "app.dapk.st.login"
+}
 
 dependencies {
     implementation "chat-engine:chat-engine"

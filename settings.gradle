@@ -1,10 +1,15 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+    }
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     apply from: "dependencies.gradle"
-    repositories {
-        Dependencies._repositories.call(it)
-    }
+    applyRepositories(it)
 }
+
 rootProject.name = "SmallTalk"
 
 includeBuild 'screen-state'

@@ -1,5 +1,11 @@
-applyAndroidLibraryModule(project)
-apply plugin: 'kotlin-parcelize'
+plugins {
+    id "st-feature-conventions"
+    id "org.jetbrains.kotlin.plugin.parcelize"
+}
+
+android {
+    namespace "app.dapk.st.navigator"
+}
 
 dependencies {
     compileOnly project(":domains:android:stub")

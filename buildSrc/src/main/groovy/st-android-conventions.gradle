@@ -1,0 +1,18 @@
+plugins {
+    id "kotlin-android"
+}
+
+def androidSdkVersion = 33
+
+android {
+    compileSdk androidSdkVersion
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        incremental = true
+    }
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion androidSdkVersion
+    }
+}

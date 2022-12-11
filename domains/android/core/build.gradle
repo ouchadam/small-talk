@@ -1,4 +1,6 @@
-plugins { id 'kotlin' }
+plugins {
+    id "kotlin"
+}
 
 dependencies {
     compileOnly project(":domains:android:stub")

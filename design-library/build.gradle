@@ -1,7 +1,13 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-android-compose-library-conventions"
+}
+
+android {
+    namespace "app.dapk.st.design"
+}
 
 dependencies {
     implementation project(":core")
-    implementation Dependencies.mavenCentral.coil
-    implementation Dependencies.mavenCentral.accompanistSystemuicontroller
+    implementation libs.compose.coil
+    implementation libs.accompanist.systemuicontroller
 }

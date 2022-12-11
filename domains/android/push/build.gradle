@@ -1,5 +1,7 @@
-applyAndroidLibraryModule(project)
-apply plugin: "org.jetbrains.kotlin.plugin.serialization"
+plugins {
+    id "st-android-library-conventions"
+    alias libs.plugins.kotlin.serialization
+}
 
 dependencies {
     implementation "chat-engine:chat-engine"
@@ -9,8 +11,8 @@ dependencies {
 
     firebase(it, "messaging")
 
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
-    implementation Dependencies.jitPack.unifiedPush
+    implementation libs.kotlin.serialization
+    implementation libs.unifiedpush
 
     kotlinTest(it)
     testImplementation 'chat-engine:chat-engine-test'

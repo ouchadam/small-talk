@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
-    api Dependencies.mavenCentral.kotlinCoroutinesCore
-    testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
-    testFixturesImplementation Dependencies.mavenCentral.kluent
-    testFixturesImplementation Dependencies.mavenCentral.mockk
-    testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesTest
+    api libs.kotlin.coroutines
+    testFixturesImplementation libs.kotlin.coroutines
+    testFixturesImplementation libs.kluent
+    testFixturesImplementation libs.mockk
+    testFixturesImplementation libs.kotlin.coroutines.test
 }

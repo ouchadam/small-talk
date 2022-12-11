@@ -1,76 +1,25 @@
 plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
+    id "st-application-conventions"
+    alias libs.plugins.firebase.crashlytics apply false
 }
 
-applyCommonAndroidParameters(project)
-applyCrashlyticsIfRelease(project)
+applyCrashlyticsIfRelease()
 
 android {
-    ndkVersion "25.0.8141415"
-    defaultConfig {
-        applicationId "app.dapk.st"
-        def versionJson = new groovy.json.JsonSlurper().parseText(rootProject.file('version.json').text)
-        versionCode versionJson.code
-        versionName versionJson.name
-
-        if (isDebugBuild) {
-            resConfigs "en", "xxhdpi"
-        } else {
-            resConfigs "en"
-        }
-
-        if (isFoss()) {
-            archivesBaseName = "$archivesBaseName-foss"
-        }
-    }
-
-    bundle {
-        abi.enableSplit true
-        density.enableSplit true
-        language.enableSplit true
-    }
+    namespace "app.dapk.st"
 
     buildTypes {
-        debug {
-            versionNameSuffix = " [debug]"
-            matchingFallbacks = ['release']
-            signingConfig.storeFile rootProject.file("tools/debug.keystore")
-        }
         release {
-            minifyEnabled true
-            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
                     'proguard/app.pro',
                     "proguard/serializationx.pro",
                     "proguard/olm.pro"
-
-            if (project.hasProperty("unsigned")) {
-                // releases are signed externally
-            } else {
-                signingConfig = buildTypes.debug.signingConfig
-            }
         }
-    }
-
-    compileOptions {
-        coreLibraryDesugaringEnabled true
-    }
-
-    packagingOptions {
-        resources.excludes += "DebugProbesKt.bin"
-    }
-}
-
-if (isDebugBuild) {
-    androidComponents {
-        def release = selector().withBuildType("release")
-        beforeVariants(release) { it.enabled = false }
     }
 }
 
 dependencies {
-    coreLibraryDesugaring Dependencies.google.jdkLibs
+    coreLibraryDesugaring libs.android.desugar
 
     implementation project(":features:home")
     implementation project(":features:directory")
@@ -98,11 +47,22 @@ dependencies {
     implementation "chat-engine:matrix-chat-engine"
     implementation "chat-engine.matrix:store"
 
-    implementation Dependencies.google.androidxComposeUi
-    implementation Dependencies.mavenCentral.ktorAndroid
-    implementation Dependencies.mavenCentral.sqldelightAndroid
-    implementation Dependencies.mavenCentral.matrixOlm
+    implementation libs.compose.ui
+    implementation libs.ktor.android
+    implementation libs.sqldelight.android
+    implementation libs.matrix.olm
 
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
-    debugImplementation Dependencies.mavenCentral.leakCanary
+    implementation libs.kotlin.serialization
+    debugImplementation libs.leakcanary
+}
+
+def applyCrashlyticsIfRelease() {
+    if (isReleaseBuild && !isFoss()) {
+        project.apply plugin: libs.plugins.firebase.crashlytics.get().pluginId
+        project.afterEvaluate {
+            project.tasks.withType(com.google.firebase.crashlytics.buildtools.gradle.tasks.UploadMappingFileTask).configureEach {
+                it.googleServicesResourceRoot.set(project.file("src/release/res/"))
+            }
+        }
+    }
 }

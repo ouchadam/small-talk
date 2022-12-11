@@ -1,0 +1,64 @@
+plugins {
+    id "com.android.application"
+    id "st-android-conventions"
+}
+
+android {
+    ndkVersion "25.0.8141415"
+    defaultConfig {
+        applicationId "app.dapk.st"
+        def versionJson = new groovy.json.JsonSlurper().parseText(rootProject.file('version.json').text)
+        versionCode versionJson.code
+        versionName versionJson.name
+
+        if (isDebugBuild) {
+            resConfigs "en", "xxhdpi"
+        } else {
+            resConfigs "en"
+        }
+
+        if (isFoss()) {
+            archivesBaseName = "$archivesBaseName-foss"
+        }
+    }
+
+    bundle {
+        abi.enableSplit true
+        density.enableSplit true
+        language.enableSplit true
+    }
+
+    buildTypes {
+        debug {
+            versionNameSuffix = " [debug]"
+            matchingFallbacks = ['release']
+            signingConfig.storeFile rootProject.file("tools/debug.keystore")
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+
+            if (project.hasProperty("unsigned")) {
+                // releases are signed externally
+            } else {
+                signingConfig = buildTypes.debug.signingConfig
+            }
+        }
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+    }
+
+    packagingOptions {
+        resources.excludes += "DebugProbesKt.bin"
+    }
+}
+
+if (isDebugBuild) {
+    androidComponents {
+        def release = selector().withBuildType("release")
+        beforeVariants(release) { it.enabled = false }
+    }
+}

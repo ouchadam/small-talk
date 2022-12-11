@@ -1,7 +1,7 @@
 plugins {
     id 'kotlin'
-    id 'com.squareup.sqldelight'
-    id 'org.jetbrains.kotlin.plugin.serialization'
+    alias libs.plugins.kotlin.serialization
+    alias libs.plugins.sqldelight
     id 'java-test-fixtures'
 }
 
@@ -15,9 +15,8 @@ sqldelight {
 dependencies {
     implementation project(":core")
     implementation "chat-engine:chat-engine"
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
-    implementation Dependencies.mavenCentral.kotlinCoroutinesCore
-    implementation "com.squareup.sqldelight:coroutines-extensions:1.5.4"
+    implementation libs.kotlin.serialization
+    implementation libs.sqldelight.extensions
 
     kotlinFixtures(it)
     testImplementation(testFixtures(project(":core")))
