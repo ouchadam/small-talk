@@ -3,7 +3,9 @@ plugins {
 }
 
 android {
-    buildFeatures.compose = true
+    buildFeatures {
+        compose = true
+    }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }

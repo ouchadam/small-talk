@@ -1,17 +1,6 @@
 plugins {
-//    id "kotlin-android"
+    id "kotlin-android"
 }
-
-//
-//tasks.withType(Class.forName("org.jetbrains.kotlin.gradle.tasks.KotlinCompile.KotlinCompile")).configureEach {
-//    kotlinOptions {
-//        jvmTarget = "1.8"
-//        freeCompilerArgs = [
-//                '-opt-in=kotlin.contracts.ExperimentalContracts',
-//                '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
-//        ]
-//    }
-//}
 
 def androidSdkVersion = 33
 

@@ -1,5 +1,5 @@
 plugins {
-    alias libs.plugins.kotlin
+    id 'kotlin'
     alias libs.plugins.kotlin.serialization
     alias libs.plugins.sqldelight
     id 'java-test-fixtures'

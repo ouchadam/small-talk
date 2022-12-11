@@ -2,6 +2,10 @@ plugins {
     id "st-android-compose-library-conventions"
 }
 
+android {
+    namespace "app.dapk.st.design"
+}
+
 dependencies {
     implementation project(":core")
     implementation libs.compose.coil

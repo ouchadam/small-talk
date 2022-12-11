@@ -1,6 +1,10 @@
 plugins {
     id "st-feature-conventions"
-    alias libs.plugins.kotlin.parcelize
+    id "org.jetbrains.kotlin.plugin.parcelize"
+}
+
+android {
+    namespace "app.dapk.st.navigator"
 }
 
 dependencies {

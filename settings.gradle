@@ -9,6 +9,7 @@ dependencyResolutionManagement {
     apply from: "dependencies.gradle"
     applyRepositories(it)
 }
+
 rootProject.name = "SmallTalk"
 
 includeBuild 'screen-state'

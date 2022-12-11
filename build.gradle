@@ -6,6 +6,18 @@ def launchTask = getGradle()
 ext.isReleaseBuild = launchTask.contains("bundlerelease") || launchTask.contains("assemblerelease")
 ext.isDebugBuild = !isReleaseBuild
 
+subprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "1.8"
+            freeCompilerArgs = [
+                    '-opt-in=kotlin.contracts.ExperimentalContracts',
+                    '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+            ]
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

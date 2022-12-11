@@ -2,6 +2,10 @@ plugins {
     id "st-feature-conventions"
 }
 
+android {
+    namespace "app.dapk.st.directory"
+}
+
 dependencies {
     implementation project(":domains:android:compose-core")
     implementation "chat-engine:chat-engine"
