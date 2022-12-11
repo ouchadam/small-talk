@@ -1,4 +1,6 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-feature-conventions"
+}
 
 dependencies {
     implementation "chat-engine:chat-engine"
@@ -12,5 +14,5 @@ dependencies {
     implementation 'screen-state:screen-android'
     implementation project(":core")
     implementation project(":design-library")
-    implementation Dependencies.mavenCentral.coil
+    implementation libs.compose.coil
 }

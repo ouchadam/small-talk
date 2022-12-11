@@ -1,9 +1,7 @@
 plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
+    id "st-application-conventions"
 }
 
-applyCommonAndroidParameters(project)
 applyCrashlyticsIfRelease(project)
 
 android {
@@ -70,7 +68,7 @@ if (isDebugBuild) {
 }
 
 dependencies {
-    coreLibraryDesugaring Dependencies.google.jdkLibs
+    coreLibraryDesugaring libs.android.desugar
 
     implementation project(":features:home")
     implementation project(":features:directory")
@@ -98,11 +96,11 @@ dependencies {
     implementation "chat-engine:matrix-chat-engine"
     implementation "chat-engine.matrix:store"
 
-    implementation Dependencies.google.androidxComposeUi
-    implementation Dependencies.mavenCentral.ktorAndroid
-    implementation Dependencies.mavenCentral.sqldelightAndroid
-    implementation Dependencies.mavenCentral.matrixOlm
+    implementation libs.compose.ui
+    implementation libs.ktor.android
+    implementation libs.sqldelight.android
+    implementation libs.matrix.olm
 
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
-    debugImplementation Dependencies.mavenCentral.leakCanary
+    implementation libs.kotlin.serialization
+    debugImplementation libs.leakcanary
 }

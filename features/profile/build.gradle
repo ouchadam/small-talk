@@ -1,4 +1,6 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-feature-conventions"
+}
 
 dependencies {
     implementation "chat-engine:chat-engine"

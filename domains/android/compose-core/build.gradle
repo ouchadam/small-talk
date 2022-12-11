@@ -1,4 +1,6 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-android-compose-library-conventions"
+}
 
 dependencies {
     implementation project(":core")

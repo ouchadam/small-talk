@@ -1,5 +1,7 @@
-applyAndroidComposeLibraryModule(project)
-apply plugin: 'kotlin-parcelize'
+plugins {
+    id "st-feature-conventions"
+    alias libs.plugins.kotlin.parcelize
+}
 
 dependencies {
     implementation "chat-engine:chat-engine"
@@ -10,7 +12,7 @@ dependencies {
     implementation project(":core")
     implementation project(":features:navigator")
     implementation project(":design-library")
-    implementation Dependencies.mavenCentral.coil
+    implementation libs.compose.coil
 
     kotlinTest(it)
 

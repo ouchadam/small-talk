@@ -1,4 +1,6 @@
-applyAndroidLibraryModule(project)
+plugins {
+    id "st-android-library-conventions"
+}
 
 dependencies {
     implementation "chat-engine:chat-engine"
@@ -12,7 +14,7 @@ dependencies {
     implementation project(":features:navigator")
 
 
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
+    implementation libs.kotlin.serialization
 
     kotlinTest(it)
     testImplementation 'chat-engine:chat-engine-test'

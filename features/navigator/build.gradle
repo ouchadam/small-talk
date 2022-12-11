@@ -1,5 +1,7 @@
-applyAndroidLibraryModule(project)
-apply plugin: 'kotlin-parcelize'
+plugins {
+    id "st-feature-conventions"
+    alias libs.plugins.kotlin.parcelize
+}
 
 dependencies {
     compileOnly project(":domains:android:stub")

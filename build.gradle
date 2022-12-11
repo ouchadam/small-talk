@@ -1,16 +1,6 @@
-buildscript {
-    apply from: "dependencies.gradle"
-
-    repositories {
-        Dependencies._repositories.call(it)
-    }
-    dependencies {
-        classpath Dependencies.google.androidGradlePlugin
-        classpath Dependencies.mavenCentral.kotlinGradlePlugin
-        classpath Dependencies.mavenCentral.sqldelightGradlePlugin
-        classpath Dependencies.mavenCentral.kotlinSerializationGradlePlugin
-        classpath Dependencies.google.firebaseCrashlyticsPlugin
-    }
+plugins {
+//    alias(libs.plugins.android.application) apply false
+//    alias(libs.plugins.android.library) apply false
 }
 
 def launchTask = getGradle()
@@ -18,107 +8,19 @@ def launchTask = getGradle()
         .getTaskRequests()
         .toString()
         .toLowerCase()
-def isReleaseBuild = launchTask.contains("release")
+def isReleaseBuild = launchTask.contains("bundleRelease") || launchTask.contains("assembleRelease")
 ext.isDebugBuild = !isReleaseBuild
-
-subprojects {
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = "1.8"
-            freeCompilerArgs = [
-                    '-opt-in=kotlin.contracts.ExperimentalContracts',
-                    '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
-            ]
-        }
-    }
-}
 
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-ext.applyMatrixServiceModule = { project ->
-    project.apply plugin: 'kotlin'
-    project.apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
-
-    def dependencies = project.dependencies
-
-    dependencies.api project.project(":matrix:matrix")
-    dependencies.api project.project(":matrix:common")
-    dependencies.implementation project.project(":matrix:matrix-http")
-    dependencies.implementation Dependencies.mavenCentral.kotlinSerializationJson
-}
-
-ext.applyLibraryPlugins = { project ->
-    project.apply plugin: 'com.android.library'
-    project.apply plugin: 'kotlin-android'
-}
-
-ext.androidSdkVersion = 33
-
-ext.applyCommonAndroidParameters = { project ->
-    def android = project.android
-    android.compileSdk androidSdkVersion
-    android.compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-        incremental = true
-    }
-    android.defaultConfig {
-        minSdkVersion 24
-        targetSdkVersion androidSdkVersion
-    }
-}
-
-ext.applyLibraryModuleOptimisations = { project ->
-    project.android {
-        variantFilter { variant ->
-            if (variant.name == "debug") {
-                variant.ignore = true
-            }
-        }
-
-        buildFeatures {
-            buildConfig = false
-            dataBinding = false
-            aidl = false
-            renderScript = false
-            resValues = false
-            shaders = false
-            viewBinding = false
-        }
-    }
-}
-
-ext.applyCompose = { project ->
-    def dependencies = project.dependencies
-
-    dependencies.implementation Dependencies.google.androidxComposeUi
-    dependencies.implementation Dependencies.google.androidxComposeFoundation
-    dependencies.implementation Dependencies.google.androidxComposeMaterial
-    dependencies.implementation Dependencies.google.androidxComposeIconsExtended
-    dependencies.implementation Dependencies.google.androidxActivityCompose
-
-    def android = project.android
-    android.buildFeatures.compose = true
-    android.composeOptions {
-        kotlinCompilerExtensionVersion = Dependencies.google.kotlinCompilerExtensionVersion
-    }
-}
-
-ext.applyAndroidComposeLibraryModule = { project ->
-    applyAndroidLibraryModule(project)
-    applyCompose(project)
-}
-
-ext.applyAndroidLibraryModule = { project ->
-    applyLibraryPlugins(project)
-    applyCommonAndroidParameters(project)
-    applyLibraryModuleOptimisations(project)
-}
-
 ext.applyCrashlyticsIfRelease = { project ->
+    println("is release $isReleaseBuild")
+    println("is foss ${isFoss()}")
     if (isReleaseBuild && !isFoss()) {
+        println("run craslytics")
+
         project.apply plugin: 'com.google.firebase.crashlytics'
         project.afterEvaluate {
             project.tasks.withType(com.google.firebase.crashlytics.buildtools.gradle.tasks.UploadMappingFileTask).configureEach {
@@ -129,20 +31,16 @@ ext.applyCrashlyticsIfRelease = { project ->
 }
 
 ext.kotlinTest = { dependencies ->
-    dependencies.testImplementation Dependencies.mavenCentral.kluent
-    dependencies.testImplementation Dependencies.mavenCentral.kotlinTest
-    dependencies.testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.7.20"
-    dependencies.testImplementation Dependencies.mavenCentral.mockk
-    dependencies.testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
-
-    dependencies.testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
-    dependencies.testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+    dependencies.testImplementation libs.kluent
+    dependencies.testImplementation libs.kotlin.test
+    dependencies.testImplementation libs.mockk
+    dependencies.testImplementation libs.kotlin.coroutines.test
 }
 
 ext.kotlinFixtures = { dependencies ->
-    dependencies.testFixturesImplementation Dependencies.mavenCentral.mockk
-    dependencies.testFixturesImplementation Dependencies.mavenCentral.kluent
-    dependencies.testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
+    dependencies.testFixturesImplementation libs.mockk
+    dependencies.testFixturesImplementation libs.kluent
+    dependencies.testFixturesImplementation libs.kotlin.coroutines
 }
 
 ext.androidImportFixturesWorkaround = { project, fixtures ->
