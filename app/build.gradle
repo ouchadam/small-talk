@@ -1,8 +1,9 @@
 plugins {
     id "st-application-conventions"
+    alias libs.plugins.firebase.crashlytics apply false
 }
 
-applyCrashlyticsIfRelease(project)
+applyCrashlyticsIfRelease()
 
 android {
     ndkVersion "25.0.8141415"
@@ -103,4 +104,15 @@ dependencies {
 
     implementation libs.kotlin.serialization
     debugImplementation libs.leakcanary
+}
+
+def applyCrashlyticsIfRelease() {
+    if (isReleaseBuild && !isFoss()) {
+        project.apply plugin: libs.plugins.firebase.crashlytics.get().pluginId
+        project.afterEvaluate {
+            project.tasks.withType(com.google.firebase.crashlytics.buildtools.gradle.tasks.UploadMappingFileTask).configureEach {
+                it.googleServicesResourceRoot.set(project.file("src/release/res/"))
+            }
+        }
+    }
 }

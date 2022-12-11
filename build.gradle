@@ -1,33 +1,13 @@
-plugins {
-//    alias(libs.plugins.android.application) apply false
-//    alias(libs.plugins.android.library) apply false
-}
-
 def launchTask = getGradle()
         .getStartParameter()
         .getTaskRequests()
         .toString()
         .toLowerCase()
-def isReleaseBuild = launchTask.contains("bundleRelease") || launchTask.contains("assembleRelease")
+ext.isReleaseBuild = launchTask.contains("bundlerelease") || launchTask.contains("assemblerelease")
 ext.isDebugBuild = !isReleaseBuild
 
 task clean(type: Delete) {
     delete rootProject.buildDir
-}
-
-ext.applyCrashlyticsIfRelease = { project ->
-    println("is release $isReleaseBuild")
-    println("is foss ${isFoss()}")
-    if (isReleaseBuild && !isFoss()) {
-        println("run craslytics")
-
-        project.apply plugin: 'com.google.firebase.crashlytics'
-        project.afterEvaluate {
-            project.tasks.withType(com.google.firebase.crashlytics.buildtools.gradle.tasks.UploadMappingFileTask).configureEach {
-                it.googleServicesResourceRoot.set(project.file("src/release/res/"))
-            }
-        }
-    }
 }
 
 ext.kotlinTest = { dependencies ->

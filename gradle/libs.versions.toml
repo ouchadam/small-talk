@@ -14,8 +14,6 @@ android-library = { id = "com.android.library", version.ref = "android-gp" }
 android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
-crashlytics = { id = "org.jetbrains.kotlin.plugin.parcelize", version = "1.8.0-RC" }
-
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "2.9.2" }
 
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
