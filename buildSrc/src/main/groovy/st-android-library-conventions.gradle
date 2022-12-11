@@ -1,0 +1,22 @@
+plugins {
+    id "com.android.library"
+    id "st-android-conventions"
+}
+
+android {
+    variantFilter { variant ->
+        if (variant.name == "debug") {
+            variant.ignore = true
+        }
+    }
+
+    buildFeatures {
+        buildConfig = false
+        dataBinding = false
+        aidl = false
+        renderScript = false
+        resValues = false
+        shaders = false
+        viewBinding = false
+    }
+}

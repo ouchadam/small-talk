@@ -1,0 +1,29 @@
+plugins {
+//    id "kotlin-android"
+}
+
+//
+//tasks.withType(Class.forName("org.jetbrains.kotlin.gradle.tasks.KotlinCompile.KotlinCompile")).configureEach {
+//    kotlinOptions {
+//        jvmTarget = "1.8"
+//        freeCompilerArgs = [
+//                '-opt-in=kotlin.contracts.ExperimentalContracts',
+//                '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+//        ]
+//    }
+//}
+
+def androidSdkVersion = 33
+
+android {
+    compileSdk androidSdkVersion
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        incremental = true
+    }
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion androidSdkVersion
+    }
+}
