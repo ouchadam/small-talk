@@ -4,3 +4,6 @@
 [submodule "chat-engine"]
 	path = chat-engine
 	url = git@github.com:ouchadam/chat-engine.git
+[submodule "tools/conventions"]
+	path = tools/conventions
+	url = git@github.com:ouchadam/conventions.git

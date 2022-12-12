@@ -1,3 +1,7 @@
+plugins {
+    id "st-base-conventions" apply false
+}
+
 def launchTask = getGradle()
         .getStartParameter()
         .getTaskRequests()
