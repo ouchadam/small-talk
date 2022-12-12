@@ -3,7 +3,7 @@ kotlin = "1.7.20"
 coroutines = "1.6.4"
 sqldelight = "1.5.4"
 ktor = "2.2.1"
-compose = "1.2.1"
+compose = "1.3.2"
 compose-compiler = "1.3.2"
 android-gp = "7.3.1"
 
