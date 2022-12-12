@@ -7,7 +7,9 @@ applyCrashlyticsIfRelease()
 
 android {
     namespace "app.dapk.st"
-
+    defaultConfig {
+        applicationId "app.dapk.st"
+    }
     buildTypes {
         release {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
