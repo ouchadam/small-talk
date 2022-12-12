@@ -1,3 +1,0 @@
-plugins {
-    id 'st-android-compose-library-conventions'
-}
