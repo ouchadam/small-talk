@@ -118,4 +118,25 @@
 
 ---
 
+
+#### Repositories 
+
+`SmallTalk` is split into multiple repositories through git submodules. 
+
+##### [small-talk](https://github.com/ouchadam/small-talk) 
+- The main repository, responsibile for rendering data into _screens_ and generating the android application artifact.
+
+##### [chat-engine](https://github.com/ouchadam/chat-engine) 
+- All things chat and matrix, where the vast majority of business logic sits. 
+- Pure kotlin with no UI.
+
+##### [conventions](https://github.com/ouchadam/conventions) 
+- Reusable gradle plugins for modular android projects
+
+##### [screen-state](https://github.com/ouchadam/screen-state) 
+- Reusable state management and generic screen flow components.
+- Wrapper around android's `ViewModel` focused on testability.
+
+---
+
 #### Join the conversation @ https://matrix.to/#/#small-talk:iswell.cool
