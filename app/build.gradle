@@ -49,7 +49,6 @@ dependencies {
     implementation "chat-engine:matrix-chat-engine"
     implementation "chat-engine.matrix:store"
 
-    implementation libs.compose.ui
     implementation libs.ktor.android
     implementation libs.sqldelight.android
     implementation libs.matrix.olm
