@@ -16,6 +16,9 @@ dependencies {
     implementation project(":design-library")
     implementation project(":core")
 
+    kotlinTest(it)
+
     testImplementation 'screen-state:state-test'
     testImplementation 'chat-engine:chat-engine-test'
+    androidImportFixturesWorkaround(project, project(":core"))
 }
