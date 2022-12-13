@@ -15,7 +15,7 @@ class LoginUseCase(
     private val pushTokenRegistrar: PushTokenRegistrar,
     private val errorTracker: ErrorTracker,
 ) {
-    suspend fun run(request: LoginRequest): LoginResult {
+    suspend fun login(request: LoginRequest): LoginResult {
         return logP("login") {
             when (val result = chatEngine.login(request)) {
                 is LoginResult.Success -> {

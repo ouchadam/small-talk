@@ -28,7 +28,7 @@ fun loginReducer(
                 dispatch(LoginAction.UpdateContent(LoginScreenState.Content.Loading))
                 val request = LoginRequest(action.userName, action.password, action.serverUrl.takeIfNotEmpty())
 
-                when (val result = loginUseCase.run(request)) {
+                when (val result = loginUseCase.login(request)) {
                     is LoginResult.Error -> dispatch(LoginAction.UpdateContent(LoginScreenState.Content.Error(result.cause)))
 
                     LoginResult.MissingWellKnown -> {

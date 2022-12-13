@@ -10,6 +10,6 @@ class FakeLoginUseCase {
 
     val instance = mockk<LoginUseCase>()
 
-    fun given(loginRequest: LoginRequest) = coEvery { instance.run(loginRequest) }.delegateReturn()
+    fun given(loginRequest: LoginRequest) = coEvery { instance.login(loginRequest) }.delegateReturn()
 
 }
