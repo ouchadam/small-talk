@@ -7,9 +7,7 @@ import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.domain.StoreCleaner
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.home.HomeScreenState.*
-import app.dapk.st.login.LoginViewModel
-import app.dapk.st.matrix.common.CredentialsStore
-import app.dapk.st.matrix.common.isSignedIn
+import app.dapk.st.login.state.LoginState
 import app.dapk.st.profile.state.ProfileAction
 import app.dapk.st.profile.state.ProfileState
 import app.dapk.st.viewmodel.DapkViewModel
@@ -22,7 +20,7 @@ import kotlinx.coroutines.launch
 internal class HomeViewModel(
     private val chatEngine: ChatEngine,
     private val directoryState: DirectoryState,
-    private val loginViewModel: LoginViewModel,
+    private val loginState: LoginState,
     private val profileState: ProfileState,
     private val cacheCleaner: StoreCleaner,
     private val betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
@@ -33,7 +31,7 @@ internal class HomeViewModel(
     private var listenForInvitesJob: Job? = null
 
     fun directory() = directoryState
-    fun login() = loginViewModel
+    fun login() = loginState
     fun profile() = profileState
 
     fun start() {
