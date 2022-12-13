@@ -23,10 +23,10 @@ import kotlinx.coroutines.flow.onEach
 
 class MainActivity : DapkActivity() {
 
-    private val directoryViewModel by state { module<DirectoryModule>().directoryState() }
-    private val loginViewModel by viewModel { module<LoginModule>().loginViewModel() }
-    private val profileViewModel by state { module<ProfileModule>().profileState() }
-    private val homeViewModel by viewModel { module<HomeModule>().homeViewModel(directoryViewModel, loginViewModel, profileViewModel) }
+    private val directoryState by state { module<DirectoryModule>().directoryState() }
+    private val loginState by state { module<LoginModule>().loginState() }
+    private val profileState by state { module<ProfileModule>().profileState() }
+    private val homeViewModel by viewModel { module<HomeModule>().homeViewModel(directoryState, loginState, profileState) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

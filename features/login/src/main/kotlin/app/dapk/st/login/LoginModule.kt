@@ -3,7 +3,10 @@ package app.dapk.st.login
 import app.dapk.st.core.ProvidableModule
 import app.dapk.st.core.extensions.ErrorTracker
 import app.dapk.st.engine.ChatEngine
+import app.dapk.st.login.state.LoginState
+import app.dapk.st.login.state.loginReducer
 import app.dapk.st.push.PushModule
+import app.dapk.st.state.createStateViewModel
 
 class LoginModule(
     private val chatEngine: ChatEngine,
@@ -11,7 +14,9 @@ class LoginModule(
     private val errorTracker: ErrorTracker,
 ) : ProvidableModule {
 
-    fun loginViewModel(): LoginViewModel {
-        return LoginViewModel(chatEngine, pushModule.pushTokenRegistrar(), errorTracker)
+    fun loginState(): LoginState {
+        return createStateViewModel {
+            loginReducer(chatEngine, pushModule.pushTokenRegistrar(), errorTracker, it)
+        }
     }
 }
