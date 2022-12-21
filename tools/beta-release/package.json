@@ -7,7 +7,7 @@
   "private": true,
   "dependencies": {
     "@googleapis/androidpublisher": "^4.0.0",
-    "matrix-js-sdk": "^22.0.0",
+    "matrix-js-sdk": "^23.0.0",
     "request": "^2.88.2"
   }
 }
