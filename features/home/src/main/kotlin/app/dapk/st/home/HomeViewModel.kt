@@ -30,10 +30,6 @@ internal class HomeViewModel(
 
     private var listenForInvitesJob: Job? = null
 
-    fun directory() = directoryState
-    fun login() = loginState
-    fun profile() = profileState
-
     fun start() {
         viewModelScope.launch {
             state = if (chatEngine.isSignedIn()) {

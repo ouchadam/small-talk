@@ -43,7 +43,7 @@ class MainActivity : DapkActivity() {
                 BetaUpgradeDialog()
             } else {
                 Surface(Modifier.fillMaxSize()) {
-                    HomeScreen(homeViewModel)
+                    HomeScreen(homeViewModel, directoryState, loginState, profileState)
                 }
             }
         }

@@ -10,15 +10,18 @@ import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.directory.DirectoryScreen
+import app.dapk.st.directory.state.DirectoryState
 import app.dapk.st.home.HomeScreenState.*
 import app.dapk.st.home.HomeScreenState.Page.Directory
 import app.dapk.st.home.HomeScreenState.Page.Profile
 import app.dapk.st.login.LoginScreen
+import app.dapk.st.login.state.LoginState
 import app.dapk.st.profile.ProfileScreen
+import app.dapk.st.profile.state.ProfileState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun HomeScreen(homeViewModel: HomeViewModel) {
+internal fun HomeScreen(homeViewModel: HomeViewModel, directoryState: DirectoryState, loginState: LoginState, profileState: ProfileState) {
     LifecycleEffect(
         onStart = { homeViewModel.start() },
         onStop = { homeViewModel.stop() }
@@ -34,9 +37,9 @@ internal fun HomeScreen(homeViewModel: HomeViewModel) {
                 content = { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
                         when (state.page) {
-                            Directory -> DirectoryScreen(homeViewModel.directory())
+                            Directory -> DirectoryScreen(directoryState)
                             Profile -> {
-                                ProfileScreen(homeViewModel.profile()) {
+                                ProfileScreen(profileState) {
                                     homeViewModel.changePage(Directory)
                                 }
                             }
@@ -47,7 +50,7 @@ internal fun HomeScreen(homeViewModel: HomeViewModel) {
         }
 
         SignedOut -> {
-            LoginScreen(homeViewModel.login()) {
+            LoginScreen(loginState) {
                 homeViewModel.loggedIn()
             }
         }
