@@ -11,7 +11,7 @@ import app.dapk.state.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-fun createHomeReducer(
+fun homeReducer(
     chatEngine: ChatEngine,
     cacheCleaner: StoreCleaner,
     betaVersionUpgradeUseCase: BetaVersionUpgradeUseCase,
@@ -23,6 +23,15 @@ fun createHomeReducer(
 
         change(HomeAction.UpdateState::class) { action, _ ->
             action.state
+        },
+
+        change(HomeAction.UpdateToSignedIn::class) { action, state ->
+            val me = action.me
+            when (state) {
+                HomeScreenState.Loading -> HomeScreenState.SignedIn(HomeScreenState.Page.Directory, me, invites = 0)
+                is HomeScreenState.SignedIn -> state.copy(me = me, invites = state.invites)
+                HomeScreenState.SignedOut -> HomeScreenState.SignedIn(HomeScreenState.Page.Directory, me, invites = 0)
+            }
         },
 
         change(HomeAction.UpdateInvitesCount::class) { action, state ->
@@ -37,7 +46,6 @@ fun createHomeReducer(
             if (chatEngine.isSignedIn()) {
                 eventEmitter.invoke(HomeEvent.OnShowContent)
                 dispatch(HomeAction.InitialHome)
-                listenForInviteChanges(chatEngine, jobBag)
             } else {
                 dispatch(HomeAction.UpdateState(HomeScreenState.SignedOut))
             }
@@ -45,18 +53,26 @@ fun createHomeReducer(
 
         async(HomeAction.InitialHome::class) {
             val me = chatEngine.me(forceRefresh = false)
-            val nextState = when (val current = getState()) {
-                HomeScreenState.Loading -> HomeScreenState.SignedIn(HomeScreenState.Page.Directory, me, invites = 0)
-                is HomeScreenState.SignedIn -> current.copy(me = me, invites = current.invites)
-                HomeScreenState.SignedOut -> HomeScreenState.SignedIn(HomeScreenState.Page.Directory, me, invites = 0)
-            }
-            dispatch(HomeAction.UpdateState(nextState))
+            dispatch(HomeAction.UpdateToSignedIn(me))
+            listenForInviteChanges(chatEngine, jobBag)
         },
 
         async(HomeAction.LoggedIn::class) {
             dispatch(HomeAction.InitialHome)
             eventEmitter.invoke(HomeEvent.OnShowContent)
-            listenForInviteChanges(chatEngine, jobBag)
+        },
+
+        async(HomeAction.ChangePageSideEffect::class) { action ->
+            when (action.page) {
+                HomeScreenState.Page.Directory -> {
+                    // do nothing
+                }
+
+                HomeScreenState.Page.Profile -> {
+                    dispatch(ComponentLifecycle.OnGone)
+                    dispatch(ProfileAction.Reset)
+                }
+            }
         },
 
         multi(HomeAction.ChangePage::class) { action ->
@@ -64,24 +80,17 @@ fun createHomeReducer(
                 when (state) {
                     is HomeScreenState.SignedIn -> when (action.page) {
                         state.page -> state
-                        else -> state.copy(page = action.page).also {
-                            async {
-                                when (action.page) {
-                                    HomeScreenState.Page.Directory -> {
-                                        // do nothing
-                                    }
-
-                                    HomeScreenState.Page.Profile -> {
-                                        dispatch(ComponentLifecycle.OnGone)
-                                        dispatch(ProfileAction.Reset)
-                                    }
-                                }
-                            }
-                        }
+                        else -> state.copy(page = action.page)
                     }
 
                     HomeScreenState.Loading -> state
                     HomeScreenState.SignedOut -> state
+                }
+            }
+            async {
+                val state = getState()
+                if (state is HomeScreenState.SignedIn && state.page != action.page) {
+                    dispatch(HomeAction.ChangePageSideEffect(action.page))
                 }
             }
         },
@@ -90,12 +99,11 @@ fun createHomeReducer(
             dispatch(DirectorySideEffect.ScrollToTop)
         },
 
-
         sideEffect(HomeAction.ClearCache::class) { _, _ ->
             cacheCleaner.cleanCache(removeCredentials = false)
             betaVersionUpgradeUseCase.notifyUpgraded()
             eventEmitter.invoke(HomeEvent.Relaunch)
-        }
+        },
     )
 }
 

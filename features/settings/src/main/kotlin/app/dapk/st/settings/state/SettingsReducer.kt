@@ -144,7 +144,6 @@ internal fun settingsReducer(
                     }
 
                     Ignored -> {
-                        nothing()
                     }
 
                     ToggleDynamicTheme -> async {

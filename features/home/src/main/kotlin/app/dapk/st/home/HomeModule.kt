@@ -5,7 +5,7 @@ import app.dapk.st.core.ProvidableModule
 import app.dapk.st.directory.DirectoryModule
 import app.dapk.st.domain.StoreModule
 import app.dapk.st.engine.ChatEngine
-import app.dapk.st.home.state.createHomeReducer
+import app.dapk.st.home.state.homeReducer
 import app.dapk.st.login.LoginModule
 import app.dapk.st.profile.ProfileModule
 import app.dapk.st.state.State
@@ -39,7 +39,7 @@ class HomeModule(
     }
 
     private fun homeReducerFactory(eventEmitter: suspend (Any) -> Unit) =
-        createHomeReducer(chatEngine, storeModule.cacheCleaner(), betaVersionUpgradeUseCase, JobBag(), eventEmitter)
+        homeReducer(chatEngine, storeModule.cacheCleaner(), betaVersionUpgradeUseCase, JobBag(), eventEmitter)
 }
 
 typealias DynamicState = State<DynamicReducers, Any>
