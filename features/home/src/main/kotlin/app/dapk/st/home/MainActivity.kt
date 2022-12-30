@@ -12,26 +12,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import app.dapk.st.core.DapkActivity
+import app.dapk.st.core.extensions.unsafeLazy
 import app.dapk.st.core.module
-import app.dapk.st.core.viewModel
-import app.dapk.st.directory.DirectoryModule
-import app.dapk.st.login.LoginModule
-import app.dapk.st.profile.ProfileModule
+import app.dapk.st.home.state.HomeAction
+import app.dapk.st.home.state.HomeEvent
+import app.dapk.st.home.state.HomeState
 import app.dapk.st.state.state
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 class MainActivity : DapkActivity() {
 
-    private val directoryState by state { module<DirectoryModule>().directoryState() }
-    private val loginState by state { module<LoginModule>().loginState() }
-    private val profileState by state { module<ProfileModule>().profileState() }
-    private val homeViewModel by viewModel { module<HomeModule>().homeViewModel(directoryState, loginState, profileState) }
+    private val homeModule by unsafeLazy { module<HomeModule>() }
+    private val compositeState by state { homeModule.compositeHomeState() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pushPermissionLauncher = registerPushPermission()
-        homeViewModel.events.onEach {
+        compositeState.events.onEach {
             when (it) {
                 HomeEvent.Relaunch -> recreate()
                 HomeEvent.OnShowContent -> pushPermissionLauncher?.invoke()
@@ -39,11 +37,12 @@ class MainActivity : DapkActivity() {
         }.launchIn(lifecycleScope)
 
         setContent {
-            if (homeViewModel.hasVersionChanged()) {
-                BetaUpgradeDialog()
+            val homeState: HomeState = compositeState.childState()
+            if (homeModule.betaVersionUpgradeUseCase.hasVersionChanged()) {
+                BetaUpgradeDialog(homeState)
             } else {
                 Surface(Modifier.fillMaxSize()) {
-                    HomeScreen(homeViewModel)
+                    HomeScreen(homeState, compositeState.childState(), compositeState.childState(), compositeState.childState())
                 }
             }
         }
@@ -56,20 +55,20 @@ class MainActivity : DapkActivity() {
             null
         }
     }
+}
 
-    @Composable
-    private fun BetaUpgradeDialog() {
-        AlertDialog(
-            title = { Text(text = "BETA") },
-            text = { Text(text = "During the BETA, version upgrades require a cache clear") },
-            onDismissRequest = {
+@Composable
+private fun BetaUpgradeDialog(homeState: HomeState) {
+    AlertDialog(
+        title = { Text(text = "BETA") },
+        text = { Text(text = "During the BETA, version upgrades require a cache clear") },
+        onDismissRequest = {
 
-            },
-            confirmButton = {
-                TextButton(onClick = { homeViewModel.clearCache() }) {
-                    Text(text = "Clear cache".uppercase())
-                }
-            },
-        )
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = { homeState.dispatch(HomeAction.ClearCache) }) {
+                Text(text = "Clear cache".uppercase())
+            }
+        },
+    )
 }

@@ -15,7 +15,9 @@ class ProfileModule(
 ) : ProvidableModule {
 
     fun profileState(): ProfileState {
-        return createStateViewModel { profileReducer(chatEngine, errorTracker, ProfileUseCase(chatEngine, errorTracker), JobBag()) }
+        return createStateViewModel { profileReducer() }
     }
+
+    fun profileReducer() = profileReducer(chatEngine, errorTracker, ProfileUseCase(chatEngine, errorTracker), JobBag())
 
 }

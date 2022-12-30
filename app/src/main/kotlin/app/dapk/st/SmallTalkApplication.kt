@@ -67,7 +67,7 @@ class SmallTalkApplication : Application(), ModuleProvider {
         }
     }
 
-    @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ProvidableModule> provide(klass: KClass<T>): T {
         return when (klass) {
             DirectoryModule::class -> featureModules.directoryModule

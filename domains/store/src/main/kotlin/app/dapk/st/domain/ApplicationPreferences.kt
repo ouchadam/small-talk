@@ -16,6 +16,5 @@ class ApplicationPreferences(
 
 }
 
-@JvmInline
-value class ApplicationVersion(val value: Int)
+data class ApplicationVersion(val value: Int)
 
