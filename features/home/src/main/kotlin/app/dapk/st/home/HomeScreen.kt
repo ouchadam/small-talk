@@ -11,9 +11,11 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.CircleishAvatar
 import app.dapk.st.directory.DirectoryScreen
 import app.dapk.st.directory.state.DirectoryState
-import app.dapk.st.home.HomeScreenState.*
-import app.dapk.st.home.HomeScreenState.Page.Directory
-import app.dapk.st.home.HomeScreenState.Page.Profile
+import app.dapk.st.home.state.HomeAction
+import app.dapk.st.home.state.HomeScreenState.*
+import app.dapk.st.home.state.HomeScreenState.Page.Directory
+import app.dapk.st.home.state.HomeScreenState.Page.Profile
+import app.dapk.st.home.state.HomeState
 import app.dapk.st.login.LoginScreen
 import app.dapk.st.login.state.LoginState
 import app.dapk.st.profile.ProfileScreen
@@ -21,18 +23,18 @@ import app.dapk.st.profile.state.ProfileState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun HomeScreen(homeViewModel: HomeViewModel, directoryState: DirectoryState, loginState: LoginState, profileState: ProfileState) {
+internal fun HomeScreen(homeState: HomeState, directoryState: DirectoryState, loginState: LoginState, profileState: ProfileState) {
     LifecycleEffect(
-        onStart = { homeViewModel.start() },
-        onStop = { homeViewModel.stop() }
+        onStart = { homeState.dispatch(HomeAction.LifecycleVisible) },
+        onStop = { homeState.dispatch(HomeAction.LifecycleGone) }
     )
 
-    when (val state = homeViewModel.state) {
+    when (val state = homeState.current) {
         Loading -> CenteredLoading()
         is SignedIn -> {
             Scaffold(
                 bottomBar = {
-                    BottomBar(state, homeViewModel)
+                    BottomBar(state, homeState)
                 },
                 content = { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
@@ -40,7 +42,7 @@ internal fun HomeScreen(homeViewModel: HomeViewModel, directoryState: DirectoryS
                             Directory -> DirectoryScreen(directoryState)
                             Profile -> {
                                 ProfileScreen(profileState) {
-                                    homeViewModel.changePage(Directory)
+                                    homeState.dispatch(HomeAction.ChangePage(Directory))
                                 }
                             }
                         }
@@ -51,7 +53,7 @@ internal fun HomeScreen(homeViewModel: HomeViewModel, directoryState: DirectoryS
 
         SignedOut -> {
             LoginScreen(loginState) {
-                homeViewModel.loggedIn()
+                homeState.dispatch(HomeAction.LoggedIn)
             }
         }
     }
@@ -59,7 +61,7 @@ internal fun HomeScreen(homeViewModel: HomeViewModel, directoryState: DirectoryS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
+private fun BottomBar(state: SignedIn, homeState: HomeState) {
     Column {
         Divider(modifier = Modifier.fillMaxWidth(), color = Color.Black.copy(alpha = 0.2f), thickness = 0.5.dp)
         NavigationBar(containerColor = Color.Transparent, modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -70,8 +72,8 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                         selected = state.page == page,
                         onClick = {
                             when {
-                                state.page == page -> homeViewModel.scrollToTopOfMessages()
-                                else -> homeViewModel.changePage(page)
+                                state.page == page -> homeState.dispatch(HomeAction.ScrollToTop)
+                                else -> homeState.dispatch(HomeAction.ChangePage(page))
                             }
                         },
                     )
@@ -89,7 +91,7 @@ private fun BottomBar(state: SignedIn, homeViewModel: HomeViewModel) {
                             }
                         },
                         selected = state.page == page,
-                        onClick = { homeViewModel.changePage(page) },
+                        onClick = { homeState.dispatch(HomeAction.ChangePage(page)) },
                     )
                 }
             }

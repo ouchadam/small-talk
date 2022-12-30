@@ -190,6 +190,9 @@ internal class FeatureModules internal constructor(
                 storeModule.value.applicationStore(),
                 buildMeta,
             ),
+            profileModule,
+            loginModule,
+            directoryModule
         )
     }
     val settingsModule by unsafeLazy {
