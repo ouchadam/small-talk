@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.core.app.NavUtils
 import app.dapk.st.core.AndroidUri
 import app.dapk.st.core.MimeType
 import app.dapk.st.matrix.common.RoomId
@@ -33,7 +34,8 @@ interface Navigator {
         }
 
         fun upToHome() {
-            activity.navigateUpTo(intentFactory.home(activity))
+            activity.finish()
+            activity.startActivity(intentFactory.home(activity))
         }
 
         fun toMessenger(roomId: RoomId, attachments: List<MessageAttachment>) {
