@@ -29,7 +29,8 @@ private val AN_EVENT_ID = anEventId("state event")
 private val A_SELF_ID = aUserId("self")
 private val A_MESSENGER_PAGE_STATE = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
 private val A_MESSAGE_ATTACHMENT = MessageAttachment(AndroidUri("a-uri"), MimeType.Image)
-private val A_REPLY = aRoomReplyMessageEvent()
+private val A_REPLY = aRoomMessageEvent()
+private val AN_SUPPORTED_REPLY = aRoomReplyMessageEvent()
 private val AN_IMAGE_BUBBLE = BubbleModel.Image(
     BubbleModel.Image.ImageContent(100, 200, "a-url"),
     mockk(),
@@ -184,7 +185,7 @@ class MessengerReducerTest {
     }
 
     @Test
-    fun `given text composer, when Enter ReplyMode, then updates composer state with reply`() = runReducerTest {
+    fun `given message text composer, when Enter ReplyMode, then updates composer state with reply`() = runReducerTest {
         setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = null)) }
 
         reduce(ComposerStateChange.ReplyMode.Enter(A_REPLY))
@@ -192,6 +193,15 @@ class MessengerReducerTest {
         assertOnlyStateChange { previous ->
             previous.copy(composerState = (previous.composerState as ComposerState.Text).copy(reply = A_REPLY))
         }
+    }
+
+    @Test
+    fun `given text composer, when Enter ReplyMode with unsupported content, then does nothing`() = runReducerTest {
+        setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = null)) }
+
+        reduce(ComposerStateChange.ReplyMode.Enter(AN_SUPPORTED_REPLY))
+
+        assertNoChanges()
     }
 
     @Test
@@ -333,8 +343,8 @@ class MessengerReducerTest {
 
     @Test
     fun `given text composer with reply, when SendMessage, then clear composer and sends text message`() = runReducerTest {
-        setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = A_REPLY.message), roomState = Lce.Content(A_MESSENGER_PAGE_STATE)) }
-        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT, reply = A_REPLY.message), A_MESSENGER_PAGE_STATE.roomState.roomOverview) }
+        setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = A_REPLY), roomState = Lce.Content(A_MESSENGER_PAGE_STATE)) }
+        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT, reply = A_REPLY), A_MESSENGER_PAGE_STATE.roomState.roomOverview) }
 
         reduce(ScreenAction.SendMessage)
 
