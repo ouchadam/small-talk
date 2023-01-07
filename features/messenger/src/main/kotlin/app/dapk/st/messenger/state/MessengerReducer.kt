@@ -85,12 +85,22 @@ internal fun messengerReducer(
 
         change(ComposerStateChange.ReplyMode::class) { action, state ->
             when (action) {
-                is ComposerStateChange.ReplyMode.Enter -> state.copy(
-                    composerState = when (state.composerState) {
-                        is ComposerState.Attachments -> state.composerState.copy(reply = action.replyingTo)
-                        is ComposerState.Text -> state.composerState.copy(reply = action.replyingTo)
+                is ComposerStateChange.ReplyMode.Enter -> {
+                    when (action.replyingTo) {
+                        is RoomEvent.Message -> state.copy(
+                            composerState = when (state.composerState) {
+                                is ComposerState.Attachments -> state.composerState.copy(reply = action.replyingTo)
+                                is ComposerState.Text -> state.composerState.copy(reply = action.replyingTo)
+                            }
+                        )
+
+                        // TODO support replying to more message types
+                        is RoomEvent.Encrypted,
+                        is RoomEvent.Image,
+                        is RoomEvent.Redacted,
+                        is RoomEvent.Reply -> state
                     }
-                )
+                }
 
                 ComposerStateChange.ReplyMode.Exit -> state.copy(
                     composerState = when (state.composerState) {
