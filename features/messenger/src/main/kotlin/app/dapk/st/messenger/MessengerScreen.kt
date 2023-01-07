@@ -67,7 +67,7 @@ internal fun MessengerScreen(
 ) {
     val state = viewModel.current
 
-    viewModel.ObserveEvents(galleryLauncher)
+    viewModel.ObserveEvents(galleryLauncher, navigator)
     LifecycleEffect(
         onStart = { viewModel.dispatch(ComponentLifecycle.Visible) },
         onStop = { viewModel.dispatch(ComponentLifecycle.Gone) }
@@ -85,6 +85,30 @@ internal fun MessengerScreen(
         onImageClick = { viewModel.dispatch(ComposerStateChange.ImagePreview.Show(it)) }
     )
 
+    when (val dialog = state.dialogState) {
+        null -> {
+            // do nothing
+        }
+
+        is DialogState.PositiveNegative -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.dispatch(ScreenAction.LeaveRoomConfirmation.Deny) },
+                confirmButton = {
+                    Button(onClick = { viewModel.dispatch(ScreenAction.LeaveRoomConfirmation.Confirm) }) {
+                        Text("Leave room")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { viewModel.dispatch(ScreenAction.LeaveRoomConfirmation.Deny) }) {
+                        Text("Cancel")
+                    }
+                },
+                title = { Text(dialog.title) },
+                text = { Text(dialog.subtitle) }
+            )
+        }
+    }
+
     Column {
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
             state.roomState.takeIfContent()?.let {
@@ -98,8 +122,10 @@ internal fun MessengerScreen(
                             viewModel.dispatch(ScreenAction.Notifications.Mute)
                         })
                     }
+                    DropdownMenuItem(text = { Text("Leave room", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
+                        viewModel.dispatch(ScreenAction.LeaveRoom)
+                    })
                 }
-
             }
         })
 
@@ -207,7 +233,7 @@ private fun ZoomableImage(viewerState: ViewerState) {
 }
 
 @Composable
-private fun MessengerState.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>) {
+private fun MessengerState.ObserveEvents(galleryLauncher: ActivityResultLauncher<ImageGalleryActivityPayload>, navigator: Navigator) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
@@ -221,6 +247,8 @@ private fun MessengerState.ObserveEvents(galleryLauncher: ActivityResultLauncher
                 is MessengerEvent.Toast -> {
                     Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 }
+
+                MessengerEvent.OnLeftRoom -> navigator.navigate.upToHome()
             }
         }
     }
