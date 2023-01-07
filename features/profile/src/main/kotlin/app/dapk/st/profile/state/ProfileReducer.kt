@@ -73,7 +73,7 @@ fun profileReducer(
             },
 
             sideEffect(ProfileAction.RejectRoomInvite::class) { action, _ ->
-                kotlin.runCatching { chatEngine.rejectJoinRoom(action.roomId) }.fold(
+                kotlin.runCatching { chatEngine.rejectRoom(action.roomId) }.fold(
                     onFailure = { errorTracker.track(it) },
                     onSuccess = {}
                 )

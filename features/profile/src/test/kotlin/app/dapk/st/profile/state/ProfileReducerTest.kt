@@ -93,7 +93,7 @@ class ProfileReducerTest {
 
     @Test
     fun `when RejectRoomInvite, then rejects room`() = runReducerTest {
-        fakeChatEngine.expect { it.rejectJoinRoom(A_ROOM_ID) }
+        fakeChatEngine.expect { it.rejectRoom(A_ROOM_ID) }
 
         reduce(ProfileAction.RejectRoomInvite(A_ROOM_ID))
     }
