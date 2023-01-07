@@ -19,6 +19,7 @@ import app.dapk.st.navigator.MessageAttachment
 import app.dapk.state.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlin.reflect.KClass
 
 internal fun messengerReducer(
     jobBag: JobBag,
@@ -36,6 +37,7 @@ internal fun messengerReducer(
             roomState = Lce.Loading(),
             composerState = initialComposerState(initialAttachments),
             viewerState = null,
+            dialogState = null,
         ),
 
         async(ComponentLifecycle::class) { action ->
@@ -159,8 +161,42 @@ internal fun messengerReducer(
                 )
             )
         },
+
+        change(ScreenAction.UpdateDialogState::class) { action, state ->
+            state.copy(dialogState = action.dialogState)
+        },
+
+        rewrite(ScreenAction.LeaveRoom::class) {
+            ScreenAction.UpdateDialogState(
+                DialogState.PositiveNegative(
+                    title = "Leave room",
+                    subtitle = "Are you sure you want you leave the room? If the room is private you will need to be invited again to rejoin.",
+                    negativeAction = ScreenAction.LeaveRoomConfirmation.Deny,
+                    positiveAction = ScreenAction.LeaveRoomConfirmation.Confirm,
+                )
+            )
+        },
+
+        async(ScreenAction.LeaveRoomConfirmation::class) { action ->
+            dispatch(ScreenAction.UpdateDialogState(dialogState = null))
+
+            when (action) {
+                ScreenAction.LeaveRoomConfirmation.Confirm -> {
+                    runCatching { chatEngine.rejectRoom(getState().roomId) }.fold(
+                        onSuccess = { eventEmitter.invoke(MessengerEvent.OnLeftRoom) },
+                        onFailure = { eventEmitter.invoke(MessengerEvent.Toast("Failed to leave room")) },
+                    )
+                }
+
+                ScreenAction.LeaveRoomConfirmation.Deny -> {
+                    // do nothing
+                }
+            }
+        },
     )
 }
+
+private fun <A : Action, S> rewrite(klass: KClass<A>, mapper: (A) -> Action) = async<A, S>(klass) { action -> dispatch(mapper(action)) }
 
 private suspend fun ChatEngine.sendTextMessage(content: MessengerPageState, composerState: ComposerState.Text) {
     val roomState = content.roomState

@@ -10,11 +10,19 @@ sealed interface ScreenAction : Action {
     data class CopyToClipboard(val model: BubbleModel) : ScreenAction
     object SendMessage : ScreenAction
     object OpenGalleryPicker : ScreenAction
+    object LeaveRoom : ScreenAction
 
     sealed interface Notifications : ScreenAction {
         object Mute : Notifications
         object Unmute : Notifications
     }
+
+    sealed interface LeaveRoomConfirmation : ScreenAction {
+        object Confirm : LeaveRoomConfirmation
+        object Deny : LeaveRoomConfirmation
+    }
+
+    data class UpdateDialogState(val dialogState: DialogState?): ScreenAction
 }
 
 sealed interface ComponentLifecycle : Action {
