@@ -15,14 +15,12 @@ import fake.FakeChatEngine
 import fake.FakeJobBag
 import fake.FakeMessageOptionsStore
 import fixture.*
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
-import test.ReducerTestScope
-import test.delegateReturn
-import test.expect
-import test.testReducer
+import test.*
 
 private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
@@ -37,10 +35,15 @@ private val AN_IMAGE_BUBBLE = BubbleModel.Image(
     mockk(),
     BubbleModel.Event("author-id", "author-name", edited = false, time = "10:27")
 )
-
 private val A_TEXT_BUBBLE = BubbleModel.Text(
     content = RichText(listOf(RichText.Part.Normal(A_MESSAGE_CONTENT))),
     BubbleModel.Event("author-id", "author-name", edited = false, time = "10:27")
+)
+private val A_DIALOG_STATE = DialogState.PositiveNegative(
+    "a title",
+    "a subtitle",
+    positiveAction = ScreenAction.LeaveRoomConfirmation.Confirm,
+    negativeAction = ScreenAction.LeaveRoomConfirmation.Deny,
 )
 
 class MessengerReducerTest {
@@ -72,6 +75,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
+                dialogState = null,
             )
         )
     }
@@ -84,6 +88,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
+                dialogState = null,
             )
         )
     }
@@ -96,6 +101,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Attachments(listOf(A_MESSAGE_ATTACHMENT), reply = null),
                 viewerState = null,
+                dialogState = null,
             )
         )
     }
@@ -219,6 +225,60 @@ class MessengerReducerTest {
         assertOnlyStateChange { previous ->
             previous.copy(composerState = (previous.composerState as ComposerState.Attachments).copy(reply = null))
         }
+    }
+
+    @Test
+    fun `when LeaveRoom, then updates dialog state with leave room confirmation`() = runReducerTest {
+        reduce(ScreenAction.LeaveRoom)
+
+        assertOnlyDispatches(
+            ScreenAction.UpdateDialogState(
+                DialogState.PositiveNegative(
+                    title = "Leave room",
+                    subtitle = "Are you sure you want you leave the room? If the room is private you will need to be invited again to rejoin.",
+                    negativeAction = ScreenAction.LeaveRoomConfirmation.Deny,
+                    positiveAction = ScreenAction.LeaveRoomConfirmation.Confirm,
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `when UpdateDialogState, then updates dialog state`() = runReducerTest {
+        reduce(ScreenAction.UpdateDialogState(dialogState = A_DIALOG_STATE))
+
+        assertOnlyStateChange { it.copy(dialogState = A_DIALOG_STATE) }
+    }
+
+    @Test
+    fun `given can leave room, when LeaveConfirmation Confirm, then removes dialog and rejects room and emits OnLeftRoom`() = runReducerTest {
+        fakeChatEngine.expect { it.rejectRoom(A_ROOM_ID) }
+
+        reduce(ScreenAction.LeaveRoomConfirmation.Confirm)
+
+        assertDispatches(ScreenAction.UpdateDialogState(dialogState = null))
+        assertEvents(MessengerEvent.OnLeftRoom)
+        assertNoStateChange()
+    }
+
+    @Test
+    fun `given leave room fails, when LeaveConfirmation Confirm, then removes dialog and emits toast`() = runReducerTest {
+        fakeChatEngine.expectError(error = RuntimeException("an error")) { fakeChatEngine.rejectRoom(A_ROOM_ID) }
+
+        reduce(ScreenAction.LeaveRoomConfirmation.Confirm)
+
+        assertDispatches(ScreenAction.UpdateDialogState(dialogState = null))
+        assertEvents(MessengerEvent.Toast("Failed to leave room"))
+        assertNoStateChange()
+    }
+
+    @Test
+    fun `when LeaveConfirmation Deny, then removes dialog and does nothing`() = runReducerTest {
+        reduce(ScreenAction.LeaveRoomConfirmation.Deny)
+
+        assertDispatches(ScreenAction.UpdateDialogState(dialogState = null))
+        assertNoEvents()
+        assertNoStateChange()
     }
 
     @Test
