@@ -1,0 +1,97 @@
+ext.applyRepositories = { dependencyResolutionManagement ->
+    dependencyResolutionManagement.repositories {
+        google {
+            content {
+                includeGroupByRegex "com\\.android.*"
+                includeGroupByRegex "com\\.google.*"
+                includeGroupByRegex "androidx\\..*"
+            }
+        }
+
+        maven {
+            url 'https://jitpack.io'
+            content {
+                includeGroup "com.github.UnifiedPush"
+            }
+        }
+
+        mavenCentral {
+            content {
+                includeGroupByRegex "org\\.jetbrains.*"
+                includeGroupByRegex "com\\.google.*"
+                includeGroupByRegex "com\\.squareup.*"
+                includeGroupByRegex "com\\.android.*"
+                includeGroupByRegex "org\\.apache.*"
+                includeGroupByRegex "org\\.json.*"
+                includeGroupByRegex "org\\.codehaus.*"
+                includeGroupByRegex "org\\.jdom.*"
+                includeGroupByRegex "com\\.fasterxml.*"
+                includeGroupByRegex "com\\.sun.*"
+                includeGroupByRegex "org\\.ow2.*"
+                includeGroupByRegex "org\\.eclipse.*"
+                includeGroup "app.cash.turbine"
+                includeGroup "de.undercouch"
+                includeGroup "de.danielbechler"
+                includeGroup "com.github.gundy"
+                includeGroup "com.sun.activation"
+                includeGroup "com.thoughtworks.qdox"
+                includeGroup "com.annimon"
+                includeGroup "com.github.javaparser"
+                includeGroup "com.beust"
+                includeGroup "org.bouncycastle"
+                includeGroup "org.bitbucket.b_c"
+                includeGroup "org.checkerframework"
+                includeGroup "org.amshove.kluent"
+                includeGroup "org.jvnet.staxex"
+                includeGroup "org.glassfish"
+                includeGroup "org.glassfish.jaxb"
+                includeGroup "org.antlr"
+                includeGroup "org.tensorflow"
+                includeGroup "org.xerial"
+                includeGroup "org.slf4j"
+                includeGroup "org.freemarker"
+                includeGroup "org.threeten"
+                includeGroup "org.hamcrest"
+                includeGroup "org.matrix.android"
+                includeGroup "org.sonatype.oss"
+                includeGroup "org.junit.jupiter"
+                includeGroup "org.junit.platform"
+                includeGroup "org.junit"
+                includeGroup "org.junit.jupiter"
+                includeGroup "org.jsoup"
+                includeGroup "org.jacoco"
+                includeGroup "org.testng"
+                includeGroup "org.opentest4j"
+                includeGroup "org.apiguardian"
+                includeGroup "org.webjars"
+                includeGroup "org.objenesis"
+                includeGroup "commons-io"
+                includeGroup "commons-logging"
+                includeGroup "commons-codec"
+                includeGroup "net.java.dev.jna"
+                includeGroup "net.sf.jopt-simple"
+                includeGroup "net.sf.kxml"
+                includeGroup "net.bytebuddy"
+                includeGroup "net.java"
+                includeGroup "it.unimi.dsi"
+                includeGroup "io.grpc"
+                includeGroup "io.netty"
+                includeGroup "io.opencensus"
+                includeGroup "io.ktor"
+                includeGroup "io.coil-kt"
+                includeGroup "io.mockk"
+                includeGroup "io.perfmark"
+                includeGroup "info.picocli"
+                includeGroup "us.fatehi"
+                includeGroup "jakarta.xml.bind"
+                includeGroup "jakarta.activation"
+                includeGroup "javax.annotation"
+                includeGroup "javax.inject"
+                includeGroup "junit"
+                includeGroup "jline"
+                includeGroup "xerces"
+                includeGroup "xml-apis"
+            }
+        }
+    }
+}

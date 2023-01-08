@@ -20,7 +20,8 @@ class BetaVersionUpgradeUseCase(
     }
 
     private suspend fun hasChangedVersion(): Boolean {
-        val previousVersion = applicationPreferences.readVersion()?.value
+        val readVersion = applicationPreferences.readVersion()
+        val previousVersion = readVersion?.value
         val currentVersion = buildMeta.versionCode
         return when (previousVersion) {
             null -> false

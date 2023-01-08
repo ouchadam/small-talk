@@ -9,7 +9,6 @@ import app.dapk.st.core.attachAppLogger
 import app.dapk.st.core.extensions.ResettableUnsafeLazy
 import app.dapk.st.core.extensions.Scope
 import app.dapk.st.directory.DirectoryModule
-import app.dapk.st.domain.StoreModule
 import app.dapk.st.firebase.messaging.MessagingModule
 import app.dapk.st.graph.AppModule
 import app.dapk.st.home.HomeModule
@@ -55,23 +54,20 @@ class SmallTalkApplication : Application(), ModuleProvider {
         attachAppLogger(logger)
         _appLogger = logger
 
-        onApplicationLaunch(notificationsModule, storeModule)
+        onApplicationLaunch(notificationsModule)
     }
 
-    private fun onApplicationLaunch(notificationsModule: NotificationsModule, storeModule: StoreModule) {
+    private fun onApplicationLaunch(notificationsModule: NotificationsModule) {
         applicationScope.launch {
             featureModules.homeModule.betaVersionUpgradeUseCase.waitUnitReady()
-
-            storeModule.credentialsStore().credentials()?.let {
-                featureModules.pushModule.pushTokenRegistrar().registerCurrentToken()
-            }
-            runCatching { storeModule.localEchoStore.preload() }
+            featureModules.chatEngineModule.engine.preload()
+            featureModules.pushModule.pushTokenRegistrar().registerCurrentToken()
             val notificationsUseCase = notificationsModule.notificationsUseCase()
             notificationsUseCase.listenForNotificationChanges(this)
         }
     }
 
-    @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ProvidableModule> provide(klass: KClass<T>): T {
         return when (klass) {
             DirectoryModule::class -> featureModules.directoryModule
@@ -99,7 +95,6 @@ class SmallTalkApplication : Application(), ModuleProvider {
         lazyFeatureModules.reset()
 
         val notificationsModule = featureModules.notificationsModule
-        val storeModule = appModule.storeModule.value
-        onApplicationLaunch(notificationsModule, storeModule)
+        onApplicationLaunch(notificationsModule)
     }
 }

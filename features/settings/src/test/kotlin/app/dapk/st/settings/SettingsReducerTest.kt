@@ -1,10 +1,6 @@
 package app.dapk.st.settings
 
 import app.dapk.st.core.Lce
-import app.dapk.st.core.page.PageAction
-import app.dapk.st.core.page.PageContainer
-import app.dapk.st.core.page.PageStateChange
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.engine.ImportResult
 import app.dapk.st.push.Registrar
 import app.dapk.st.settings.state.ComponentLifecycle
@@ -12,6 +8,10 @@ import app.dapk.st.settings.state.RootActions
 import app.dapk.st.settings.state.ScreenAction
 import app.dapk.st.settings.state.settingsReducer
 import app.dapk.state.Combined2
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
+import app.dapk.state.page.PageContainer
+import app.dapk.state.page.PageStateChange
 import fake.*
 import fixture.aRoomId
 import internalfake.FakeSettingsItemFactory

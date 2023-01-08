@@ -1,7 +1,9 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-feature-conventions"
+}
 
 dependencies {
-    implementation project(":matrix:services:crypto")
+    implementation "chat-engine:chat-engine"
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
     implementation project(":design-library")

@@ -1,11 +1,21 @@
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    apply from: "dependencies.gradle"
+pluginManagement {
+    includeBuild 'tools/conventions'
     repositories {
-        Dependencies._repositories.call(it)
+        gradlePluginPortal()
+        google()
     }
 }
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    apply from: "gradle/repositories.gradle"
+    applyRepositories(it)
+}
+
 rootProject.name = "SmallTalk"
+
+includeBuild 'screen-state'
+includeBuild 'chat-engine'
+
 include ':app'
 
 include ':design-library'
@@ -31,31 +41,10 @@ include ':domains:android:push'
 include ':domains:android:viewmodel-stub'
 include ':domains:android:viewmodel'
 include ':domains:store'
-include ':domains:olm-stub'
-include ':domains:olm'
-include ':domains:state'
 
 include ':domains:firebase:crashlytics'
 include ':domains:firebase:crashlytics-noop'
 include ':domains:firebase:messaging'
 include ':domains:firebase:messaging-noop'
 
-include ':matrix:matrix'
-include ':matrix:common'
-include ':matrix:matrix-http'
-include ':matrix:matrix-http-ktor'
-include ':matrix:services:auth'
-include ':matrix:services:sync'
-include ':matrix:services:room'
-include ':matrix:services:push'
-include ':matrix:services:message'
-include ':matrix:services:device'
-include ':matrix:services:crypto'
-include ':matrix:services:profile'
-
 include ':core'
-
-include ':test-harness'
-
-include ':chat-engine'
-include ':matrix-chat-engine'

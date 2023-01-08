@@ -21,13 +21,14 @@ import androidx.compose.ui.unit.sp
 import app.dapk.st.core.Lce
 import app.dapk.st.core.LifecycleEffect
 import app.dapk.st.core.components.CenteredLoading
-import app.dapk.st.core.page.PageAction
 import app.dapk.st.design.components.GenericError
 import app.dapk.st.design.components.Spider
-import app.dapk.st.design.components.SpiderPage
+import app.dapk.st.design.components.Toolbar
 import app.dapk.st.messenger.gallery.state.ImageGalleryActions
 import app.dapk.st.messenger.gallery.state.ImageGalleryPage
 import app.dapk.st.messenger.gallery.state.ImageGalleryState
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 
@@ -44,7 +45,7 @@ fun ImageGalleryScreen(state: ImageGalleryState, onTopLevelBack: () -> Unit, onI
         }
     }
 
-    Spider(currentPage = state.current.state1.page, onNavigate = onNavigate) {
+    Spider(currentPage = state.current.state1.page, onNavigate = onNavigate, toolbar = { navigate, title -> Toolbar(navigate, title)  }) {
         item(ImageGalleryPage.Routes.folders) {
             ImageGalleryFolders(
                 it,

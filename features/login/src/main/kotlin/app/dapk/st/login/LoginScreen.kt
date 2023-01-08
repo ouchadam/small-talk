@@ -33,15 +33,18 @@ import androidx.compose.ui.unit.sp
 import app.dapk.st.core.StartObserving
 import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.GenericError
-import app.dapk.st.login.LoginEvent.LoginComplete
-import app.dapk.st.login.LoginScreenState.*
+import app.dapk.st.login.state.LoginAction
+import app.dapk.st.login.state.LoginEvent.LoginComplete
+import app.dapk.st.login.state.LoginEvent.WellKnownMissing
+import app.dapk.st.login.state.LoginScreenState
+import app.dapk.st.login.state.LoginState
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
-    loginViewModel.ObserveEvents(onLoggedIn)
+fun LoginScreen(loginState: LoginState, onLoggedIn: () -> Unit) {
+    loginState.ObserveEvents(onLoggedIn)
     LaunchedEffect(true) {
-        loginViewModel.start()
+        loginState.dispatch(LoginAction.ComponentLifecycle.Visible)
     }
 
     var userName by rememberSaveable { mutableStateOf("") }
@@ -49,11 +52,12 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
     var serverUrl by rememberSaveable { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    when (val state = loginViewModel.state) {
-        is Error -> GenericError(cause = state.cause, action = { loginViewModel.start() })
-        Loading -> CenteredLoading()
+    when (val content = loginState.current.content) {
+        is LoginScreenState.Content.Error -> GenericError(cause = content.cause, action = { loginState.dispatch(LoginAction.ComponentLifecycle.Visible) })
+        LoginScreenState.Content.Loading -> CenteredLoading()
 
-        is Content ->
+        is LoginScreenState.Content.Idle -> {
+            val showServerUrl = loginState.current.showServerUrl
             Row {
                 Spacer(modifier = Modifier.weight(0.1f))
                 Column(
@@ -88,7 +92,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                         keyboardOptions = KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
                     )
 
-                    val canDoLoginAttempt = if (state.showServerUrl) {
+                    val canDoLoginAttempt = if (showServerUrl) {
                         userName.isNotEmpty() && password.isNotEmpty() && serverUrl.isNotEmpty()
                     } else {
                         userName.isNotEmpty() && password.isNotEmpty()
@@ -106,12 +110,12 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                             Icon(imageVector = Icons.Outlined.Lock, contentDescription = null)
                         },
                         keyboardActions = KeyboardActions(
-                            onDone = { loginViewModel.login(userName, password, serverUrl) },
+                            onDone = { loginState.dispatch(LoginAction.Login(userName, password, serverUrl)) },
                             onNext = { focusManager.moveFocus(FocusDirection.Down) },
                         ),
                         keyboardOptions = KeyboardOptions(
                             autoCorrect = false,
-                            imeAction = ImeAction.Done.takeIf { canDoLoginAttempt } ?: ImeAction.Next.takeIf { state.showServerUrl } ?: ImeAction.None,
+                            imeAction = ImeAction.Done.takeIf { canDoLoginAttempt } ?: ImeAction.Next.takeIf { showServerUrl } ?: ImeAction.None,
                             keyboardType = KeyboardType.Password
                         ),
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
@@ -123,7 +127,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                         }
                     )
 
-                    if (state.showServerUrl) {
+                    if (showServerUrl) {
                         TextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = serverUrl,
@@ -133,7 +137,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                             leadingIcon = {
                                 Icon(imageVector = Icons.Default.Web, contentDescription = null)
                             },
-                            keyboardActions = KeyboardActions(onDone = { loginViewModel.login(userName, password, serverUrl) }),
+                            keyboardActions = KeyboardActions(onDone = { loginState.dispatch(LoginAction.Login(userName, password, serverUrl)) }),
                             keyboardOptions = KeyboardOptions(
                                 autoCorrect = false,
                                 imeAction = ImeAction.Done.takeIf { canDoLoginAttempt } ?: ImeAction.None,
@@ -148,7 +152,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             keyboardController?.hide()
-                            loginViewModel.login(userName, password, serverUrl)
+                            loginState.dispatch(LoginAction.Login(userName, password, serverUrl))
                         },
                         enabled = canDoLoginAttempt
                     ) {
@@ -157,6 +161,7 @@ fun LoginScreen(loginViewModel: LoginViewModel, onLoggedIn: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.weight(0.1f))
             }
+        }
     }
 }
 
@@ -183,13 +188,13 @@ private fun Modifier.autofill(
 }
 
 @Composable
-private fun LoginViewModel.ObserveEvents(onLoggedIn: () -> Unit) {
+private fun LoginState.ObserveEvents(onLoggedIn: () -> Unit) {
     val context = LocalContext.current
     StartObserving {
         this@ObserveEvents.events.launch {
             when (it) {
                 LoginComplete -> onLoggedIn()
-                LoginEvent.WellKnownMissing -> {
+                WellKnownMissing -> {
                     Toast.makeText(context, "Couldn't find the homeserver, please enter the server URL", Toast.LENGTH_LONG).show()
                 }
             }

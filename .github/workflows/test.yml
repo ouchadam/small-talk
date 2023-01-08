@@ -16,32 +16,19 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v2
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions/setup-java@v3
         with:
           distribution: 'adopt'
           java-version: '11'
       - uses: gradle/gradle-build-action@v2
 
-      - name: Create pip requirements
-        run: |
-          echo "matrix-synapse" > requirements.txt
-
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-          cache: 'pip'
-
-      - name: Start synapse server
-        run: |
-          pip install -r requirements.txt
-          curl -sL https://gist.githubusercontent.com/ouchadam/e3ad09ec382bd91a66d88ab575ea7c31/raw/run.sh \
-            | bash -s -- --no-rate-limit
-
       - name: Run all unit tests
-        run: ./gradlew clean allCodeCoverageReport --no-daemon
+        run: ./gradlew allCodeCoverageReport
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         with:
+          verbose: true
           files: ./build/reports/jacoco/allCodeCoverageReport/allCodeCoverageReport.xml

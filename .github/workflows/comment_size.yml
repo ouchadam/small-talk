@@ -28,14 +28,14 @@ jobs:
         id: size
 
       - name: Find Comment
-        uses: peter-evans/find-comment@v1
+        uses: peter-evans/find-comment@v2
         id: fc
         with:
           issue-number: ${{ steps.size.outputs.PR_NUMBER }}
           comment-author: 'github-actions[bot]'
           body-includes: APK Size
       - name: Publish size to PR
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ steps.size.outputs.PR_NUMBER }}

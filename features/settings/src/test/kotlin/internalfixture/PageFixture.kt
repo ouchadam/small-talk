@@ -1,7 +1,7 @@
 package internalfixture
 
-import app.dapk.st.design.components.SpiderPage
 import app.dapk.st.settings.Page
+import app.dapk.state.SpiderPage
 
 internal fun aImportRoomKeysPage(
     state: Page.ImportRoomKey = Page.ImportRoomKey()

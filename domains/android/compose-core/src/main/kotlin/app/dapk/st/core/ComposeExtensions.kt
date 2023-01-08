@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -25,6 +26,10 @@ fun StartObserving(block: StartScope.() -> Unit) {
 class StartScope(private val scope: CoroutineScope) {
 
     fun <T> SharedFlow<T>.launch(onEach: suspend (T) -> Unit) {
+        this.onEach(onEach).launchIn(scope)
+    }
+
+    fun <T> Flow<T>.launch(onEach: suspend (T) -> Unit) {
         this.onEach(onEach).launchIn(scope)
     }
 }

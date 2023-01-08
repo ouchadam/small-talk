@@ -1,9 +1,11 @@
-applyAndroidLibraryModule(project)
+plugins {
+    id "st-android-library-conventions"
+}
 
 dependencies {
     implementation project(':core')
     implementation project(':domains:android:core')
-    implementation project(':matrix:common')
-    implementation platform('com.google.firebase:firebase-bom:29.0.3')
+    implementation "chat-engine:chat-engine"
+    implementation platform(libs.firebase.bom)
     implementation 'com.google.firebase:firebase-messaging'
 }

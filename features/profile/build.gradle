@@ -1,11 +1,23 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-feature-conventions"
+}
+
+android {
+    namespace "app.dapk.st.profile"
+}
 
 dependencies {
-    implementation project(":chat-engine")
+    implementation "chat-engine:chat-engine"
     implementation project(":features:settings")
-    implementation project(':domains:store')
+    implementation 'screen-state:screen-android'
     implementation project(":domains:android:compose-core")
-    implementation project(":domains:android:viewmodel")
     implementation project(":design-library")
     implementation project(":core")
+
+    kotlinTest(it)
+
+    testImplementation 'screen-state:state-test'
+    testImplementation 'chat-engine:chat-engine-test'
+    androidImportFixturesWorkaround(project, project(":core"))
+    androidImportFixturesWorkaround(project, project(":domains:android:stub"))
 }

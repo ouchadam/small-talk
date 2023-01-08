@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.dapk.st.home">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <activity android:name="app.dapk.st.home.MainActivity"/>
+        <activity android:name="app.dapk.st.home.MainActivity" android:launchMode="singleInstance"/>
     </application>
 
 </manifest>

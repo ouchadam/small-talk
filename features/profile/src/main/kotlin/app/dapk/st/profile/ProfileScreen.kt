@@ -23,15 +23,20 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.design.components.*
 import app.dapk.st.engine.RoomInvite
 import app.dapk.st.engine.RoomInvite.InviteMeta
+import app.dapk.st.profile.state.Page
+import app.dapk.st.profile.state.ProfileAction
+import app.dapk.st.profile.state.ProfileState
 import app.dapk.st.settings.SettingsActivity
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onTopLevelBack: () -> Unit) {
+fun ProfileScreen(viewModel: ProfileState, onTopLevelBack: () -> Unit) {
     viewModel.ObserveEvents()
 
     LifecycleEffect(
-        onStart = { viewModel.start() },
-        onStop = { viewModel.stop() }
+        onStart = { viewModel.dispatch(ProfileAction.ComponentLifecycle.Visible) },
+        onStop = { viewModel.dispatch(ProfileAction.ComponentLifecycle.Gone) }
     )
 
     val context = LocalContext.current
@@ -39,11 +44,11 @@ fun ProfileScreen(viewModel: ProfileViewModel, onTopLevelBack: () -> Unit) {
     val onNavigate: (SpiderPage<out Page>?) -> Unit = {
         when (it) {
             null -> onTopLevelBack()
-            else -> viewModel.goTo(it)
+            else -> viewModel.dispatch(PageAction.GoTo(it))
         }
     }
 
-    Spider(currentPage = viewModel.state.page, onNavigate = onNavigate) {
+    Spider(currentPage = viewModel.current.state1.page, onNavigate = onNavigate, toolbar = { navigate, title -> Toolbar(navigate, title) }) {
         item(Page.Routes.profile) {
             ProfilePage(context, viewModel, it)
         }
@@ -54,7 +59,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onTopLevelBack: () -> Unit) {
 }
 
 @Composable
-private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: Page.Profile) {
+private fun ProfilePage(context: Context, viewModel: ProfileState, profile: Page.Profile) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -67,7 +72,7 @@ private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: 
 
     when (val state = profile.content) {
         is Lce.Loading -> CenteredLoading()
-        is Lce.Error -> GenericError { viewModel.start() }
+        is Lce.Error -> GenericError { viewModel.dispatch(ProfileAction.ComponentLifecycle.Visible) }
         is Lce.Content -> {
             val configuration = LocalConfiguration.current
             val content = state.value
@@ -111,7 +116,7 @@ private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: 
                 TextRow(
                     title = "Invitations",
                     content = "${content.invitationsCount} pending",
-                    onClick = { viewModel.goToInvitations() }
+                    onClick = { viewModel.dispatch(ProfileAction.GoToInvitations) }
                 )
             }
         }
@@ -119,7 +124,7 @@ private fun ProfilePage(context: Context, viewModel: ProfileViewModel, profile: 
 }
 
 @Composable
-private fun SpiderItemScope.Invitations(viewModel: ProfileViewModel, invitations: Page.Invitations) {
+private fun SpiderItemScope.Invitations(viewModel: ProfileState, invitations: Page.Invitations) {
     when (val state = invitations.content) {
         is Lce.Loading -> CenteredLoading()
         is Lce.Content -> {
@@ -133,11 +138,11 @@ private fun SpiderItemScope.Invitations(viewModel: ProfileViewModel, invitations
                     TextRow(title = text, includeDivider = false) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Row {
-                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.rejectRoomInvite(it.roomId) }) {
+                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.dispatch(ProfileAction.RejectRoomInvite(it.roomId)) }) {
                                 Text("Reject".uppercase())
                             }
                             Spacer(modifier = Modifier.fillMaxWidth(0.1f))
-                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.acceptRoomInvite(it.roomId) }) {
+                            Button(modifier = Modifier.weight(1f), onClick = { viewModel.dispatch(ProfileAction.AcceptRoomInvite(it.roomId)) }) {
                                 Text("Accept".uppercase())
                             }
                         }
@@ -154,7 +159,7 @@ private fun SpiderItemScope.Invitations(viewModel: ProfileViewModel, invitations
 private fun RoomInvite.inviterName() = this.from.displayName?.let { "$it (${this.from.id.value})" } ?: this.from.id.value
 
 @Composable
-private fun ProfileViewModel.ObserveEvents() {
+private fun ProfileState.ObserveEvents() {
 //    StartObserving {
 //        this@ObserveEvents.events.launch {
 //            when (it) {

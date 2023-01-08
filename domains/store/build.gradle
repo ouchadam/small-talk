@@ -1,28 +1,22 @@
 plugins {
     id 'kotlin'
-    id 'com.squareup.sqldelight'
-    id 'org.jetbrains.kotlin.plugin.serialization'
+    alias libs.plugins.kotlin.serialization
+    alias libs.plugins.sqldelight
     id 'java-test-fixtures'
 }
 
 sqldelight {
-    DapkDb {
-        packageName = "app.dapk.db"
+    StDb {
+        packageName = "app.dapk.db.app"
     }
     linkSqlite = true
 }
 
 dependencies {
-    api project(":matrix:common")
-    implementation project(":matrix:services:sync")
-    implementation project(":matrix:services:message")
-    implementation project(":matrix:services:profile")
-    implementation project(":matrix:services:device")
-    implementation project(":matrix:services:room")
     implementation project(":core")
-    implementation Dependencies.mavenCentral.kotlinSerializationJson
-    implementation Dependencies.mavenCentral.kotlinCoroutinesCore
-    implementation "com.squareup.sqldelight:coroutines-extensions:1.5.4"
+    implementation "chat-engine:chat-engine"
+    implementation libs.kotlin.serialization
+    implementation libs.sqldelight.extensions
 
     kotlinFixtures(it)
     testImplementation(testFixtures(project(":core")))

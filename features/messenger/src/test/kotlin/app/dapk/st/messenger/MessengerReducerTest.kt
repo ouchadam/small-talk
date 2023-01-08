@@ -15,14 +15,12 @@ import fake.FakeChatEngine
 import fake.FakeJobBag
 import fake.FakeMessageOptionsStore
 import fixture.*
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
-import test.ReducerTestScope
-import test.delegateReturn
-import test.expect
-import test.testReducer
+import test.*
 
 private const val READ_RECEIPTS_ARE_DISABLED = true
 private val A_ROOM_ID = aRoomId("messenger state room id")
@@ -31,16 +29,22 @@ private val AN_EVENT_ID = anEventId("state event")
 private val A_SELF_ID = aUserId("self")
 private val A_MESSENGER_PAGE_STATE = aMessengerStateWithEvent(AN_EVENT_ID, A_SELF_ID)
 private val A_MESSAGE_ATTACHMENT = MessageAttachment(AndroidUri("a-uri"), MimeType.Image)
-private val A_REPLY = aRoomReplyMessageEvent()
+private val A_REPLY = aRoomMessageEvent()
+private val AN_SUPPORTED_REPLY = aRoomReplyMessageEvent()
 private val AN_IMAGE_BUBBLE = BubbleModel.Image(
     BubbleModel.Image.ImageContent(100, 200, "a-url"),
     mockk(),
     BubbleModel.Event("author-id", "author-name", edited = false, time = "10:27")
 )
-
 private val A_TEXT_BUBBLE = BubbleModel.Text(
     content = RichText(listOf(RichText.Part.Normal(A_MESSAGE_CONTENT))),
     BubbleModel.Event("author-id", "author-name", edited = false, time = "10:27")
+)
+private val A_DIALOG_STATE = DialogState.PositiveNegative(
+    "a title",
+    "a subtitle",
+    positiveAction = ScreenAction.LeaveRoomConfirmation.Confirm,
+    negativeAction = ScreenAction.LeaveRoomConfirmation.Deny,
 )
 
 class MessengerReducerTest {
@@ -72,6 +76,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
+                dialogState = null,
             )
         )
     }
@@ -84,6 +89,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
+                dialogState = null,
             )
         )
     }
@@ -96,6 +102,7 @@ class MessengerReducerTest {
                 roomState = Lce.Loading(),
                 composerState = ComposerState.Attachments(listOf(A_MESSAGE_ATTACHMENT), reply = null),
                 viewerState = null,
+                dialogState = null,
             )
         )
     }
@@ -178,7 +185,7 @@ class MessengerReducerTest {
     }
 
     @Test
-    fun `given text composer, when Enter ReplyMode, then updates composer state with reply`() = runReducerTest {
+    fun `given message text composer, when Enter ReplyMode, then updates composer state with reply`() = runReducerTest {
         setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = null)) }
 
         reduce(ComposerStateChange.ReplyMode.Enter(A_REPLY))
@@ -186,6 +193,15 @@ class MessengerReducerTest {
         assertOnlyStateChange { previous ->
             previous.copy(composerState = (previous.composerState as ComposerState.Text).copy(reply = A_REPLY))
         }
+    }
+
+    @Test
+    fun `given text composer, when Enter ReplyMode with unsupported content, then does nothing`() = runReducerTest {
+        setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = null)) }
+
+        reduce(ComposerStateChange.ReplyMode.Enter(AN_SUPPORTED_REPLY))
+
+        assertNoChanges()
     }
 
     @Test
@@ -219,6 +235,60 @@ class MessengerReducerTest {
         assertOnlyStateChange { previous ->
             previous.copy(composerState = (previous.composerState as ComposerState.Attachments).copy(reply = null))
         }
+    }
+
+    @Test
+    fun `when LeaveRoom, then updates dialog state with leave room confirmation`() = runReducerTest {
+        reduce(ScreenAction.LeaveRoom)
+
+        assertOnlyDispatches(
+            ScreenAction.UpdateDialogState(
+                DialogState.PositiveNegative(
+                    title = "Leave room",
+                    subtitle = "Are you sure you want you leave the room? If the room is private you will need to be invited again to rejoin.",
+                    negativeAction = ScreenAction.LeaveRoomConfirmation.Deny,
+                    positiveAction = ScreenAction.LeaveRoomConfirmation.Confirm,
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `when UpdateDialogState, then updates dialog state`() = runReducerTest {
+        reduce(ScreenAction.UpdateDialogState(dialogState = A_DIALOG_STATE))
+
+        assertOnlyStateChange { it.copy(dialogState = A_DIALOG_STATE) }
+    }
+
+    @Test
+    fun `given can leave room, when LeaveConfirmation Confirm, then removes dialog and rejects room and emits OnLeftRoom`() = runReducerTest {
+        fakeChatEngine.expect { it.rejectRoom(A_ROOM_ID) }
+
+        reduce(ScreenAction.LeaveRoomConfirmation.Confirm)
+
+        assertDispatches(ScreenAction.UpdateDialogState(dialogState = null))
+        assertEvents(MessengerEvent.OnLeftRoom)
+        assertNoStateChange()
+    }
+
+    @Test
+    fun `given leave room fails, when LeaveConfirmation Confirm, then removes dialog and emits toast`() = runReducerTest {
+        fakeChatEngine.expectError(error = RuntimeException("an error")) { fakeChatEngine.rejectRoom(A_ROOM_ID) }
+
+        reduce(ScreenAction.LeaveRoomConfirmation.Confirm)
+
+        assertDispatches(ScreenAction.UpdateDialogState(dialogState = null))
+        assertEvents(MessengerEvent.Toast("Failed to leave room"))
+        assertNoStateChange()
+    }
+
+    @Test
+    fun `when LeaveConfirmation Deny, then removes dialog and does nothing`() = runReducerTest {
+        reduce(ScreenAction.LeaveRoomConfirmation.Deny)
+
+        assertDispatches(ScreenAction.UpdateDialogState(dialogState = null))
+        assertNoEvents()
+        assertNoStateChange()
     }
 
     @Test
@@ -273,8 +343,8 @@ class MessengerReducerTest {
 
     @Test
     fun `given text composer with reply, when SendMessage, then clear composer and sends text message`() = runReducerTest {
-        setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = A_REPLY.message), roomState = Lce.Content(A_MESSENGER_PAGE_STATE)) }
-        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT, reply = A_REPLY.message), A_MESSENGER_PAGE_STATE.roomState.roomOverview) }
+        setState { it.copy(composerState = ComposerState.Text(A_MESSAGE_CONTENT, reply = A_REPLY), roomState = Lce.Content(A_MESSENGER_PAGE_STATE)) }
+        fakeChatEngine.expectUnit { it.send(expectTextMessage(A_MESSAGE_CONTENT, reply = A_REPLY), A_MESSENGER_PAGE_STATE.roomState.roomOverview) }
 
         reduce(ScreenAction.SendMessage)
 

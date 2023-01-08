@@ -1,8 +1,14 @@
-applyAndroidLibraryModule(project)
-apply plugin: 'kotlin-parcelize'
+plugins {
+    id "st-feature-conventions"
+    id "org.jetbrains.kotlin.plugin.parcelize"
+}
+
+android {
+    namespace "app.dapk.st.navigator"
+}
 
 dependencies {
     compileOnly project(":domains:android:stub")
     implementation project(":core")
-    implementation project(":chat-engine")
+    implementation "chat-engine:chat-engine"
 }

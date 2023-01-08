@@ -1,5 +1,5 @@
 plugins {
-    id 'kotlin'
+    id "kotlin"
     id 'java-test-fixtures'
 }
 
@@ -12,7 +12,7 @@ if (localProperties.exists()) {
 }
 
 dependencies {
-    def androidVer = androidSdkVersion
+    def androidVer = 33
     api files("${properties.getProperty("sdk.dir")}/platforms/android-${androidVer}/android.jar")
 
     kotlinFixtures(it)

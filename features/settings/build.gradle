@@ -1,22 +1,24 @@
-applyAndroidComposeLibraryModule(project)
+plugins {
+    id "st-feature-conventions"
+}
 
 dependencies {
-    implementation project(":chat-engine")
+    implementation "chat-engine:chat-engine"
     implementation project(":features:navigator")
     implementation project(':domains:store')
     implementation project(':domains:android:push')
     implementation project(":domains:android:compose-core")
     implementation project(":domains:android:viewmodel")
+    implementation 'screen-state:screen-android'
     implementation project(":design-library")
     implementation project(":core")
 
     kotlinTest(it)
 
-    androidImportFixturesWorkaround(project, project(":matrix:common"))
+    testImplementation 'screen-state:state-test'
+    testImplementation 'chat-engine:chat-engine-test'
     androidImportFixturesWorkaround(project, project(":core"))
-    androidImportFixturesWorkaround(project, project(":domains:store"))
-    androidImportFixturesWorkaround(project, project(":domains:state"))
     androidImportFixturesWorkaround(project, project(":domains:android:viewmodel"))
     androidImportFixturesWorkaround(project, project(":domains:android:stub"))
-    androidImportFixturesWorkaround(project, project(":chat-engine"))
+    androidImportFixturesWorkaround(project, project(":domains:store"))
 }

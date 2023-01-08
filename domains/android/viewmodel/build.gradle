@@ -1,15 +1,15 @@
 plugins {
-    id 'kotlin'
+    id "kotlin"
     id 'java-test-fixtures'
 }
 
 dependencies {
     compileOnly project(":domains:android:viewmodel-stub")
-    implementation Dependencies.mavenCentral.kotlinCoroutinesCore
+    implementation libs.kotlin.coroutines
 
     kotlinFixtures(it)
-    testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesCore
-    testFixturesImplementation Dependencies.mavenCentral.kotlinCoroutinesTest
+    testFixturesImplementation libs.kotlin.coroutines
+    testFixturesImplementation libs.kotlin.coroutines.test
     testFixturesImplementation testFixtures(project(":core"))
     testFixturesCompileOnly project(":domains:android:viewmodel-stub")
 }

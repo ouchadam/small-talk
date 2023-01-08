@@ -1,4 +1,6 @@
-applyAndroidLibraryModule(project)
+plugins {
+    id "st-android-library-conventions"
+}
 
 dependencies {
     implementation project(':core')

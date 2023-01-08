@@ -1,10 +1,8 @@
 import * as google from '@googleapis/androidpublisher'
 import * as fs from "fs"
 import * as http from 'https'
-import matrixcs, * as matrix from 'matrix-js-sdk'
-import request from 'request'
+import * as matrix from 'matrix-js-sdk'
 import * as url from 'url'
-matrixcs.request(request)
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 

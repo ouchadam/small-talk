@@ -10,6 +10,7 @@ import app.dapk.st.push.PushModule
 import app.dapk.st.settings.eventlogger.EventLoggerViewModel
 import app.dapk.st.settings.state.SettingsState
 import app.dapk.st.settings.state.settingsReducer
+import app.dapk.st.state.createStateViewModel
 
 class SettingsModule(
     private val chatEngine: ChatEngine,

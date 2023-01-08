@@ -41,7 +41,6 @@ import app.dapk.st.core.components.CenteredLoading
 import app.dapk.st.core.components.Header
 import app.dapk.st.core.extensions.takeAs
 import app.dapk.st.core.getActivity
-import app.dapk.st.core.page.PageAction
 import app.dapk.st.design.components.*
 import app.dapk.st.engine.ImportResult
 import app.dapk.st.navigator.Navigator
@@ -51,6 +50,8 @@ import app.dapk.st.settings.state.ComponentLifecycle
 import app.dapk.st.settings.state.RootActions
 import app.dapk.st.settings.state.ScreenAction
 import app.dapk.st.settings.state.SettingsState
+import app.dapk.state.SpiderPage
+import app.dapk.state.page.PageAction
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +67,7 @@ internal fun SettingsScreen(settingsState: SettingsState, onSignOut: () -> Unit,
             else -> settingsState.dispatch(PageAction.GoTo(it))
         }
     }
-    Spider(currentPage = settingsState.current.state1.page, onNavigate = onNavigate) {
+    Spider(currentPage = settingsState.current.state1.page, onNavigate = onNavigate, toolbar = { navigate, title -> Toolbar(navigate, title) }) {
         item(Page.Routes.root) {
             RootSettings(
                 it,

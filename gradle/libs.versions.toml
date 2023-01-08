@@ -1,0 +1,40 @@
+[versions]
+kotlin = "1.8.0"
+coroutines = "1.6.4"
+sqldelight = "1.5.4"
+ktor = "2.2.2"
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "2.9.2" }
+sqldelight = { id = "com.squareup.sqldelight", version.ref = "sqldelight" }
+
+[libraries]
+android-desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version = "1.1.5" }
+
+compose-coil = { group = "io.coil-kt", name = "coil-compose", version = "2.2.2" }
+accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version = "0.28.0" }
+
+matrix-olm = { group = "org.matrix.android", name = "olm-sdk", version = "3.2.12" }
+unifiedpush = { group = "com.github.UnifiedPush", name = "android-connector", version = "2.1.1" }
+
+firebase-bom = { module = "com.google.firebase:firebase-bom", version = "31.1.1" }
+
+kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.4.1" }
+kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlin-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
+
+sqldelight-android = { group = "com.squareup.sqldelight", name = "android-driver", version.ref = "sqldelight" }
+sqldelight-test = { group = "com.squareup.sqldelight", name = "sqlite-driver", version.ref = "sqldelight" }
+sqldelight-extensions = { group = "com.squareup.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
+
+ktor-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+
+junit = { group = "junit", name = "junit", version = "4.13.2" }
+kluent = { group = "org.amshove.kluent", name = "kluent", version = "1.72" }
+mockk = { group = "io.mockk", name = "mockk", version = "1.13.3" }
+
+leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version = "2.10" }
