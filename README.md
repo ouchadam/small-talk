@@ -4,7 +4,10 @@
 
 
 ![header](https://github.com/ouchadam/small-talk/blob/main/.github/readme/header.png?raw=true)
-[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/google-play-badge.png?raw=tru"></a>](https://play.google.com/store/apps/details?id=app.dapk.st)
+[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/google-play-badge.png?raw=true"></a>](https://play.google.com/store/apps/details?id=app.dapk.st)
+
+[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/fdroid-badge.png?raw=true"></a>](https://ouchadam.github.io/fdroid-repository/repo/)
+
 
 <br>
 <br>
@@ -111,7 +114,7 @@
 - Push notifications provided through [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging).
 
 ##### FOSS
-- Available through the [IzzySoft's F-Droid Repository](https://android.izzysoft.de/repo) and [Github Releases](https://github.com/ouchadam/small-talk/releases).
+- Available through a [self hosted F-Droid Repository](https://ouchadam.github.io/fdroid-repository/repo/) and [Github Releases](https://github.com/ouchadam/small-talk/releases).
 - No Google or Firebase services (and their transitive telemetrics).
 - No crash tracking.
 - No push notifications by default,  a separate [UnifiedPush](https://unifiedpush.org/) [distributor](https://unifiedpush.org/users/distributors/) is required.
