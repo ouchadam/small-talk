@@ -4,9 +4,7 @@
 
 
 ![header](https://github.com/ouchadam/small-talk/blob/main/.github/readme/header.png?raw=true)
-[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/google-play-badge.png?raw=true"></a>](https://play.google.com/store/apps/details?id=app.dapk.st)
-
-[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/fdroid-badge.png?raw=true"></a>](https://ouchadam.github.io/fdroid-repository/repo/)
+[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/fdroid-badge.png?raw=true"></a>](https://ouchadam.github.io/fdroid-repository/repo/)[<img align="right" height="70" src="https://github.com/ouchadam/small-talk/blob/main/.github/readme/google-play-badge.png?raw=true"></a>](https://play.google.com/store/apps/details?id=app.dapk.st)
 
 
 <br>
