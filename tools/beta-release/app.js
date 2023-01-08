@@ -139,7 +139,7 @@ const incrementVersionFile = async (github, branchName) => {
     const today = new Date()
     const month = (today.getMonth() + 1).toString().padStart(2, '0')
     const day = (today.getDay() + 1).toString().padStart(2, '0')
-    const year = today.getFullYear().slice(-2)
+    const year = today.getFullYear().toString().slice(-2)
     const todayFormatted = `${year}/${month}/${day}`
 
     let updatedVersionName = undefined
