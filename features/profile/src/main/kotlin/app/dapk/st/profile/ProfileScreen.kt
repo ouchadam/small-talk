@@ -67,10 +67,6 @@ private fun ProfilePage(context: Context, viewModel: ProfileState, profile: Page
             .fillMaxWidth()
             .padding(8.dp), contentAlignment = Alignment.TopEnd
     ) {
-        IconButton(onClick = { context.startActivity(Intent(context, SettingsActivity::class.java)) }) {
-            Icon(imageVector = Icons.Filled.Settings, contentDescription = "Settings")
-        }
-
         val scrollState = rememberScrollState()
         when (val state = profile.content) {
             is Lce.Loading -> CenteredLoading()
@@ -122,6 +118,9 @@ private fun ProfilePage(context: Context, viewModel: ProfileState, profile: Page
                     )
                 }
             }
+        }
+        IconButton(onClick = { context.startActivity(Intent(context, SettingsActivity::class.java)) }) {
+            Icon(imageVector = Icons.Filled.Settings, contentDescription = "Settings")
         }
     }
 }
