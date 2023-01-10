@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Settings
@@ -68,56 +70,57 @@ private fun ProfilePage(context: Context, viewModel: ProfileState, profile: Page
         IconButton(onClick = { context.startActivity(Intent(context, SettingsActivity::class.java)) }) {
             Icon(imageVector = Icons.Filled.Settings, contentDescription = "Settings")
         }
-    }
 
-    when (val state = profile.content) {
-        is Lce.Loading -> CenteredLoading()
-        is Lce.Error -> GenericError { viewModel.dispatch(ProfileAction.ComponentLifecycle.Visible) }
-        is Lce.Content -> {
-            val configuration = LocalConfiguration.current
-            val content = state.value
-            Column {
-                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    val fallbackLabel = content.me.displayName ?: content.me.userId.value
-                    val avatarSize = configuration.percentOfHeight(0.2f)
-                    Box {
-                        CircleishAvatar(content.me.avatarUrl?.value, fallbackLabel, avatarSize)
+        val scrollState = rememberScrollState()
+        when (val state = profile.content) {
+            is Lce.Loading -> CenteredLoading()
+            is Lce.Error -> GenericError { viewModel.dispatch(ProfileAction.ComponentLifecycle.Visible) }
+            is Lce.Content -> {
+                val configuration = LocalConfiguration.current
+                val content = state.value
+                Column(modifier = Modifier.verticalScroll(scrollState).padding(top = 32.dp)) {
+                    Spacer(modifier = Modifier.fillMaxHeight(0.05f))
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        val fallbackLabel = content.me.displayName ?: content.me.userId.value
+                        val avatarSize = configuration.percentOfHeight(0.2f)
+                        Box {
+                            CircleishAvatar(content.me.avatarUrl?.value, fallbackLabel, avatarSize)
 
-                        // TODO enable once edit support is added
-                        if (false) {
-                            IconButton(modifier = Modifier
-                                .size(avatarSize * 0.314f)
-                                .align(Alignment.BottomEnd)
-                                .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
-                                .padding(12.dp),
-                                onClick = {}
-                            ) {
-                                Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                            // TODO enable once edit support is added
+                            if (false) {
+                                IconButton(modifier = Modifier
+                                    .size(avatarSize * 0.314f)
+                                    .align(Alignment.BottomEnd)
+                                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+                                    .padding(12.dp),
+                                    onClick = {}
+                                ) {
+                                    Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                                }
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.fillMaxHeight(0.05f))
+
+                    TextRow(
+                        title = "Display name",
+                        content = content.me.displayName ?: "Not set",
+                    )
+                    TextRow(
+                        title = "User id",
+                        content = content.me.userId.value,
+                    )
+                    TextRow(
+                        title = "Homeserver",
+                        content = content.me.homeServerUrl.value,
+                    )
+
+                    TextRow(
+                        title = "Invitations",
+                        content = "${content.invitationsCount} pending",
+                        onClick = { viewModel.dispatch(ProfileAction.GoToInvitations) }
+                    )
                 }
-                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
-
-                TextRow(
-                    title = "Display name",
-                    content = content.me.displayName ?: "Not set",
-                )
-                TextRow(
-                    title = "User id",
-                    content = content.me.userId.value,
-                )
-                TextRow(
-                    title = "Homeserver",
-                    content = content.me.homeServerUrl.value,
-                )
-
-                TextRow(
-                    title = "Invitations",
-                    content = "${content.invitationsCount} pending",
-                    onClick = { viewModel.dispatch(ProfileAction.GoToInvitations) }
-                )
             }
         }
     }
