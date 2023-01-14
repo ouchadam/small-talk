@@ -165,6 +165,7 @@ internal class FeatureModules internal constructor(
         DirectoryModule(
             context = context,
             chatEngine = chatEngineModule.engine,
+            iconLoader = imageLoaderModule.iconLoader(),
         )
     }
     val loginModule by unsafeLazy {

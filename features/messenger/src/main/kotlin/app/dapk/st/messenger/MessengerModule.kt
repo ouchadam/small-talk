@@ -16,7 +16,7 @@ class MessengerModule(
     private val chatEngine: ChatEngine,
     private val context: Context,
     private val messageOptionsStore: MessageOptionsStore,
-    private val deviceMeta: DeviceMeta,
+    val deviceMeta: DeviceMeta,
 ) : ProvidableModule {
 
     internal fun messengerState(launchPayload: MessagerActivityPayload): MessengerState {
