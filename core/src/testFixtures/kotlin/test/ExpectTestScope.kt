@@ -20,7 +20,7 @@ class ExpectTest(override val coroutineContext: CoroutineContext) : ExpectTestSc
 
     override fun verifyExpects() {
         expects.forEach { (times, block) -> coVerify(exactly = times) { block.invoke(this) } }
-        groups.forEach { coVerifyOrder { it.invoke(this) } }
+        groups.forEach { coVerifyAll { it.invoke(this) } }
     }
 
     override fun <T> T.expectUnit(times: Int, block: suspend MockKMatcherScope.(T) -> Unit) {

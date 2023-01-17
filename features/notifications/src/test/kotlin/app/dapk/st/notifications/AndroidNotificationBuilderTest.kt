@@ -1,12 +1,14 @@
 package app.dapk.st.notifications
 
+import android.app.Notification
 import app.dapk.st.core.DeviceMeta
-import fixture.NotificationDelegateFixtures.anAndroidNotification
 import fake.FakeContext
 import fake.FakeNotificationBuilder
 import fake.aFakeMessagingStyle
+import fixture.NotificationDelegateFixtures.anAndroidNotification
 import io.mockk.every
 import io.mockk.mockk
+import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 import test.delegateReturn
 import test.runExpectTest
@@ -15,21 +17,30 @@ private val A_MESSAGING_STYLE = aFakeMessagingStyle()
 
 class AndroidNotificationBuilderTest {
 
+    private val aPlatformNotification = mockk<Notification>()
+
     private val fakeContext = FakeContext()
     private val fakeNotificationBuilder = FakeNotificationBuilder()
     private val fakeAndroidNotificationStyleBuilder = FakeAndroidNotificationStyleBuilder()
+    private val fakeNotificationExtensions = FakeNotificationExtensions()
 
     private val builder = AndroidNotificationBuilder(
         fakeContext.instance,
         DeviceMeta(apiVersion = 26),
         fakeAndroidNotificationStyleBuilder.instance,
         builderFactory = { _, _, _ -> fakeNotificationBuilder.instance },
+        notificationExtensions = fakeNotificationExtensions
     )
 
     @Test
     fun `applies all builder options`() = runExpectTest {
         val notification = anAndroidNotification()
         fakeAndroidNotificationStyleBuilder.given(notification.messageStyle!!).returns(A_MESSAGING_STYLE)
+        fakeNotificationBuilder.givenBuilds().returns(aPlatformNotification)
+
+        with(fakeNotificationExtensions) {
+            fakeNotificationExtensions.expect { fakeNotificationBuilder.instance.applyLocusId(notification.shortcutId!!) }
+        }
         fakeNotificationBuilder.instance.captureExpects {
             it.setOnlyAlertOnce(!notification.alertMoreThanOnce)
             it.setAutoCancel(notification.autoCancel)
@@ -45,9 +56,9 @@ class AndroidNotificationBuilderTest {
             it.setLargeIcon(notification.largeIcon)
             it.build()
         }
+        val result = builder.build(notification)
 
-        val ignoredResult = builder.build(notification)
-
+        result shouldBeEqualTo aPlatformNotification
         verifyExpects()
     }
 }
@@ -57,3 +68,5 @@ class FakeAndroidNotificationStyleBuilder {
 
     fun given(style: AndroidNotificationStyle) = every { instance.build(style) }.delegateReturn()
 }
+
+private class FakeNotificationExtensions : NotificationExtensions by mockk()

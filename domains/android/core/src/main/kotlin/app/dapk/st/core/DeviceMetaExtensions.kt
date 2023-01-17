@@ -16,6 +16,11 @@ fun DeviceMeta.onAtLeastO(block: () -> Unit) {
     whenXOrHigher(Build.VERSION_CODES.O, block, fallback = {})
 }
 
+@ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q, lambda = 0)
+fun DeviceMeta.onAtLeastQ(block: () -> Unit) {
+    whenXOrHigher(Build.VERSION_CODES.Q, block, fallback = {})
+}
+
 @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.R, lambda = 0)
 fun DeviceMeta.onAtLeastR(block: () -> Unit) {
     whenXOrHigher(Build.VERSION_CODES.R, block, fallback = {})
