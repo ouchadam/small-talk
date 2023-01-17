@@ -1,19 +1,24 @@
 package app.dapk.st.directory
 
 import android.content.Context
-import android.content.pm.ShortcutInfo
 import androidx.core.app.Person
+import androidx.core.content.LocusIdCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import app.dapk.st.engine.RoomOverview
+import app.dapk.st.imageloader.IconLoader
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.messenger.MessengerActivity
 
-internal class ShortcutHandler(private val context: Context) {
+internal class ShortcutHandler(
+    private val context: Context,
+    private val iconLoader: IconLoader,
+) {
 
     private val cachedRoomIds = mutableListOf<RoomId>()
 
-    fun onDirectoryUpdate(overviews: List<RoomOverview>) {
+    suspend fun onDirectoryUpdate(overviews: List<RoomOverview>) {
         val update = overviews.map { it.roomId }
         if (cachedRoomIds != update) {
             cachedRoomIds.clear()
@@ -21,12 +26,14 @@ internal class ShortcutHandler(private val context: Context) {
 
             val maxShortcutCountPerActivity = ShortcutManagerCompat.getMaxShortcutCountPerActivity(context)
             overviews
+                .sortedByDescending { it.lastMessage?.utcTimestamp }
                 .take(maxShortcutCountPerActivity)
                 .forEachIndexed { index, room ->
                     val build = ShortcutInfoCompat.Builder(context, room.roomId.value)
                         .setShortLabel(room.roomName ?: "N/A")
                         .setLongLabel(room.roomName ?: "N/A")
                         .setRank(index)
+                        .setLocusId((LocusIdCompat(room.roomId.value)))
                         .run {
                             this.setPerson(
                                 Person.Builder()
@@ -35,9 +42,14 @@ internal class ShortcutHandler(private val context: Context) {
                                     .build()
                             )
                         }
+                        .run {
+                            room.roomAvatarUrl?.let { iconLoader.load(it.value) }?.let {
+                                this.setIcon(IconCompat.createFromIcon(context, it))
+                            } ?: this
+                        }
                         .setIntent(MessengerActivity.newShortcutInstance(context, room.roomId))
                         .setLongLived(true)
-                        .setCategories(setOf(ShortcutInfo.SHORTCUT_CATEGORY_CONVERSATION))
+                        .setIsConversation()
                         .build()
                     ShortcutManagerCompat.pushDynamicShortcut(context, build)
                 }

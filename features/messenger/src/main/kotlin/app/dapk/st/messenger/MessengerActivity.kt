@@ -3,6 +3,7 @@ package app.dapk.st.messenger
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.LocusId
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,11 +11,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import app.dapk.st.core.AndroidUri
-import app.dapk.st.core.DapkActivity
-import app.dapk.st.core.MimeType
+import app.dapk.st.core.*
 import app.dapk.st.core.extensions.unsafeLazy
-import app.dapk.st.core.module
 import app.dapk.st.matrix.common.RoomId
 import app.dapk.st.messenger.gallery.GetImageFromGallery
 import app.dapk.st.messenger.state.ComposerStateChange
@@ -57,6 +55,8 @@ class MessengerActivity : DapkActivity() {
         super.onCreate(savedInstanceState)
         val payload = readPayload<MessagerActivityPayload>()
         val factory = ImageRequest.Builder(applicationContext).fetcherFactory(module.decryptingFetcherFactory(RoomId(payload.roomId)))
+
+        module.deviceMeta.onAtLeastR { setLocusContext(LocusId(payload.roomId), savedInstanceState) }
 
         val galleryLauncher = registerForActivityResult(GetImageFromGallery()) {
             it?.let { uri ->
