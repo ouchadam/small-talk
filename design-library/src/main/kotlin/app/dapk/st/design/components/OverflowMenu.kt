@@ -4,10 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpOffset
@@ -34,5 +31,14 @@ fun OverflowMenu(content: @Composable () -> Unit) {
                 contentDescription = null,
             )
         }
+    }
+}
+
+@Composable
+fun BooleanOption(value: Boolean, trueText: String, falseText: String, onClick: (Boolean) -> Unit) {
+    val itemTextColor = MaterialTheme.colorScheme.onSecondaryContainer
+    when (value) {
+        true -> DropdownMenuItem(text = { Text(trueText, color = itemTextColor) }, onClick = { onClick(true) })
+        false -> DropdownMenuItem(text = { Text(falseText, color = itemTextColor) }, onClick = { onClick(false) })
     }
 }

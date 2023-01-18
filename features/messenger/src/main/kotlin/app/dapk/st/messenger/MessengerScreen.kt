@@ -113,14 +113,12 @@ internal fun MessengerScreen(
         Toolbar(onNavigate = { navigator.navigate.upToHome() }, roomTitle, actions = {
             state.roomState.takeIfContent()?.let {
                 OverflowMenu {
-                    when (it.isMuted) {
-                        true -> DropdownMenuItem(text = { Text("Unmute notifications", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
-                            viewModel.dispatch(ScreenAction.Notifications.Unmute)
-                        })
-
-                        false -> DropdownMenuItem(text = { Text("Mute notifications", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
-                            viewModel.dispatch(ScreenAction.Notifications.Mute)
-                        })
+                    BooleanOption(value = it.isMuted, trueText = "Unmute notifications", falseText = "Mute notifications") {
+                        val action = when (it) {
+                            true -> ScreenAction.Notifications.Unmute
+                            false -> ScreenAction.Notifications.Unmute
+                        }
+                        viewModel.dispatch(action)
                     }
                     DropdownMenuItem(text = { Text("Leave room", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
                         viewModel.dispatch(ScreenAction.LeaveRoom)
