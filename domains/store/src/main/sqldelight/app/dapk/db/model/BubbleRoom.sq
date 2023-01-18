@@ -1,0 +1,18 @@
+CREATE TABLE dbStRoomMeta  (
+    room_id TEXT NOT NULL,
+    is_bubble INTEGER AS Int NOT NULL DEFAULT 0,
+    PRIMARY KEY (room_id)
+);
+
+markBubble:
+INSERT OR REPLACE INTO dbStRoomMeta(room_id, is_bubble)
+VALUES (?,?);
+
+unmarkBubble:
+INSERT OR REPLACE INTO dbStRoomMeta(room_id, is_bubble)
+VALUES (?,?);
+
+select:
+SELECT is_bubble
+FROM dbStRoomMeta
+WHERE room_id = ?;

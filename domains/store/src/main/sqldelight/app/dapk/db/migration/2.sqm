@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS dbStRoomMeta  (
+    room_id TEXT NOT NULL,
+    is_bubble INTEGER AS Int NOT NULL DEFAULT 0,
+    PRIMARY KEY (room_id)
+);
