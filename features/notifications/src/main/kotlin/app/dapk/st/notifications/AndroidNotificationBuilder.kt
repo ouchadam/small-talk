@@ -4,13 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
+import android.content.LocusId
 import android.graphics.drawable.Icon
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.isAtLeastO
 import app.dapk.st.core.onAtLeastO
+import app.dapk.st.core.onAtLeastQ
 
 @SuppressLint("NewApi")
-@Suppress("ObjectPropertyName")
 private val _builderFactory: (Context, String, DeviceMeta) -> Notification.Builder = { context, channel, deviceMeta ->
     deviceMeta.isAtLeastO(
         block = { Notification.Builder(context, channel) },
@@ -22,7 +23,8 @@ class AndroidNotificationBuilder(
     private val context: Context,
     private val deviceMeta: DeviceMeta,
     private val notificationStyleBuilder: AndroidNotificationStyleBuilder,
-    private val builderFactory: (Context, String, DeviceMeta) -> Notification.Builder = _builderFactory
+    private val builderFactory: (Context, String, DeviceMeta) -> Notification.Builder = _builderFactory,
+    private val notificationExtensions: NotificationExtensions = DefaultNotificationExtensions(deviceMeta),
 ) {
     @SuppressLint("NewApi")
     fun build(notification: AndroidNotification): Notification {
@@ -41,7 +43,8 @@ class AndroidNotificationBuilder(
             }
             .ifNotNull(notification.category) { setCategory(it) }
             .ifNotNull(notification.shortcutId) {
-                deviceMeta.onAtLeastO { setShortcutId(notification.shortcutId) }
+                with(notificationExtensions) { applyLocusId(it) }
+                deviceMeta.onAtLeastO { setShortcutId(it) }
             }
             .ifNotNull(notification.smallIcon) { setSmallIcon(it) }
             .ifNotNull(notification.largeIcon) { setLargeIcon(it) }
