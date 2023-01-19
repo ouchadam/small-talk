@@ -21,7 +21,7 @@ accompanist-systemuicontroller = { group = "com.google.accompanist", name = "acc
 matrix-olm = { group = "org.matrix.android", name = "olm-sdk", version = "3.2.12" }
 unifiedpush = { group = "com.github.UnifiedPush", name = "android-connector", version = "2.1.1" }
 
-firebase-bom = { module = "com.google.firebase:firebase-bom", version = "31.1.1" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version = "31.2.0" }
 
 kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.4.1" }
 kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
