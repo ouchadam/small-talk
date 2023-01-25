@@ -12,9 +12,14 @@ sealed interface ScreenAction : Action {
     object OpenGalleryPicker : ScreenAction
     object LeaveRoom : ScreenAction
 
-    sealed interface Notifications : ScreenAction {
-        object Mute : Notifications
-        object Unmute : Notifications
+    sealed interface MuteNotifications : ScreenAction {
+        object Mute : MuteNotifications
+        object Unmute : MuteNotifications
+    }
+
+    sealed interface ChatBubble : ScreenAction {
+        object Enable: ChatBubble
+        object Disable: ChatBubble
     }
 
     sealed interface LeaveRoomConfirmation : ScreenAction {
@@ -22,7 +27,7 @@ sealed interface ScreenAction : Action {
         object Deny : LeaveRoomConfirmation
     }
 
-    data class UpdateDialogState(val dialogState: DialogState?): ScreenAction
+    data class UpdateDialogState(val dialogState: DialogState?) : ScreenAction
 }
 
 sealed interface ComponentLifecycle : Action {
@@ -33,6 +38,7 @@ sealed interface ComponentLifecycle : Action {
 sealed interface MessagesStateChange : Action {
     data class Content(val content: MessengerPageState) : MessagesStateChange
     data class MuteContent(val isMuted: Boolean) : MessagesStateChange
+    data class ChatBubbleContent(val isChatBubble: Boolean) : MessagesStateChange
 }
 
 sealed interface ComposerStateChange : Action {

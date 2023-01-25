@@ -15,7 +15,6 @@ import fake.FakeChatEngine
 import fake.FakeJobBag
 import fake.FakeMessageOptionsStore
 import fixture.*
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -77,6 +76,7 @@ class MessengerReducerTest {
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
                 dialogState = null,
+                appRoomState = Lce.Loading(),
             )
         )
     }
@@ -90,6 +90,7 @@ class MessengerReducerTest {
                 composerState = ComposerState.Text(value = "", reply = null),
                 viewerState = null,
                 dialogState = null,
+                appRoomState = Lce.Loading(),
             )
         )
     }
@@ -103,6 +104,7 @@ class MessengerReducerTest {
                 composerState = ComposerState.Attachments(listOf(A_MESSAGE_ATTACHMENT), reply = null),
                 viewerState = null,
                 dialogState = null,
+                appRoomState = Lce.Loading(),
             )
         )
     }

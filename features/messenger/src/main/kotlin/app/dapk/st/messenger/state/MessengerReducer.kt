@@ -38,6 +38,7 @@ internal fun messengerReducer(
             composerState = initialComposerState(initialAttachments),
             viewerState = null,
             dialogState = null,
+            appRoomState = Lce.Loading(),
         ),
 
         async(ComponentLifecycle::class) { action ->
@@ -156,20 +157,44 @@ internal fun messengerReducer(
             }
         },
 
-        async(ScreenAction.Notifications::class) { action ->
+        async(ScreenAction.MuteNotifications::class) { action ->
             when (action) {
-                ScreenAction.Notifications.Mute -> chatEngine.muteRoom(roomId)
-                ScreenAction.Notifications.Unmute -> chatEngine.unmuteRoom(roomId)
+                ScreenAction.MuteNotifications.Mute -> chatEngine.muteRoom(roomId)
+                ScreenAction.MuteNotifications.Unmute -> chatEngine.unmuteRoom(roomId)
             }
 
             dispatch(
                 MessagesStateChange.MuteContent(
                     isMuted = when (action) {
-                        ScreenAction.Notifications.Mute -> true
-                        ScreenAction.Notifications.Unmute -> false
+                        ScreenAction.MuteNotifications.Mute -> true
+                        ScreenAction.MuteNotifications.Unmute -> false
                     }
                 )
             )
+        },
+
+        async(ScreenAction.ChatBubble::class) { action ->
+            when (action) {
+                ScreenAction.ChatBubble.Disable -> {}
+                ScreenAction.ChatBubble.Enable -> {}
+            }
+
+            dispatch(
+                MessagesStateChange.ChatBubbleContent(
+                    isChatBubble = when (action) {
+                        ScreenAction.ChatBubble.Enable -> true
+                        ScreenAction.ChatBubble.Disable -> false
+                    }
+                )
+            )
+        },
+
+        change(MessagesStateChange.ChatBubbleContent::class) { action, state ->
+            when (val appRoomState = state.appRoomState) {
+                is Lce.Content -> state.copy(appRoomState = appRoomState.copy(value = appRoomState.value.copy(isChatBubble = action.isChatBubble)))
+                is Lce.Error -> state
+                is Lce.Loading -> state
+            }
         },
 
         change(ScreenAction.UpdateDialogState::class) { action, state ->

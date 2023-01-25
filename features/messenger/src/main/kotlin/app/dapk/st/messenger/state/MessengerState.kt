@@ -17,6 +17,11 @@ data class MessengerScreenState(
     val composerState: ComposerState,
     val viewerState: ViewerState?,
     val dialogState: DialogState?,
+    val appRoomState: Lce<AppRoomState>,
+)
+
+data class AppRoomState(
+    val isChatBubble: Boolean
 )
 
 data class ViewerState(

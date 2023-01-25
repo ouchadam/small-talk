@@ -52,6 +52,8 @@ import app.dapk.st.matrix.common.RichText
 import app.dapk.st.matrix.common.UserId
 import app.dapk.st.messenger.gallery.ImageGalleryActivityPayload
 import app.dapk.st.messenger.state.*
+import app.dapk.st.messenger.state.ScreenAction.ChatBubble
+import app.dapk.st.messenger.state.ScreenAction.MuteNotifications
 import app.dapk.st.navigator.Navigator
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -115,8 +117,15 @@ internal fun MessengerScreen(
                 OverflowMenu {
                     BooleanOption(value = it.isMuted, trueText = "Unmute notifications", falseText = "Mute notifications") {
                         val action = when (it) {
-                            true -> ScreenAction.Notifications.Unmute
-                            false -> ScreenAction.Notifications.Unmute
+                            true -> MuteNotifications.Unmute
+                            false -> MuteNotifications.Mute
+                        }
+                        viewModel.dispatch(action)
+                    }
+                    BooleanOption(value = it.isMuted, trueText = "Disable bubble", falseText = "Enable bubble") {
+                        val action = when (it) {
+                            true -> ChatBubble.Disable
+                            false -> ChatBubble.Enable
                         }
                         viewModel.dispatch(action)
                     }
