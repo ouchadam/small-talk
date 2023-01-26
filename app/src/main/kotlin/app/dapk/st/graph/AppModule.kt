@@ -59,7 +59,7 @@ internal class AppModule(context: Application, logger: MatrixLogger) {
     }
 
     private val driver = AndroidSqliteDriver(DapkDb.Schema, context, "dapk.db")
-    private val stDriver = AndroidSqliteDriver(DapkDb.Schema, context, "stdb.db")
+    private val stDriver = AndroidSqliteDriver(StDb.Schema, context, "stdb.db")
     private val engineDatabase = DapkDb(driver)
     private val stDatabase = StDb(stDriver)
     val coroutineDispatchers = CoroutineDispatchers(Dispatchers.IO)
