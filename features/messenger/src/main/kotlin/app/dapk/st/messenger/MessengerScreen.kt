@@ -122,13 +122,17 @@ internal fun MessengerScreen(
                         }
                         viewModel.dispatch(action)
                     }
-                    BooleanOption(value = it.isMuted, trueText = "Disable bubble", falseText = "Enable bubble") {
-                        val action = when (it) {
-                            true -> ChatBubble.Disable
-                            false -> ChatBubble.Enable
+
+                    state.appRoomState.takeIfContent()?.let {
+                        BooleanOption(value = it.isChatBubble, trueText = "Disable bubble", falseText = "Enable bubble") {
+                            val action = when (it) {
+                                true -> ChatBubble.Disable
+                                false -> ChatBubble.Enable
+                            }
+                            viewModel.dispatch(action)
                         }
-                        viewModel.dispatch(action)
                     }
+
                     DropdownMenuItem(text = { Text("Leave room", color = MaterialTheme.colorScheme.onSecondaryContainer) }, onClick = {
                         viewModel.dispatch(ScreenAction.LeaveRoom)
                     })

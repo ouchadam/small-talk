@@ -63,6 +63,7 @@ class MessengerReducerTest {
             fakeMessageOptionsStore.instance,
             A_ROOM_ID,
             emptyList(),
+            mockk(),
             fakeEventSource,
         )
     }
@@ -405,6 +406,7 @@ class MessengerReducerTest {
             fakeMessageOptionsStore.instance,
             A_ROOM_ID,
             initialAttachments = initialAttachments,
+            appRoomStore = mockk(),
             fakeEventSource,
         )
     }(block)

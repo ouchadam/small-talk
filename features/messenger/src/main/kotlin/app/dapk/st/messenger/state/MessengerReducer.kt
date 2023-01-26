@@ -1,12 +1,14 @@
 package app.dapk.st.messenger.state
 
 import android.os.Build
+import android.util.Log
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.Lce
 import app.dapk.st.core.asString
 import app.dapk.st.core.extensions.takeIfContent
 import app.dapk.st.design.components.BubbleModel
+import app.dapk.st.domain.application.AppRoomPersistence
 import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
 import app.dapk.st.engine.MessengerPageState
@@ -29,6 +31,7 @@ internal fun messengerReducer(
     messageOptionsStore: MessageOptionsStore,
     roomId: RoomId,
     initialAttachments: List<MessageAttachment>?,
+    appRoomStore: AppRoomPersistence,
     eventEmitter: suspend (MessengerEvent) -> Unit,
 ): ReducerFactory<MessengerScreenState> {
     return createReducer(
@@ -46,14 +49,26 @@ internal fun messengerReducer(
             when (action) {
                 is ComponentLifecycle.Visible -> {
                     jobBag.replace(
+                        "appRoomState",
+                        appRoomStore.observe(state.roomId)
+                            .onEach { dispatch(MessagesStateChange.AppRoomContent(it)) }
+                            .launchIn(coroutineScope)
+                    )
+
+
+                    jobBag.replace(
                         "messages", chatEngine.messages(state.roomId, disableReadReceipts = messageOptionsStore.isReadReceiptsDisabled())
                             .onEach { dispatch(MessagesStateChange.Content(it)) }
                             .launchIn(coroutineScope)
                     )
                 }
 
-                ComponentLifecycle.Gone -> jobBag.cancel("messages")
+                ComponentLifecycle.Gone -> jobBag.cancelAll()
             }
+        },
+
+        change(MessagesStateChange.AppRoomContent::class) { action, state ->
+            state.copy(appRoomState = Lce.Content(action.content))
         },
 
         change(MessagesStateChange.Content::class) { action, state ->
@@ -174,9 +189,11 @@ internal fun messengerReducer(
         },
 
         async(ScreenAction.ChatBubble::class) { action ->
+            Log.e("!!!", "$action")
+            val state = getState()
             when (action) {
-                ScreenAction.ChatBubble.Disable -> {}
-                ScreenAction.ChatBubble.Enable -> {}
+                ScreenAction.ChatBubble.Disable -> appRoomStore.unmarkBubble(state.roomId)
+                ScreenAction.ChatBubble.Enable -> appRoomStore.markBubble(state.roomId)
             }
 
             dispatch(

@@ -5,6 +5,7 @@ import android.content.Context
 import app.dapk.st.core.DeviceMeta
 import app.dapk.st.core.JobBag
 import app.dapk.st.core.ProvidableModule
+import app.dapk.st.domain.application.AppRoomPersistence
 import app.dapk.st.state.createStateViewModel
 import app.dapk.st.domain.application.message.MessageOptionsStore
 import app.dapk.st.engine.ChatEngine
@@ -16,6 +17,7 @@ class MessengerModule(
     private val chatEngine: ChatEngine,
     private val context: Context,
     private val messageOptionsStore: MessageOptionsStore,
+    private val appRoomStore: AppRoomPersistence,
     val deviceMeta: DeviceMeta,
 ) : ProvidableModule {
 
@@ -29,6 +31,7 @@ class MessengerModule(
                 messageOptionsStore,
                 RoomId(launchPayload.roomId),
                 launchPayload.attachments,
+                appRoomStore,
                 it
             )
         }

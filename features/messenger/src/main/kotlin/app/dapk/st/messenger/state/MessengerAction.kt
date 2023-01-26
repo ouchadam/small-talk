@@ -1,6 +1,7 @@
 package app.dapk.st.messenger.state
 
 import app.dapk.st.design.components.BubbleModel
+import app.dapk.st.domain.application.AppRoomState
 import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.navigator.MessageAttachment
@@ -37,6 +38,7 @@ sealed interface ComponentLifecycle : Action {
 
 sealed interface MessagesStateChange : Action {
     data class Content(val content: MessengerPageState) : MessagesStateChange
+    data class AppRoomContent(val content: AppRoomState) : MessagesStateChange
     data class MuteContent(val isMuted: Boolean) : MessagesStateChange
     data class ChatBubbleContent(val isChatBubble: Boolean) : MessagesStateChange
 }

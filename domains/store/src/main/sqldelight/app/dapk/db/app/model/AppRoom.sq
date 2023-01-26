@@ -1,18 +1,14 @@
 CREATE TABLE dbAppRoom  (
     room_id TEXT NOT NULL,
-    is_bubble INTEGER AS Int NOT NULL DEFAULT 0,
+    is_bubble INTEGER AS Int NOT NULL,
     PRIMARY KEY (room_id)
 );
 
-markBubble:
-INSERT OR REPLACE INTO dbAppRoom(room_id, is_bubble)
-VALUES (?,?);
-
-unmarkBubble:
+updateBubble:
 INSERT OR REPLACE INTO dbAppRoom(room_id, is_bubble)
 VALUES (?,?);
 
 select:
-SELECT is_bubble
+SELECT *
 FROM dbAppRoom
 WHERE room_id = ?;

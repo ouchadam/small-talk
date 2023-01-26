@@ -2,6 +2,7 @@ package app.dapk.st.messenger.state
 
 import app.dapk.st.core.Lce
 import app.dapk.st.design.components.BubbleModel
+import app.dapk.st.domain.application.AppRoomState
 import app.dapk.st.engine.MessengerPageState
 import app.dapk.st.engine.RoomEvent
 import app.dapk.st.matrix.common.RoomId
@@ -18,10 +19,6 @@ data class MessengerScreenState(
     val viewerState: ViewerState?,
     val dialogState: DialogState?,
     val appRoomState: Lce<AppRoomState>,
-)
-
-data class AppRoomState(
-    val isChatBubble: Boolean
 )
 
 data class ViewerState(

@@ -180,6 +180,7 @@ internal class FeatureModules internal constructor(
             chatEngineModule.engine,
             context,
             storeModule.value.messageStore(),
+            storeModule.value.appRoomStore(),
             deviceMeta,
         )
     }
