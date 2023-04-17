@@ -35,7 +35,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: APK Size
       - name: Publish size to PR
-        uses: peter-evans/create-or-update-comment@v2
+        uses: peter-evans/create-or-update-comment@v3
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ steps.size.outputs.PR_NUMBER }}
