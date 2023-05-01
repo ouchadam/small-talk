@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.8.0"
+kotlin = "1.8.21"
 coroutines = "1.6.4"
 sqldelight = "1.5.5"
 ktor = "2.3.0"
