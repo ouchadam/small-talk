@@ -12,7 +12,7 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "2.9.
 sqldelight = { id = "com.squareup.sqldelight", version.ref = "sqldelight" }
 
 [libraries]
-android-desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version = "1.1.5" }
+android-desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version = "1.2.3" }
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version = "1.6.0" }
 
 compose-coil = { group = "io.coil-kt", name = "coil-compose", version = "2.3.0" }
