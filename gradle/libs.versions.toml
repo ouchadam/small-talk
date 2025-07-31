@@ -19,7 +19,7 @@ compose-coil = { group = "io.coil-kt", name = "coil-compose", version = "2.3.0" 
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version = "0.30.1" }
 
 matrix-olm = { group = "org.matrix.android", name = "olm-sdk", version = "3.2.12" }
-unifiedpush = { group = "com.github.UnifiedPush", name = "android-connector", version = "2.1.1" }
+unifiedpush = { group = "com.github.UnifiedPush", name = "android-connector", version = "2.5.0" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version = "31.5.0" }
 
