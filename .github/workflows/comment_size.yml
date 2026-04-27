@@ -15,7 +15,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - uses: dawidd6/action-download-artifact@v2
+      - uses: dawidd6/action-download-artifact@v6
         with:
           name: apk-size
           workflow: ${{ github.event.workflow_run.workflow_id }}
